@@ -1344,7 +1344,7 @@
 
     /* --- helpers --- */
     function calcDday(dateStr) {
-      const today = new Date(2026, 4, 20);
+      const today = new Date();
       const target = new Date(dateStr);
       return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
     }
@@ -1358,6 +1358,21 @@
     }
     function saveLS(key, val) {
       try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    }
+    function getWeekNumber(d) {
+      const date = d || new Date();
+      const startOfYear = new Date(date.getFullYear(), 0, 1);
+      return Math.ceil(((date - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    }
+    function getWeekRange(weekOffset) {
+      const now = new Date();
+      const day = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + weekOffset * 7);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const fmt = d => `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+      return `${fmt(monday)} ~ ${fmt(sunday)}`;
     }
 
     /* ---------------- DATA ---------------- */
@@ -1567,7 +1582,7 @@
       const weeklyDone = weeklyGoals.filter(w => w.done).length;
       const sparkData = [38, 42, 51, 45, 58, 62, overall];
       const dayLabels = ['월','화','수','목','금','토','일'];
-      const todayIdx = 2; // 수요일
+      const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
       const dreamAvg = useMemo(() => dreams.length > 0
         ? Math.round(dreams.reduce((s, d) => s + Math.min(100, d.targetAmount > 0 ? (d.currentAmount / d.targetAmount) * 100 : 0), 0) / dreams.length)
@@ -1593,7 +1608,7 @@
       };
 
       const todayDateStr = useMemo(() => {
-        const d = new Date(2026, 4, 20);
+        const d = new Date();
         const days = ["일","월","화","수","목","금","토"];
         return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 · ${days[d.getDay()]}요일`;
       }, []);
@@ -1605,7 +1620,7 @@
             <div className="hero-main">
               <div className="hero-eyebrow">
                 <span>이번주 전체 달성률</span>
-                <span className="week-chip">W21 · 2026</span>
+                <span className="week-chip">{`W${getWeekNumber()} · ${new Date().getFullYear()}`}</span>
               </div>
               <div className="hero-number">
                 <span>{overall}</span><span className="pct">%</span>
@@ -1742,8 +1757,15 @@
             <div className="card card-pad">
               <div className="card-header">
                 <div className="card-title"><span className="dot-purple" />이번주 목표</div>
-                <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>{weeklyDone}/{weeklyGoals.length} · W21</span>
+                <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>{weeklyDone}/{weeklyGoals.length} · {`W${getWeekNumber()}`}</span>
               </div>
+              <input className="next-week-input" placeholder="+ Enter 눌러서 추가"
+                onKeyDown={e => {
+                  if (e.key === "Enter" && e.target.value.trim()) {
+                    setWeeklyGoals(prev => [...prev, { id: "w" + Date.now(), text: e.target.value.trim(), done: false }]);
+                    e.target.value = "";
+                  }
+                }} />
               <div className="checklist">
                 {weeklyGoals.map(w => (
                   <div key={w.id} className={"check-item" + (w.done ? " done" : "")} onClick={() => { if (editingWeeklyId !== w.id) toggleWeeklyGoal(w.id); }}>
@@ -1790,7 +1812,7 @@
             <div className="card card-pad">
               <div className="card-header">
                 <div className="card-title"><span className="dot-purple" />다음주 목표</div>
-                <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>W22</span>
+                <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>{`W${getWeekNumber() + 1}`}</span>
               </div>
               <div className="checklist">
                 {nextWeekGoals.map(w => (
@@ -1818,8 +1840,8 @@
         if (!good && !bad && !improve) return;
         const newRetro = {
           id: "r" + Date.now(),
-          week: "W21 · 2026",
-          date: "05.17 ~ 05.23",
+          week: `W${getWeekNumber()} · ${new Date().getFullYear()}`,
+          date: getWeekRange(0),
           good, bad, improve,
         };
         setRetros(prev => [newRetro, ...prev]);
@@ -1838,8 +1860,8 @@
 
           <div className="retro-editor">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-              <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.01em" }}>이번주 회고 · W21</div>
-              <div style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11.5, color: "var(--text-3)" }}>2026.05.17 ~ 05.23</div>
+              <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.01em" }}>이번주 회고 · W{getWeekNumber()}</div>
+              <div style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11.5, color: "var(--text-3)" }}>{new Date().getFullYear()}.{getWeekRange(0)}</div>
             </div>
             <div className="retro-grid">
               <div className="retro-field">
@@ -1870,6 +1892,8 @@
                 <div className="retro-card-head">
                   <span className="retro-week-label">{r.week}</span>
                   <span style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11, color: "var(--text-4)" }}>{r.date}</span>
+                  <button onClick={() => setRetros(prev => prev.filter(x => x.id !== r.id))}
+                    style={{ background: "transparent", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 13, padding: "2px 6px" }}>×</button>
                 </div>
                 <div className="retro-cols">
                   <div>
@@ -2096,6 +2120,10 @@
                           )}
                         </div>
                       </div>
+                      <button onClick={() => setDreams(prev => prev.filter(x => x.id !== d.id))}
+                        style={{ background: "transparent", border: "1px solid var(--red)", borderRadius: 6, color: "var(--red)", fontSize: 12, padding: "6px 14px", cursor: "pointer", fontFamily: "Geist, sans-serif", marginTop: 8 }}>
+                        드림 삭제
+                      </button>
                     </div>
                   )}
                 </div>
@@ -2161,7 +2189,23 @@
                     {yr.current && <span style={{ fontSize:9.5, color:"var(--accent)", fontFamily:"Geist Mono, ui-monospace, monospace" }}>NOW</span>}
                   </div>
                   <div className="bigt-items">
-                    {yr.items.map((it, i) => <div key={i} className={"bigt-item " + it.state}>{it.text}</div>)}
+                    {yr.items.map((it, i) => (
+                      <div key={i} style={{ display:"flex", alignItems:"center", gap:4 }}>
+                        <div className={"bigt-item " + it.state} style={{ flex:1 }}>{it.text}</div>
+                        <button onClick={() => setVision(v => ({ ...v, timeline: v.timeline.map(y => y.year === yr.year ? { ...y, items: y.items.filter((_, idx) => idx !== i) } : y) }))}
+                          style={{ background:"transparent", border:"none", color:"var(--text-4)", cursor:"pointer", fontSize:12, padding:"1px 5px", flexShrink:0 }}>×</button>
+                      </div>
+                    ))}
+                    <input
+                      placeholder="+ 항목 추가 (Enter)"
+                      style={{ marginTop:6, background:"var(--bg-3)", border:"1px solid var(--border)", borderRadius:5, color:"var(--text-2)", fontSize:11, padding:"4px 8px", fontFamily:"Geist, sans-serif", width:"100%" }}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && e.target.value.trim()) {
+                          const text = e.target.value.trim();
+                          setVision(v => ({ ...v, timeline: v.timeline.map(y => y.year === yr.year ? { ...y, items: [...y.items, { text, state: yr.current ? "active" : "future" }] } : y) }));
+                          e.target.value = "";
+                        }
+                      }} />
                   </div>
                 </div>
               ))}
@@ -2367,56 +2411,49 @@
     }
 
     /* ---------- TAB 3: Tasks ---------- */
-    function Calendar() {
-      const today = 20;
-      const month = 5;
-      const year = 2026;
-      const firstDay = new Date(year, month - 1, 1).getDay(); // 0 sun
-      const daysInMonth = new Date(year, month, 0).getDate();
-      const prevDays = new Date(year, month - 1, 0).getDate();
-
-      const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
+    function Calendar({ tasks }) {
+      const [current, setCurrent] = useState(() => {
+        const n = new Date();
+        return { year: n.getFullYear(), month: n.getMonth() + 1 };
+      });
+      const today = new Date();
+      const isToday = (d) => today.getFullYear() === current.year && today.getMonth() + 1 === current.month && today.getDate() === d;
+      const isInWeek = (d) => {
+        const day = new Date(current.year, current.month - 1, d);
+        const dow = day.getDay();
+        const monday = new Date(day);
+        monday.setDate(d - (dow === 0 ? 6 : dow - 1));
+        const todayMonday = new Date(today);
+        const todayDow = today.getDay();
+        todayMonday.setDate(today.getDate() - (todayDow === 0 ? 6 : todayDow - 1));
+        return monday.toDateString() === todayMonday.toDateString();
+      };
+      const taskDates = tasks ? tasks.map(t => t.date).filter(Boolean) : [];
+      const hasEvent = (d) => {
+        const ds = `${current.year}-${String(current.month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        return taskDates.includes(ds);
+      };
+      const firstDay = new Date(current.year, current.month - 1, 1).getDay();
+      const daysInMonth = new Date(current.year, current.month, 0).getDate();
+      const startOffset = firstDay === 0 ? 6 : firstDay - 1;
       const cells = [];
-      // leading
-      for (let i = 0; i < firstDay; i++) {
-        cells.push({ d: prevDays - firstDay + i + 1, muted: true });
-      }
-      for (let d = 1; d <= daysInMonth; d++) {
-        cells.push({ d, muted: false, today: d === today, hasEvent: [5, 8, 12, 18, 22, 25].includes(d),
-                     inWeek: d >= 18 && d <= 24 });
-      }
-      while (cells.length % 7 !== 0) {
-        const last = cells[cells.length - 1];
-        cells.push({ d: cells.length - daysInMonth - firstDay + 1, muted: true });
-      }
-
+      for (let i = 0; i < startOffset; i++) cells.push(null);
+      for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+      const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
+      const prevMonth = () => setCurrent(p => p.month === 1 ? { year: p.year-1, month: 12 } : { ...p, month: p.month-1 });
+      const nextMonth = () => setCurrent(p => p.month === 12 ? { year: p.year+1, month: 1 } : { ...p, month: p.month+1 });
       return (
-        <div className="card card-pad">
-          <div className="cal-head">
-            <div className="cal-month">2026년 5월</div>
-            <div className="cal-nav">
-              <button>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-              </button>
-              <button>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
-            </div>
+        <div className="card card-pad cal-card">
+          <div className="cal-header">
+            <button className="cal-nav" onClick={prevMonth}>‹</button>
+            <span className="cal-month">{current.year}. {MONTHS[current.month-1]}</span>
+            <button className="cal-nav" onClick={nextMonth}>›</button>
           </div>
           <div className="cal-grid">
-            {weekDays.map((w, i) => <div key={i} className="cal-head-cell">{w}</div>)}
-            {cells.map((c, i) => (
-              <div
-                key={i}
-                className={
-                  "cal-cell" +
-                  (c.muted ? " muted" : "") +
-                  (c.today ? " today" : "") +
-                  (c.hasEvent ? " has-event" : "") +
-                  (c.inWeek && !c.today ? " in-week" : "")
-                }
-              >
-                {c.d}
+            {["월","화","수","목","금","토","일"].map(d => <div key={d} className="cal-dow">{d}</div>)}
+            {cells.map((d, i) => (
+              <div key={i} className={["cal-cell", d && isToday(d) ? "today" : "", d && isInWeek(d) ? "in-week" : "", d && hasEvent(d) ? "has-event" : ""].filter(Boolean).join(" ")}>
+                {d || ""}
               </div>
             ))}
           </div>
@@ -2436,6 +2473,9 @@
     }
 
     function TasksTab({ tasks, toggleTask, addTask, editTask, deleteTask }) {
+      const [filter, setFilter] = useState("all");
+      const tags = ["all", ...new Set(tasks.map(t => t.tag).filter(Boolean))];
+      const filteredTasks = filter === "all" ? tasks : tasks.filter(t => t.tag === filter);
       const [showAddForm, setShowAddForm] = useState(false);
       const [newText, setNewText] = useState("");
       const [newQuadrant, setNewQuadrant] = useState("Q1");
@@ -2461,7 +2501,14 @@
               <div className="section-sub">월간 일정 · 이번주 4분면 · 오늘의 디테일</div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="btn btn-ghost">필터</button>
+              <div style={{ display: "flex", gap: 4 }}>
+                {tags.map(tag => (
+                  <button key={tag} onClick={() => setFilter(tag)}
+                    style={{ background: filter === tag ? "var(--accent)" : "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 6, color: filter === tag ? "#fff" : "var(--text-3)", fontSize: 11, padding: "4px 10px", cursor: "pointer", fontFamily: "Geist, sans-serif" }}>
+                    {tag === "all" ? "전체" : tag}
+                  </button>
+                ))}
+              </div>
               <button className="btn" onClick={() => setShowAddForm(v => !v)}><span style={{fontSize:14}}>+</span>태스크 추가</button>
             </div>
           </div>
@@ -2493,18 +2540,18 @@
           )}
 
           <div className="tasks-grid">
-            <Calendar />
+            <Calendar tasks={tasks} />
 
             <div className="card card-pad" style={{ display: "flex", flexDirection: "column" }}>
               <div className="card-header">
                 <div className="card-title"><span className="dot-purple"/>이번주 4분면 · Eisenhower</div>
                 <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>
-                  W21 · {tasks.length} tasks
+                  {`W${getWeekNumber()}`} · {tasks.length} tasks
                 </span>
               </div>
               <div className="eisen-full" style={{ flex: 1 }}>
                 {QUADRANTS.map((q) => {
-                  const qTasks = tasks.filter(t => t.quadrant === q.id);
+                  const qTasks = filteredTasks.filter(t => t.quadrant === q.id);
                   return (
                     <div key={q.id} className="eisen-quad">
                       <div className="eq-head">
@@ -2539,11 +2586,11 @@
             <div className="card-header">
               <div className="card-title"><span className="dot-purple"/>오늘 할 일 · 상세</div>
               <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>
-                {tasks.filter(t => t.done).length}/{tasks.length} 완료 · 5월 20일
+                {filteredTasks.filter(t => t.done).length}/{filteredTasks.length} 완료 · {`${new Date().getMonth()+1}월 ${new Date().getDate()}일`}
               </span>
             </div>
             <div className="today-rows">
-              {tasks.map(t => {
+              {filteredTasks.map(t => {
                 const q = QUADRANTS.find(q => q.id === t.quadrant);
                 return (
                   <div
@@ -2674,7 +2721,11 @@
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div className="date-pill">
                 <span className="dot" />
-                2026 · 05 · 20 · WED
+                {(() => {
+                  const now = new Date();
+                  const days = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+                  return `${now.getFullYear()} · ${String(now.getMonth()+1).padStart(2,'0')} · ${String(now.getDate()).padStart(2,'0')} · ${days[now.getDay()]}`;
+                })()}
               </div>
               <button onClick={() => _auth.signOut()} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-4)', fontSize: 11, padding: '4px 10px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>로그아웃</button>
             </div>
