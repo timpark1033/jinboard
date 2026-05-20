@@ -147,6 +147,56 @@
       time: { weeklyPool: 72, used: 45.5 }
     };
 
+    /* ── 재무관리 (자산/수입/지출) ── */
+    const INITIAL_FINANCE = {
+      assets: [
+        { id: "a1", category: "estate", name: "강남 아파트", value: 1500000000, note: "" },
+        { id: "a2", category: "estate", name: "서초 빌라", value: 650000000, note: "" },
+        { id: "a3", category: "account", name: "주거래 통장", value: 12000000, note: "" },
+        { id: "a4", category: "account", name: "주식 계좌", value: 8500000, note: "" }
+      ],
+      incomes: [
+        { id: "in1", category: "regular", name: "임대료", expected: 1500000, actual: 1500000, day: 1 },
+        { id: "in2", category: "regular", name: "본업", expected: 3500000, actual: 3500000, day: 25 },
+        { id: "in3", category: "irregular", name: "컨설팅", expected: 500000, actual: 0, day: 0 }
+      ],
+      expenses: [
+        { id: "ex1", category: "fixed", name: "생활비", expected: 2000000, actual: 2000000, day: 1 },
+        { id: "ex2", category: "fixed", name: "대출 이자", expected: 800000, actual: 800000, day: 5 },
+        { id: "ex3", category: "fixed", name: "넷플릭스", expected: 17000, actual: 17000, day: 1 },
+        { id: "ex4", category: "variable", name: "외식", expected: 400000, actual: 320000, day: 0 },
+        { id: "ex5", category: "variable", name: "쇼핑", expected: 300000, actual: 150000, day: 0 }
+      ]
+    };
+    const ASSET_CATS = { estate: "🏠 부동산", account: "💳 계좌", other: "📦 기타" };
+    const INCOME_CATS = { regular: "정기 수입", irregular: "비정기 수입" };
+    const EXPENSE_CATS = { fixed: "고정 지출", variable: "변동 지출", oneoff: "1회성 지출" };
+
+    function sumAssets(finance, category) {
+      return (finance.assets || []).filter(a => !category || a.category === category).reduce((s, a) => s + (a.value || 0), 0);
+    }
+    function sumIncome(finance, items) {
+      const base = (finance.incomes || []).reduce((s, i) => s + (i.expected || 0), 0);
+      const buff = (items || []).filter(i => i.status === "equipped").reduce((s, it) => s + (it.buffs || []).filter(b => b.type === "money").reduce((ss, b) => ss + b.value, 0), 0);
+      return base + buff;
+    }
+    function sumIncomeActual(finance) {
+      return (finance.incomes || []).reduce((s, i) => s + (i.actual || 0), 0);
+    }
+    function sumExpense(finance, items) {
+      const base = (finance.expenses || []).reduce((s, e) => s + (e.expected || 0), 0);
+      const debuff = (items || []).filter(i => i.status === "equipped").reduce((s, it) => s + (it.debuffs || []).filter(d => d.type === "money").reduce((ss, d) => ss + d.value, 0), 0);
+      return base + debuff;
+    }
+    function sumExpenseActual(finance) {
+      return (finance.expenses || []).reduce((s, e) => s + (e.actual || 0), 0);
+    }
+    function fmtKR(n) {
+      if (n >= 100000000) return "₩" + (n / 100000000).toFixed(1) + "억";
+      if (n >= 10000) return "₩" + Math.round(n / 10000).toLocaleString() + "만";
+      return "₩" + (n || 0).toLocaleString();
+    }
+
     const INITIAL_SETTINGS = {
       geminiKey: "",
       weeklyTimePool: 72,
@@ -2342,12 +2392,36 @@
     }
 
     /* ─── Stage 3: ResourcesItemsTab (실제 구현) ─── */
-    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings }) {
+    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings, finance, setFinance, onOpenFinance }) {
       const [selectedItem, setSelectedItem] = useState(null);
       const [filter, setFilter] = useState("all");
-      const [editBase, setEditBase] = useState(false);
+      const [editingAssetId, setEditingAssetId] = useState(null);
 
       const computed = useMemo(() => computeResources(resources, items), [resources, items]);
+      const fin = finance || INITIAL_FINANCE;
+
+      // 재무 요약
+      const totalAssets = sumAssets(fin);
+      const totalIncome = sumIncome(fin, items);
+      const totalIncomeActual = sumIncomeActual(fin);
+      const totalExpense = sumExpense(fin, items);
+      const totalExpenseActual = sumExpenseActual(fin);
+      const profitExpected = totalIncome - totalExpense;
+      const profitActual = totalIncomeActual - totalExpenseActual;
+      const netWorth = totalAssets + (fin.assets || []).filter(a => a.category === "account").reduce((s,a) => s, 0); // 단순 총자산
+
+      const addAsset = (cat) => {
+        const id = "a" + Date.now();
+        setFinance(prev => ({ ...prev, assets: [...(prev.assets || []), { id, category: cat, name: "새 항목", value: 0, note: "" }] }));
+        setEditingAssetId(id);
+      };
+      const updateAsset = (id, updates) => {
+        setFinance(prev => ({ ...prev, assets: (prev.assets || []).map(a => a.id === id ? { ...a, ...updates } : a) }));
+      };
+      const deleteAsset = (id) => {
+        if (!confirm("자산 항목을 삭제하시겠어요?")) return;
+        setFinance(prev => ({ ...prev, assets: (prev.assets || []).filter(a => a.id !== id) }));
+      };
 
       const filteredItems = filter === "all" ? items : items.filter((i) => i.status === filter);
       const totalSlots = 32; // 8x4
@@ -2400,111 +2474,130 @@
 
       return (
         <div className="panel-enter">
-          <div className="ri-split">
-            {/* LEFT: 자원 현황 */}
+          <div className="ri-split" style={{ gridTemplateColumns: "38% 20% 42%" }}>
+            {/* LEFT: 재무관리 간소화 */}
             <div className="ri-col">
-              {/* 돈 */}
-              <div className="res-card">
-                <div className="res-card-head">
-                  <div className="res-card-title"><span className="res-card-ic">💰</span>돈 자원</div>
-                  <button className="gtr-btn-add" onClick={() => setEditBase((v) => !v)} style={{ background: editBase ? "var(--bg-2)" : "var(--accent)", color: editBase ? "var(--text-2)" : "white", border: editBase ? "1px solid var(--border)" : "none" }}>
-                    {editBase ? "완료" : "기본값 수정"}
-                  </button>
+              {/* 순자산 요약 */}
+              <div className="fin-summary-card">
+                <div className="summary-net">
+                  <span className="lbl">💎 순자산</span>
+                  <span className="val">{fmtKR(totalAssets)}</span>
                 </div>
+                <div className="summary-chg">{totalAssets > 0 ? "↑ 전월 대비 추적 가능" : "자산 추가 시 추이 표시"}</div>
+              </div>
 
-                <div className="res-line income">
-                  <span className="lbl">기본 수입</span>
-                  {editBase
-                    ? <input className="res-input" type="number" value={computed.money.baseIncome} onChange={(e) => updateBase("income", e.target.value)} />
-                    : <span className="val">+{computed.money.baseIncome.toLocaleString()}원</span>}
+              {/* 자산 */}
+              <div className="fin-card">
+                <div className="fin-card-head">
+                  <div className="fin-card-title">🏦 자산</div>
+                  <div className="fin-card-sum">{fmtKR(totalAssets)}</div>
                 </div>
-                {items.filter((i) => i.status === "equipped" && (i.buffs || []).some((b) => b.type === "money")).map((i) => (
-                  <div key={"inc-" + i.id} className="res-sub">
-                    {i.emoji} {i.name}: +{(i.buffs || []).filter((b) => b.type === "money").reduce((s, b) => s + b.value, 0).toLocaleString()}원
-                  </div>
-                ))}
-
-                <div className="res-line expense" style={{ marginTop: 8 }}>
-                  <span className="lbl">기본 지출</span>
-                  {editBase
-                    ? <input className="res-input" type="number" value={computed.money.baseExpenses} onChange={(e) => updateBase("expenses", e.target.value)} />
-                    : <span className="val">-{computed.money.baseExpenses.toLocaleString()}원</span>}
-                </div>
-                {items.filter((i) => i.status === "equipped" && (i.debuffs || []).some((d) => d.type === "money")).map((i) => (
-                  <div key={"exp-" + i.id} className="res-sub">
-                    {i.emoji} {i.name}: -{(i.debuffs || []).filter((d) => d.type === "money").reduce((s, d) => s + d.value, 0).toLocaleString()}원
-                  </div>
-                ))}
-
-                <div className={"res-line profit " + (computed.money.profit >= 0 ? "positive" : "negative")}>
-                  <span className="lbl">순이익</span>
-                  <span className="val">{computed.money.profit >= 0 ? "+" : ""}{computed.money.profit.toLocaleString()}원</span>
+                {Object.entries(ASSET_CATS).map(([cat, label]) => {
+                  const list = (fin.assets || []).filter(a => a.category === cat);
+                  if (list.length === 0) return null;
+                  return (
+                    <div key={cat}>
+                      <div className="asset-cat-title">{label} <span style={{ color: "var(--accent)", fontFamily: "Geist Mono, monospace" }}>{fmtKR(sumAssets(fin, cat))}</span></div>
+                      {list.map(a => (
+                        <div key={a.id} className="asset-row">
+                          {editingAssetId === a.id ? (
+                            <input type="text" value={a.name} onChange={(e) => updateAsset(a.id, { name: e.target.value })}
+                              style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "3px 7px", fontSize: 11.5, fontFamily: "Geist, sans-serif", outline: "none" }} />
+                          ) : (
+                            <span className="nm" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{a.name}</span>
+                          )}
+                          {editingAssetId === a.id ? (
+                            <input className="val-input" type="number" value={a.value} onChange={(e) => updateAsset(a.id, { value: Number(e.target.value) || 0 })}
+                              onBlur={() => setEditingAssetId(null)} onKeyDown={(e) => { if (e.key === "Enter") setEditingAssetId(null); }}
+                              autoFocus />
+                          ) : (
+                            <span className="val" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{fmtKR(a.value)}</span>
+                          )}
+                          <button onClick={() => deleteAsset(a.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 14 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                <div className="fin-add-btn-row" style={{ marginTop: 10 }}>
+                  <button className="fin-add-btn" onClick={() => addAsset("estate")}>+ 부동산</button>
+                  <button className="fin-add-btn" onClick={() => addAsset("account")}>+ 계좌</button>
+                  <button className="fin-add-btn" onClick={() => addAsset("other")}>+ 기타</button>
                 </div>
               </div>
 
-              {/* 에너지 */}
+              {/* 이번달 현황 */}
+              <div className="fin-card">
+                <div className="fin-card-head">
+                  <div className="fin-card-title">📊 이번달 현황</div>
+                  <button className="fin-add-btn" onClick={onOpenFinance} style={{ padding: "4px 10px", flex: "0 0 auto", width: "auto" }}>📋 상세 관리</button>
+                </div>
+                <div className="res-line">
+                  <span className="lbl">📈 수입</span>
+                  <span className="val" style={{ color: "var(--green)" }}>+{Math.round(totalIncome/10000).toLocaleString()}만</span>
+                </div>
+                <div className="res-line">
+                  <span className="lbl">📉 지출</span>
+                  <span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExpense/10000).toLocaleString()}만</span>
+                </div>
+                <div className="fin-net" style={{ marginTop: 8 }}>
+                  <div>
+                    <div className="lbl">💵 순이익</div>
+                    <div style={{ fontSize: 10.5, color: "var(--text-4)", marginTop: 2 }}>
+                      예상 {profitExpected >= 0 ? "+" : ""}{Math.round(profitExpected/10000).toLocaleString()}만 · 실제 {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만
+                    </div>
+                  </div>
+                  <span className="val" style={{ color: profitActual >= 0 ? "var(--green)" : "var(--red)" }}>
+                    {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* MIDDLE: 에너지·시간·스탯 버프 */}
+            <div className="ri-col">
               <div className="res-card">
                 <div className="res-card-head">
-                  <div className="res-card-title"><span className="res-card-ic">⚡</span>에너지 자원</div>
-                  <div className="res-card-sub">이번 주</div>
+                  <div className="res-card-title"><span className="res-card-ic">⚡</span>에너지</div>
                 </div>
                 <div className="res-bar-wrap">
                   <div className="res-bar-label">
-                    <span>사용 / 한계</span>
+                    <span>사용/한계</span>
                     <span className="val">{computed.energy.used} / {computed.energy.weeklyPool + computed.energy.buff}</span>
                   </div>
                   <div className="res-bar">
                     <div className={"res-bar-fill " + (energyPct > 80 ? "warn" : "")} style={{ width: Math.min(100, energyPct) + "%" }} />
                   </div>
                 </div>
-                <div className="res-line" style={{ marginTop: 10 }}>
-                  <span className="lbl">기본 풀</span>
-                  <span className="val">{computed.energy.weeklyPool}</span>
-                </div>
-                {computed.energy.buff > 0 && (
-                  <div className="res-line income">
-                    <span className="lbl">아이템 버프</span>
-                    <span className="val">+{computed.energy.buff}</span>
-                  </div>
-                )}
-                <div className="res-line">
-                  <span className="lbl">남은 에너지</span>
-                  <span className="val">{computed.energy.weeklyPool + computed.energy.buff - computed.energy.used}</span>
+                <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 6 }}>
+                  남은: <strong style={{ color: "var(--green)", fontFamily: "Geist Mono, monospace" }}>{computed.energy.weeklyPool + computed.energy.buff - computed.energy.used}</strong>
                 </div>
               </div>
 
-              {/* 시간 */}
               <div className="res-card">
                 <div className="res-card-head">
-                  <div className="res-card-title"><span className="res-card-ic">⏰</span>시간 자원</div>
-                  <div className="res-card-sub">이번 주</div>
+                  <div className="res-card-title"><span className="res-card-ic">⏰</span>시간</div>
                 </div>
                 <div className="res-bar-wrap">
                   <div className="res-bar-label">
-                    <span>사용 / 한계</span>
-                    <span className="val">{computed.time.used.toFixed(1)}h / {computed.time.weeklyPool + computed.time.buff}h</span>
+                    <span>사용/한계</span>
+                    <span className="val">{computed.time.used.toFixed(1)} / {computed.time.weeklyPool + computed.time.buff}h</span>
                   </div>
                   <div className="res-bar">
                     <div className={"res-bar-fill " + (timePct > 80 ? "warn" : "")} style={{ width: Math.min(100, timePct) + "%" }} />
                   </div>
                 </div>
-                <div className="res-line" style={{ marginTop: 10 }}>
-                  <span className="lbl">기본 풀</span>
-                  <span className="val">{computed.time.weeklyPool}h</span>
-                </div>
                 {computed.time.buff > 0 && (
-                  <div className="res-line income">
-                    <span className="lbl">아이템 버프</span>
-                    <span className="val">+{computed.time.buff}h</span>
+                  <div style={{ fontSize: 10.5, color: "var(--text-4)", marginTop: 6 }}>
+                    기본 {computed.time.weeklyPool}h + 아이템 <strong style={{ color: "var(--green)" }}>+{computed.time.buff}h</strong>
                   </div>
                 )}
               </div>
 
-              {/* 스탯 버프 요약 */}
               {Object.keys(computed.statBuffs).length > 0 && (
                 <div className="res-card">
                   <div className="res-card-head">
-                    <div className="res-card-title"><span className="res-card-ic">📈</span>스탯 XP 버프</div>
+                    <div className="res-card-title"><span className="res-card-ic">📈</span>스탯 버프</div>
                   </div>
                   {Object.entries(computed.statBuffs).map(([sid, v]) => {
                     const s = stats.find((x) => x.id === sid);
@@ -2798,6 +2891,143 @@
       );
     }
 
+    /* ─── Stage 4-B: 재무 상세 관리 모달 ─── */
+    function FinanceDetailModal({ open, onClose, finance, setFinance, items }) {
+      const [sub, setSub] = useState("income");
+      if (!open) return null;
+
+      const updateItem = (kind, id, updates) => {
+        setFinance(prev => ({ ...prev, [kind]: (prev[kind] || []).map(x => x.id === id ? { ...x, ...updates } : x) }));
+      };
+      const addItem = (kind, cat) => {
+        const id = (kind === "incomes" ? "in" : "ex") + Date.now();
+        setFinance(prev => ({ ...prev, [kind]: [...(prev[kind] || []), { id, category: cat, name: "새 항목", expected: 0, actual: 0, day: 1 }] }));
+      };
+      const deleteItem = (kind, id) => {
+        setFinance(prev => ({ ...prev, [kind]: (prev[kind] || []).filter(x => x.id !== id) }));
+      };
+
+      const totalInExp = sumIncome(finance, items);
+      const totalInAct = sumIncomeActual(finance);
+      const totalExExp = sumExpense(finance, items);
+      const totalExAct = sumExpenseActual(finance);
+      const profitExp = totalInExp - totalExExp;
+      const profitAct = totalInAct - totalExAct;
+
+      const renderItems = (kind, cats) => {
+        const list = (finance[kind] || []);
+        return Object.entries(cats).map(([cat, label]) => {
+          const filtered = list.filter(x => x.category === cat);
+          return (
+            <div key={cat}>
+              <div className="asset-cat-title">{label}</div>
+              {filtered.length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)", padding: "4px 0", fontStyle: "italic" }}>없음</div>}
+              {filtered.map(x => (
+                <div key={x.id} style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+                  <input value={x.name} onChange={(e) => updateItem(kind, x.id, { name: e.target.value })}
+                    style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 12, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
+                  <input type="number" value={x.expected} onChange={(e) => updateItem(kind, x.id, { expected: Number(e.target.value) || 0 })}
+                    placeholder="예상"
+                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 11.5, textAlign: "right", outline: "none" }} />
+                  <input type="number" value={x.actual} onChange={(e) => updateItem(kind, x.id, { actual: Number(e.target.value) || 0 })}
+                    placeholder="실제"
+                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 11.5, textAlign: "right", outline: "none" }} />
+                  <button onClick={() => deleteItem(kind, x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 14 }}>×</button>
+                </div>
+              ))}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, padding: "4px 0", marginTop: 4 }}>
+                <button onClick={() => addItem(kind, cat)} style={{ gridColumn: "1 / -1", background: "var(--bg-2)", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "5px 0", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>+ {label} 추가</button>
+              </div>
+            </div>
+          );
+        });
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal-box" style={{ width: 720 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div className="modal-title">📋 재무 상세 관리</div>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+
+            {/* 하위 탭 */}
+            <div style={{ padding: "10px 22px 0", display: "flex", gap: 4, borderBottom: "1px solid var(--border)" }}>
+              <button className={"inv-tab" + (sub === "income" ? " active" : "")} onClick={() => setSub("income")}>📈 수입</button>
+              <button className={"inv-tab" + (sub === "expense" ? " active" : "")} onClick={() => setSub("expense")}>📉 지출</button>
+              <button className={"inv-tab" + (sub === "summary" ? " active" : "")} onClick={() => setSub("summary")}>📊 요약</button>
+            </div>
+
+            <div className="modal-body">
+              {sub === "income" && (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 10, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                    <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
+                  </div>
+                  {renderItems("incomes", INCOME_CATS)}
+                  <div className="fin-net" style={{ marginTop: 14 }}>
+                    <div><div className="lbl">📈 수입 합계</div><div style={{ fontSize: 10.5, color: "var(--text-4)", marginTop: 2 }}>예상 vs 실제</div></div>
+                    <span className="val green">+{Math.round(totalInExp/10000).toLocaleString()}만 / +{Math.round(totalInAct/10000).toLocaleString()}만</span>
+                  </div>
+                </>
+              )}
+
+              {sub === "expense" && (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 10, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                    <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
+                  </div>
+                  {renderItems("expenses", EXPENSE_CATS)}
+                  {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).length > 0 && (
+                    <>
+                      <div className="asset-cat-title">⚔️ 장착 아이템 디버프 (자동)</div>
+                      {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).map(i => (
+                        <div key={"d-" + i.id} className="res-line">
+                          <span className="lbl">{i.emoji} {i.name}</span>
+                          <span className="val" style={{ color: "var(--red)" }}>-{(i.debuffs || []).filter(d => d.type === "money").reduce((s,d)=>s+d.value,0).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  <div className="fin-net" style={{ marginTop: 14 }}>
+                    <div><div className="lbl">📉 지출 합계</div></div>
+                    <span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExExp/10000).toLocaleString()}만 / -{Math.round(totalExAct/10000).toLocaleString()}만</span>
+                  </div>
+                </>
+              )}
+
+              {sub === "summary" && (
+                <div>
+                  <div className="fin-summary-card">
+                    <div className="summary-net">
+                      <span className="lbl">💵 이번달 순이익</span>
+                      <span className="val" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>{profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-3)", textAlign: "right" }}>예상 {profitExp >= 0 ? "+" : ""}{Math.round(profitExp/10000).toLocaleString()}만 대비 {profitAct - profitExp >= 0 ? "+" : ""}{Math.round((profitAct - profitExp)/10000).toLocaleString()}만</div>
+                  </div>
+                  <div className="fin-card">
+                    <div className="fin-card-head"><div className="fin-card-title">📈 수입</div><div className="fin-card-sum green">+{Math.round(totalInAct/10000).toLocaleString()}만</div></div>
+                    <div className="res-line"><span className="lbl">예상</span><span className="val">{Math.round(totalInExp/10000).toLocaleString()}만</span></div>
+                    <div className="res-line"><span className="lbl">실제</span><span className="val" style={{ color: "var(--green)" }}>{Math.round(totalInAct/10000).toLocaleString()}만</span></div>
+                  </div>
+                  <div className="fin-card">
+                    <div className="fin-card-head"><div className="fin-card-title">📉 지출</div><div className="fin-card-sum red">-{Math.round(totalExAct/10000).toLocaleString()}만</div></div>
+                    <div className="res-line"><span className="lbl">예상</span><span className="val">{Math.round(totalExExp/10000).toLocaleString()}만</span></div>
+                    <div className="res-line"><span className="lbl">실제</span><span className="val" style={{ color: "var(--red)" }}>{Math.round(totalExAct/10000).toLocaleString()}만</span></div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-foot">
+              <span style={{ fontSize: 11, color: "var(--text-4)" }}>💡 항목 클릭하여 인라인 편집 · 변경 즉시 자동 저장</span>
+              <button className="btn-save" onClick={onClose}>✓ 완료</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function App({ user }) {
       const [tab, setTab] = useState("dashboard");
       const [goals, setGoals] = useState(INITIAL_GOALS);
@@ -2818,6 +3048,8 @@
       // Stage 1 추가: 자원, 설정, 모달
       const [resources, setResources] = useState(INITIAL_RESOURCES);
       const [items, setItems] = useState(INITIAL_ITEMS);
+      const [finance, setFinance] = useState(INITIAL_FINANCE);
+      const [financeModalOpen, setFinanceModalOpen] = useState(false);
       const [settings, setSettings] = useState(() => loadLS("dreamboard_settings", INITIAL_SETTINGS));
       const [statModalOpen, setStatModalOpen] = useState(false);
       const [guideModalOpen, setGuideModalOpen] = useState(false);
@@ -2843,6 +3075,7 @@
             if (d.dailyLog) setDailyLog(d.dailyLog);
             if (d.resources) setResources(d.resources);
             if (d.items) setItems(d.items);
+            if (d.finance) setFinance(d.finance);
           }
           setLoaded(true);
         });
@@ -2854,10 +3087,10 @@
         clearTimeout(saveTimer.current);
         saveTimer.current = setTimeout(() => {
           _db.collection("users").doc(user.uid).set(
-            { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items }
+            { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance }
           );
         }, 1500);
-      }, [tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, loaded]);
+      }, [tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance, loaded]);
 
       // dailyLog 자동 기록
       useEffect(() => {
@@ -3033,6 +3266,8 @@
             items={items} setItems={setItems}
             resources={resources} setResources={setResources}
             goals={goals} stats={stats} settings={settings}
+            finance={finance} setFinance={setFinance}
+            onOpenFinance={() => setFinanceModalOpen(true)}
           />}
           {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} />}
 
@@ -3066,6 +3301,13 @@
             settings={settings}
             setSettings={setSettings}
             onLogout={() => _auth.signOut()}
+          />
+          <FinanceDetailModal
+            open={financeModalOpen}
+            onClose={() => setFinanceModalOpen(false)}
+            finance={finance}
+            setFinance={setFinance}
+            items={items}
           />
         </div>
       );
