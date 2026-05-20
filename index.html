@@ -1307,15 +1307,15 @@
   .db-root { display: flex; flex-direction: column; height: calc(100vh - 104px); overflow: hidden; gap: 0; }
 
   /* ZONE 1: 드림 스트립 */
-  .dream-strip { display: flex; gap: 10px; padding: 10px 24px; background: var(--bg-1); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+  .dream-strip { display: flex; gap: 12px; padding: 12px 24px; background: var(--bg-1); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; height: 124px; box-sizing: border-box; align-items: center; }
   .dream-strip::-webkit-scrollbar { display: none; }
-  .dream-strip-card { position: relative; min-width: 160px; height: 64px; border-radius: 10px; overflow: hidden; cursor: default; flex-shrink: 0; border: 1px solid var(--border); }
-  .dream-strip-card .dsc-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; }
-  .dream-strip-card .dsc-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 8px 10px; }
-  .dream-strip-card .dsc-name { font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dream-strip-card .dsc-bar { height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 4px; }
+  .dream-strip-card { position: relative; min-width: 190px; flex: 1; max-width: 280px; height: 100px; border-radius: 12px; overflow: hidden; cursor: default; flex-shrink: 0; border: 1px solid var(--border); }
+  .dream-strip-card .dsc-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .dream-strip-card .dsc-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 10px 12px; }
+  .dream-strip-card .dsc-name { font-size: 12px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dream-strip-card .dsc-bar { height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 5px; }
   .dream-strip-card .dsc-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
-  .dream-strip-card .dsc-pct { font-size: 10px; color: rgba(255,255,255,0.7); font-family: 'Geist Mono', monospace; margin-top: 2px; }
+  .dream-strip-card .dsc-pct { font-size: 11px; color: rgba(255,255,255,0.85); font-family: 'Geist Mono', monospace; margin-top: 3px; font-weight: 500; }
 
   /* ZONE 2: 달성률 헤더 */
   .db-header { display: flex; align-items: center; gap: 16px; padding: 8px 24px; background: var(--bg-0); border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -1337,9 +1337,8 @@
 
   /* ZONE 3+4 메인 */
   .db-body { display: flex; flex: 1; overflow: hidden; }
-  .db-side { width: 180px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; scrollbar-width: none; background: var(--bg-1); }
-  .db-side::-webkit-scrollbar { display: none; }
-  .db-side-radar { display: flex; justify-content: center; margin-top: 4px; }
+  .db-side { width: 190px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; background: var(--bg-1); }
+  .db-side-radar { display: flex; justify-content: center; margin-top: 6px; flex-shrink: 0; }
   .db-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   .db-zone3 { flex: 1; display: flex; gap: 1px; overflow: hidden; background: var(--border); }
   .db-goal-col { flex: 1; background: var(--bg-0); padding: 14px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; display: flex; flex-direction: column; gap: 8px; }
@@ -1765,21 +1764,21 @@
           <div className="db-body">
             {/* 좌측 스탯 패널 */}
             <div className="db-side">
-              <div style={{ fontSize: 10, color: 'var(--text-4)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 4 }}>개인 능력치</div>
+              <div style={{ fontSize: 10, color: 'var(--text-4)', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 2 }}>개인 능력치</div>
               {stats.map(s => (
-                <div key={s.id} className="smp" style={{ background: 'transparent', border: 'none', padding: '4px 0' }}>
-                  <div className="smp-icon" style={{ fontSize: 14 }}>{s.icon}</div>
-                  <div className="smp-body">
-                    <div className="smp-top">
-                      <span className="smp-label" style={{ fontSize: 11 }}>{s.label}</span>
-                      <span className="smp-lv" style={{ fontSize: 10 }}>Lv.<strong style={{ fontSize: 12, color: 'var(--accent)' }}>{s.level}</strong></span>
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0' }}>
+                  <span style={{ fontSize: 12, width: 16, textAlign: 'center', flexShrink: 0 }}>{s.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 2 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 500 }}>{s.label}</span>
+                      <span style={{ fontSize: 10, color: 'var(--text-4)', fontFamily: 'Geist Mono, monospace' }}>Lv.<strong style={{ color: 'var(--accent)' }}>{s.level}</strong></span>
                     </div>
-                    <div className="smp-bar"><div className="smp-bar-fill" style={{ width: `${s.xp}%` }} /></div>
+                    <div className="smp-bar" style={{ height: 3 }}><div className="smp-bar-fill" style={{ width: `${s.xp}%`, height: '100%' }} /></div>
                   </div>
                 </div>
               ))}
               <div className="db-side-radar">
-                <RadarChart stats={stats} size={140} />
+                <RadarChart stats={stats} size={126} />
               </div>
             </div>
 
