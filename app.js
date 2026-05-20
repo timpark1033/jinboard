@@ -389,32 +389,57 @@
         <div className="db-root">
           {focusMode && <FocusMode tasks={tasks} topThree={topThree} toggleTask={toggleTask} onClose={() => setFocusMode(false)} />}
 
-          {/* ZONE 1: 드림 스트립 + 자원 미니 (SC2 스타일) */}
+          {/* ZONE 1: 플레이어 스탯 (좌) + 드림 스트립 (우) + 자원 미니 (우상단) */}
           <div className="zone1-wrap">
-          <ResourceMini resources={resources} onClick={onOpenResources} />
-          <div className="dream-strip">
-            {dreams.length === 0 && <div style={{ color: 'var(--text-4)', fontSize: 12, display: 'flex', alignItems: 'center' }}>비전&성장 탭에서 드림을 추가하세요</div>}
-            {dreams.map(d => {
-              const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
-              const blur = ((1 - pct / 100) * 14).toFixed(1);
-              const gray = Math.round((1 - pct / 100) * 85);
-              const tier = inferDreamTier(d);
-              return (
-                <div key={d.id} className="dream-strip-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
-                  <span className={"dream-tier-badge " + tier}>{DREAM_TIERS[tier]?.label || tier.toUpperCase()}</span>
-                  {d.imgUrl
-                    ? <img src={d.imgUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: `blur(${blur}px) grayscale(${gray}%)` }} />
-                    : <div className="dsc-bg">{d.emoji || '⭐'}</div>
-                  }
-                  <div className="dsc-overlay">
-                    <div className="dsc-name">{d.name}</div>
-                    <div className="dsc-bar"><div className="dsc-bar-fill" style={{ width: `${pct}%` }} /></div>
-                    <div className="dsc-pct">{pct}%</div>
+            <ResourceMini resources={resources} onClick={onOpenResources} />
+
+            {/* 좌측 플레이어 스탯 */}
+            <div className="db-side">
+              <div className="stat-panel-head">
+                <span className="who"><span className="ic">⚔️</span>플레이어</span>
+                <span className="all-lv">종합 Lv.<strong>{stats.reduce((a, s) => a + statLevel(getStatTotalXp(s)), 0)}</strong></span>
+              </div>
+              <div className="stat-2col">
+                {stats.map(s => {
+                  const tx = getStatTotalXp(s);
+                  const lv = statLevel(tx);
+                  return (
+                    <div key={s.id} className="stat-2col-item" onClick={() => onOpenStatModal && onOpenStatModal()}>
+                      <div className="stat-2col-top">
+                        <span className="stat-2col-name"><span className="ic">{s.icon}</span>{s.label}</span>
+                        <span className="stat-2col-lv">Lv.<strong>{lv}</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button className="stat-detail-btn" onClick={() => onOpenStatModal && onOpenStatModal()}>상세 보기</button>
+            </div>
+
+            {/* 우측 드림 스트립 */}
+            <div className="dream-strip">
+              {dreams.length === 0 && <div style={{ color: 'var(--text-4)', fontSize: 12, display: 'flex', alignItems: 'center' }}>비전·드림 탭에서 드림을 추가하세요</div>}
+              {dreams.map(d => {
+                const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
+                const blur = ((1 - pct / 100) * 14).toFixed(1);
+                const gray = Math.round((1 - pct / 100) * 85);
+                const tier = inferDreamTier(d);
+                return (
+                  <div key={d.id} className="dream-strip-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
+                    <span className={"dream-tier-badge " + tier}>{DREAM_TIERS[tier]?.label || tier.toUpperCase()}</span>
+                    {d.imgUrl
+                      ? <img src={d.imgUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: `blur(${blur}px) grayscale(${gray}%)` }} />
+                      : <div className="dsc-bg">{d.emoji || '⭐'}</div>
+                    }
+                    <div className="dsc-overlay">
+                      <div className="dsc-name">{d.name}</div>
+                      <div className="dsc-bar"><div className="dsc-bar-fill" style={{ width: `${pct}%` }} /></div>
+                      <div className="dsc-pct">{pct}%</div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* ZONE 2: 달성률 헤더 */}
@@ -445,35 +470,8 @@
             </div>
           </div>
 
-          {/* BODY: 사이드 + 메인 */}
-          <div className="db-body">
-            {/* 좌측 스탯 패널 (2-col grid, 캐릭터 클래스) */}
-            <div className="db-side">
-              <div className="stat-panel-head">
-                <span className="who"><span className="ic">⚔️</span>플레이어</span>
-                <span className="all-lv">종합 Lv.<strong>{stats.reduce((a, s) => a + statLevel(getStatTotalXp(s)), 0)}</strong></span>
-              </div>
-              <div className="stat-2col">
-                {stats.map(s => {
-                  const tx = getStatTotalXp(s);
-                  const lv = statLevel(tx);
-                  const prog = statLevelProgress(tx);
-                  return (
-                    <div key={s.id} className="stat-2col-item" onClick={() => onOpenStatModal && onOpenStatModal()}>
-                      <div className="stat-2col-top">
-                        <span className="stat-2col-name"><span className="ic">{s.icon}</span>{s.label}</span>
-                        <span className="stat-2col-lv">Lv.<strong>{lv}</strong></span>
-                      </div>
-                      <div className="stat-2col-bar"><div className="stat-2col-bar-fill" style={{ width: `${prog.pct}%` }} /></div>
-                    </div>
-                  );
-                })}
-              </div>
-              <button className="stat-detail-btn" onClick={() => onOpenStatModal && onOpenStatModal()}>상세 보기</button>
-            </div>
-
-            {/* 메인 */}
-            <div className="db-main">
+          {/* MAIN: Zone3 + Zone4 (전체 폭) */}
+          <div className="db-main">
               {/* ZONE 3: 목표 카드들 */}
               <div className="db-zone3">
                 {goals.length === 0 && (
@@ -606,7 +604,6 @@
                   <input className="next-week-input" placeholder="+ Enter 눌러서 추가" onKeyDown={addNextWeek} />
                 </div>
               </div>
-            </div>
           </div>
         </div>
       );

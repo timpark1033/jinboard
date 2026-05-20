@@ -3023,3 +3023,63 @@
     color: var(--accent);
     font-weight: 700;
   }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 5: Zone1 좌측 스탯 정렬  ── */
+  /* ─────────────────────────────── */
+
+  /* Zone1을 flex 컨테이너로 — 좌측 스탯 + 우측 드림 */
+  .zone1-wrap {
+    position: relative;
+    display: flex;
+    height: 248px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-1);
+    flex-shrink: 0;
+  }
+
+  /* 좌측 스탯 패널 (drim-strip 옆) */
+  .db-side {
+    width: 220px;
+    flex-shrink: 0;
+    height: 100%;
+    border-right: 1px solid var(--border);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-1);
+    overflow: hidden;
+  }
+
+  /* 드림 스트립이 zone1-wrap의 flex 자식 */
+  .dream-strip {
+    flex: 1;
+    height: 100%;
+    border-bottom: none;
+    align-items: stretch;
+    padding: 14px 16px;
+    overflow-x: auto;
+  }
+
+  /* db-body 폐기 (구조에서 제거됨) — fallback 안전 */
+  .db-body { display: contents; }
+
+  /* db-main 이제 db-root 직접 자식, 전체 폭 */
+  .db-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* 스탯 2-col 내부 조정 (게이지바 없는 컴팩트) */
+  .db-side .stat-2col {
+    gap: 2px 6px;
+    flex: 1;
+  }
+  .db-side .stat-2col-item {
+    padding: 4px 6px;
+  }
+
+  /* zone1-wrap 안에서 ResourceMini가 우측 상단 절대 위치 (변동 없음) */
