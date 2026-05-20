@@ -1286,6 +1286,22 @@
   .dream-calc-result { text-align: center; padding: 10px 0 2px; }
   .dream-calc-big { display: block; font-family: "Geist Mono", ui-monospace, monospace; font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; margin-bottom: 4px; }
   .dream-calc-sub { display: block; font-size: 11px; color: var(--text-4); }
+
+  /* Edit form */
+  .edit-form { background: var(--bg-2); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; animation: bodyIn 0.2s ease; }
+  .edit-form input, .edit-form select { background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; color: var(--text-1); font-family: Geist, sans-serif; font-size: 13px; padding: 7px 10px; width: 100%; box-sizing: border-box; outline: none; }
+  .edit-form input:focus, .edit-form select:focus { border-color: var(--accent); }
+  .edit-form label { font-size: 11px; color: var(--text-4); margin-bottom: 2px; display: block; }
+  .edit-form-row { display: flex; gap: 8px; }
+  .edit-form-row > * { flex: 1; }
+  .edit-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  .btn-save { background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 12px; font-weight: 600; padding: 7px 16px; cursor: pointer; font-family: Geist, sans-serif; }
+  .btn-cancel { background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; color: var(--text-3); font-size: 12px; padding: 7px 14px; cursor: pointer; font-family: Geist, sans-serif; }
+  .btn-del { background: transparent; border: none; color: var(--text-4); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; }
+  .btn-del:hover { color: var(--red); background: rgba(239,68,68,0.08); }
+  .icon-edit { opacity: 0; transition: opacity 0.15s; cursor: pointer; color: var(--text-4); font-size: 12px; padding: 2px 6px; border-radius: 4px; background: transparent; border: none; }
+  .icon-edit:hover { color: var(--accent); background: rgba(139,92,246,0.1); }
+  .goal-expand:hover .icon-edit, .check-item:hover .icon-edit, .eq-task:hover .icon-edit { opacity: 1; }
 </style>
 </head>
 <body>
@@ -1543,7 +1559,9 @@
     }
 
     /* ---------- TAB 1: Dashboard ---------- */
-    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak }) {
+    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak }) {
+      const [editingWeeklyId, setEditingWeeklyId] = useState(null);
+      const [editingWeeklyText, setEditingWeeklyText] = useState("");
       const overall = useMemo(() => Math.round(goals.reduce((s, g) => s + g.progress, 0) / goals.length), [goals]);
       const completedCount = tasks.filter(t => t.done).length;
       const weeklyDone = weeklyGoals.filter(w => w.done).length;
@@ -1728,10 +1746,24 @@
               </div>
               <div className="checklist">
                 {weeklyGoals.map(w => (
-                  <div key={w.id} className={"check-item" + (w.done ? " done" : "")} onClick={() => toggleWeeklyGoal(w.id)}>
+                  <div key={w.id} className={"check-item" + (w.done ? " done" : "")} onClick={() => { if (editingWeeklyId !== w.id) toggleWeeklyGoal(w.id); }}>
                     <div className="check-box" />
-                    <div className="check-text">{w.text}</div>
+                    {editingWeeklyId === w.id ? (
+                      <input
+                        className="check-text"
+                        value={editingWeeklyText}
+                        onChange={e => setEditingWeeklyText(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") { editWeeklyGoal(w.id, editingWeeklyText); setEditingWeeklyId(null); } if (e.key === "Escape") setEditingWeeklyId(null); }}
+                        onBlur={() => { editWeeklyGoal(w.id, editingWeeklyText); setEditingWeeklyId(null); }}
+                        onClick={e => e.stopPropagation()}
+                        autoFocus
+                        style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "2px 6px", fontFamily: "Geist, sans-serif", fontSize: 13, flex: 1 }}
+                      />
+                    ) : (
+                      <div className="check-text" onDoubleClick={e => { e.stopPropagation(); setEditingWeeklyId(w.id); setEditingWeeklyText(w.text); }}>{w.text}</div>
+                    )}
                     <div className={"check-tag " + (TAG_COLORS[w.tag] || "")}>{w.tag}</div>
+                    <button className="btn-del" onClick={e => { e.stopPropagation(); deleteWeeklyGoal(w.id); }} style={{ marginLeft: 4, fontSize: 12, lineHeight: 1 }}>×</button>
                   </div>
                 ))}
               </div>
@@ -2140,28 +2172,111 @@
     }
 
     /* ---------- TAB 2: Goals ---------- */
-    function GoalsTab({ goals }) {
+    function GoalsTab({ goals, setGoals, addGoal, editGoal, deleteGoal }) {
       const [openId, setOpenId] = useState("g1");
+      const [editingId, setEditingId] = useState(null);
+      const [showAddForm, setShowAddForm] = useState(false);
+      const [editForm, setEditForm] = useState({});
+      const [newForm, setNewForm] = useState({ name: "", category: "", progress: 0, deadline: "", milestoneName: "", milestoneKpi: "" });
+
+      const startEdit = (g) => {
+        setEditingId(g.id);
+        const active = g.milestones.find(m => m.status === "active") || g.milestones[0] || {};
+        setEditForm({
+          name: g.name,
+          category: g.category,
+          progress: g.progress,
+          deadline: g.deadline,
+          milestoneName: active.name || "",
+          milestoneKpi: active.kpi ? active.kpi.label : "",
+        });
+      };
+
+      const saveEdit = (g) => {
+        const updatedMilestones = g.milestones.map(m => {
+          if (m.status === "active") {
+            return {
+              ...m,
+              name: editForm.milestoneName || m.name,
+              kpi: editForm.milestoneKpi ? { ...m.kpi, label: editForm.milestoneKpi } : m.kpi,
+            };
+          }
+          return m;
+        });
+        editGoal(g.id, {
+          name: editForm.name,
+          category: editForm.category,
+          progress: Number(editForm.progress),
+          deadline: editForm.deadline,
+          milestones: updatedMilestones,
+        });
+        setEditingId(null);
+      };
+
+      const handleAddGoal = () => {
+        if (!newForm.name.trim()) return;
+        const goal = {
+          id: "g" + Date.now(),
+          name: newForm.name.trim(),
+          category: newForm.category.trim() || "기타",
+          progress: Number(newForm.progress),
+          deadline: newForm.deadline || "2026-12-31",
+          milestones: newForm.milestoneName.trim() ? [{
+            id: "m" + Date.now(),
+            name: newForm.milestoneName.trim(),
+            status: "active",
+            kpi: newForm.milestoneKpi.trim() ? { label: newForm.milestoneKpi.trim(), current: 0, target: 100, unit: "" } : null,
+          }] : [],
+        };
+        addGoal(goal);
+        setNewForm({ name: "", category: "", progress: 0, deadline: "", milestoneName: "", milestoneKpi: "" });
+        setShowAddForm(false);
+      };
 
       return (
         <div className="panel-enter">
           <div className="section-head">
             <div>
               <div className="section-title">목표 & 단계</div>
-              <div className="section-sub">3개의 활성 목표 · 각 카드를 클릭해서 단계별 진행 상황을 펼쳐보세요</div>
+              <div className="section-sub">{goals.length}개의 활성 목표 · 각 카드를 클릭해서 단계별 진행 상황을 펼쳐보세요</div>
             </div>
-            <button className="btn"><span style={{fontSize:14}}>+</span>새 목표 추가</button>
+            <button className="btn" onClick={() => setShowAddForm(v => !v)}><span style={{fontSize:14}}>+</span>새 목표 추가</button>
           </div>
 
+          {showAddForm && (
+            <div className="edit-form" style={{ marginBottom: 16 }}>
+              <div className="edit-form-row">
+                <div><label>목표명</label><input value={newForm.name} onChange={e => setNewForm(p => ({...p, name: e.target.value}))} placeholder="목표 이름" /></div>
+                <div><label>카테고리</label><input value={newForm.category} onChange={e => setNewForm(p => ({...p, category: e.target.value}))} placeholder="예: 사업, 건강" /></div>
+              </div>
+              <div className="edit-form-row">
+                <div><label>진행률 {newForm.progress}%</label><input type="range" min="0" max="100" value={newForm.progress} onChange={e => setNewForm(p => ({...p, progress: e.target.value}))} /></div>
+                <div><label>마감기한</label><input type="date" value={newForm.deadline} onChange={e => setNewForm(p => ({...p, deadline: e.target.value}))} /></div>
+              </div>
+              <div className="edit-form-row">
+                <div><label>현재 단계명</label><input value={newForm.milestoneName} onChange={e => setNewForm(p => ({...p, milestoneName: e.target.value}))} placeholder="예: 1단계 시장 조사" /></div>
+                <div><label>KPI</label><input value={newForm.milestoneKpi} onChange={e => setNewForm(p => ({...p, milestoneKpi: e.target.value}))} placeholder="예: 구독자 수" /></div>
+              </div>
+              <div className="edit-btns">
+                <button className="btn-cancel" onClick={() => setShowAddForm(false)}>취소</button>
+                <button className="btn-save" onClick={handleAddGoal}>추가</button>
+              </div>
+            </div>
+          )}
+
           <div className="goal-row-list">
+            {goals.length === 0 && (
+              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-4)", fontSize: 13 }}>목표가 없습니다</div>
+            )}
             {goals.map((g) => {
               const open = openId === g.id;
+              const isEditing = editingId === g.id;
               const dday = calcDday(g.deadline);
               return (
                 <div key={g.id} className={"goal-expand" + (open ? " open" : "")}>
                   <div
                     className="goal-expand-head"
-                    onClick={() => setOpenId(open ? null : g.id)}
+                    onClick={() => !isEditing && setOpenId(open ? null : g.id)}
                   >
                     <ChevronIcon />
                     <div className="goal-expand-meta">
@@ -2181,7 +2296,30 @@
                       <span className="pct-num">{g.progress}%</span>
                     </div>
                     <RingChart value={g.progress} size={42} stroke={4} />
+                    <button className="icon-edit" onClick={e => { e.stopPropagation(); startEdit(g); }}>✏️</button>
+                    <button className="btn-del" onClick={e => { e.stopPropagation(); deleteGoal(g.id); }}>🗑</button>
                   </div>
+
+                  {isEditing && (
+                    <div className="edit-form" style={{ margin: "0 18px 16px" }}>
+                      <div className="edit-form-row">
+                        <div><label>목표명</label><input value={editForm.name} onChange={e => setEditForm(p => ({...p, name: e.target.value}))} /></div>
+                        <div><label>카테고리</label><input value={editForm.category} onChange={e => setEditForm(p => ({...p, category: e.target.value}))} /></div>
+                      </div>
+                      <div className="edit-form-row">
+                        <div><label>진행률 {editForm.progress}%</label><input type="range" min="0" max="100" value={editForm.progress} onChange={e => setEditForm(p => ({...p, progress: e.target.value}))} /></div>
+                        <div><label>마감기한</label><input type="date" value={editForm.deadline} onChange={e => setEditForm(p => ({...p, deadline: e.target.value}))} /></div>
+                      </div>
+                      <div className="edit-form-row">
+                        <div><label>현재 단계명</label><input value={editForm.milestoneName} onChange={e => setEditForm(p => ({...p, milestoneName: e.target.value}))} /></div>
+                        <div><label>KPI</label><input value={editForm.milestoneKpi} onChange={e => setEditForm(p => ({...p, milestoneKpi: e.target.value}))} /></div>
+                      </div>
+                      <div className="edit-btns">
+                        <button className="btn-cancel" onClick={() => setEditingId(null)}>취소</button>
+                        <button className="btn-save" onClick={() => saveEdit(g)}>저장</button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="goal-expand-body">
                     <div className="timeline">
@@ -2223,11 +2361,6 @@
                 </div>
               );
             })}
-
-            <div className="add-goal-card">
-              <span className="plus">+</span>
-              새 목표 추가하기
-            </div>
           </div>
         </div>
       );
@@ -2302,7 +2435,24 @@
       );
     }
 
-    function TasksTab({ tasks, toggleTask }) {
+    function TasksTab({ tasks, toggleTask, addTask, editTask, deleteTask }) {
+      const [showAddForm, setShowAddForm] = useState(false);
+      const [newText, setNewText] = useState("");
+      const [newQuadrant, setNewQuadrant] = useState("Q1");
+      const [newTag, setNewTag] = useState("기타");
+      const [editingId, setEditingId] = useState(null);
+      const [editText, setEditText] = useState("");
+
+      const handleAddTask = () => {
+        if (!newText.trim()) return;
+        addTask({ id: "t" + Date.now(), text: newText.trim(), quadrant: newQuadrant, tag: newTag, done: false, time: "" });
+        setNewText(""); setNewQuadrant("Q1"); setNewTag("기타");
+        setShowAddForm(false);
+      };
+
+      const startEditTask = (t) => { setEditingId(t.id); setEditText(t.text); };
+      const saveEditTask = (id) => { editTask(id, { text: editText }); setEditingId(null); };
+
       return (
         <div className="panel-enter">
           <div className="section-head">
@@ -2312,9 +2462,35 @@
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button className="btn btn-ghost">필터</button>
-              <button className="btn"><span style={{fontSize:14}}>+</span>태스크 추가</button>
+              <button className="btn" onClick={() => setShowAddForm(v => !v)}><span style={{fontSize:14}}>+</span>태스크 추가</button>
             </div>
           </div>
+
+          {showAddForm && (
+            <div className="edit-form" style={{ marginBottom: 16 }}>
+              <div><label>할일</label><input value={newText} onChange={e => setNewText(e.target.value)} placeholder="태스크 내용을 입력하세요" onKeyDown={e => e.key === "Enter" && handleAddTask()} autoFocus /></div>
+              <div className="edit-form-row">
+                <div>
+                  <label>4분면</label>
+                  <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                    {["Q1","Q2","Q3","Q4"].map(q => (
+                      <button key={q} onClick={() => setNewQuadrant(q)} style={{ flex: 1, padding: "6px 0", borderRadius: 6, border: newQuadrant === q ? "1px solid var(--accent)" : "1px solid var(--border)", background: newQuadrant === q ? "var(--accent-soft)" : "var(--bg-3)", color: newQuadrant === q ? "var(--accent)" : "var(--text-3)", cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 12, fontWeight: 600 }}>{q}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label>태그</label>
+                  <select value={newTag} onChange={e => setNewTag(e.target.value)} style={{ marginTop: 4 }}>
+                    {["유튜브","부동산","NoteUp","개인","기타"].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="edit-btns">
+                <button className="btn-cancel" onClick={() => setShowAddForm(false)}>취소</button>
+                <button className="btn-save" onClick={handleAddTask}>추가</button>
+              </div>
+            </div>
+          )}
 
           <div className="tasks-grid">
             <Calendar />
@@ -2343,10 +2519,12 @@
                         {qTasks.map(t => (
                           <div key={t.id} className="eq-task">
                             <span className={"eq-dot " + (DOT_COLORS[t.tag] || "dot-gray")} />
-                            <span style={{ textDecoration: t.done ? "line-through" : "none", color: t.done ? "var(--text-4)" : "inherit" }}>
+                            <span style={{ textDecoration: t.done ? "line-through" : "none", color: t.done ? "var(--text-4)" : "inherit", flex: 1 }}>
                               {t.text.length > 28 ? t.text.slice(0,28) + "…" : t.text}
                             </span>
                             <span className="eq-tag-mini">{t.tag}</span>
+                            <button className="icon-edit" onClick={e => { e.stopPropagation(); startEditTask(t); }}>✏</button>
+                            <button className="btn-del" onClick={e => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                           </div>
                         ))}
                       </div>
@@ -2374,12 +2552,27 @@
                     onClick={() => toggleTask(t.id)}
                   >
                     <div className="check-box" />
-                    <div className="today-text">{t.text}</div>
+                    {editingId === t.id ? (
+                      <input
+                        className="today-text"
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") saveEditTask(t.id); if (e.key === "Escape") setEditingId(null); }}
+                        onBlur={() => saveEditTask(t.id)}
+                        onClick={e => e.stopPropagation()}
+                        autoFocus
+                        style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "2px 6px", fontFamily: "Geist, sans-serif", fontSize: 13 }}
+                      />
+                    ) : (
+                      <div className="today-text">{t.text}</div>
+                    )}
                     <div className="today-quad-tag">
                       <span className={"qd "+q.dot} />
                       {q.num}
                     </div>
                     <div className="today-time">{t.time}</div>
+                    <button className="icon-edit" onClick={e => { e.stopPropagation(); startEditTask(t); }}>✏</button>
+                    <button className="btn-del" onClick={e => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                   </div>
                 );
               })}
@@ -2392,7 +2585,7 @@
     /* ---------- App ---------- */
     function App({ user }) {
       const [tab, setTab] = useState("dashboard");
-      const [goals] = useState(INITIAL_GOALS);
+      const [goals, setGoals] = useState(INITIAL_GOALS);
       const [tasks, setTasks] = useState(INITIAL_TASKS);
       const [weeklyGoals, setWeeklyGoals] = useState(INITIAL_WEEKLY_GOALS);
       const [stats, setStats] = useState(INITIAL_STATS);
@@ -2409,6 +2602,7 @@
         _db.collection("users").doc(user.uid).get().then(doc => {
           if (doc.exists) {
             const d = doc.data();
+            if (d.goals) setGoals(d.goals);
             if (d.tasks) setTasks(d.tasks);
             if (d.weeklyGoals) setWeeklyGoals(d.weeklyGoals);
             if (d.stats) setStats(d.stats);
@@ -2428,7 +2622,7 @@
         clearTimeout(saveTimer.current);
         saveTimer.current = setTimeout(() => {
           _db.collection("users").doc(user.uid).set(
-            { tasks, weeklyGoals, stats, retros, vision, dreams, nextWeekGoals, streak }
+            { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak }
           );
         }, 1500);
       }, [tasks, weeklyGoals, stats, retros, vision, dreams, nextWeekGoals, streak, loaded]);
@@ -2439,6 +2633,14 @@
       const toggleWeeklyGoal = (id) => {
         setWeeklyGoals(prev => prev.map(w => w.id === id ? { ...w, done: !w.done } : w));
       };
+      const addTask = (task) => setTasks(prev => [...prev, task]);
+      const editTask = (id, updates) => setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+      const deleteTask = (id) => setTasks(prev => prev.filter(t => t.id !== id));
+      const editWeeklyGoal = (id, text) => setWeeklyGoals(prev => prev.map(w => w.id === id ? { ...w, text } : w));
+      const deleteWeeklyGoal = (id) => setWeeklyGoals(prev => prev.filter(w => w.id !== id));
+      const addGoal = (goal) => setGoals(prev => [...prev, goal]);
+      const editGoal = (id, updates) => setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
+      const deleteGoal = (id) => setGoals(prev => prev.filter(g => g.id !== id));
 
       // Keyboard nav 1~5
       useEffect(() => {
@@ -2480,9 +2682,9 @@
 
           <Tabs active={tab} onChange={setTab} />
 
-          {tab === "dashboard" && <Dashboard goals={goals} tasks={tasks} toggleTask={toggleTask} weeklyGoals={weeklyGoals} toggleWeeklyGoal={toggleWeeklyGoal} stats={stats} dreams={dreams} nextWeekGoals={nextWeekGoals} setNextWeekGoals={setNextWeekGoals} streak={streak} setStreak={setStreak} />}
-          {tab === "goals" && <GoalsTab goals={goals} />}
-          {tab === "tasks" && <TasksTab tasks={tasks} toggleTask={toggleTask} />}
+          {tab === "dashboard" && <Dashboard goals={goals} tasks={tasks} toggleTask={toggleTask} weeklyGoals={weeklyGoals} toggleWeeklyGoal={toggleWeeklyGoal} editWeeklyGoal={editWeeklyGoal} deleteWeeklyGoal={deleteWeeklyGoal} setWeeklyGoals={setWeeklyGoals} stats={stats} dreams={dreams} nextWeekGoals={nextWeekGoals} setNextWeekGoals={setNextWeekGoals} streak={streak} setStreak={setStreak} />}
+          {tab === "goals" && <GoalsTab goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal} />}
+          {tab === "tasks" && <TasksTab tasks={tasks} toggleTask={toggleTask} addTask={addTask} editTask={editTask} deleteTask={deleteTask} />}
           {tab === "retro" && <RetroTab retros={retros} setRetros={setRetros} />}
           {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} />}
 
