@@ -873,6 +873,15 @@
                           <span className="dream-unit">{d.unit}</span>
                         </div>
                         <div className="dream-input-row">
+                          <label>티어</label>
+                          <select className="char-input" style={{ flex: 1, textAlign: "left", fontSize: 11 }} value={d.tier || inferDreamTier(d)} onChange={e => updateDream(d.id, "tier", e.target.value)}>
+                            <option value="legend">👑 Legend · +5,000 XP</option>
+                            <option value="epic">💜 Epic · +2,500 XP</option>
+                            <option value="rare">💎 Rare · +1,000 XP</option>
+                            <option value="normal">⚪ Normal · +400 XP</option>
+                          </select>
+                        </div>
+                        <div className="dream-input-row">
                           <label>이미지 URL</label>
                           <input className="char-input" style={{ flex:1, textAlign:"left", fontSize:11 }} value={d.imgUrl}
                             onChange={e => updateDream(d.id, "imgUrl", e.target.value)} placeholder="https://... 또는 아래 버튼으로 업로드" />
@@ -1776,10 +1785,16 @@
 
     /* ─── Stage 2: GoalsTasksRetroTab ─── */
     function GoalsTasksRetroTab({
-      goals, setGoals, addGoal, editGoal, deleteGoal,
+      goals, setGoals, addGoal, editGoal, deleteGoal, toggleStage,
       tasks, toggleTask, addTask, editTask, deleteTask,
       retros, setRetros, dailyLog, stats
     }) {
+      const toggleStageInForm = toggleStage || ((gId, mId) => {
+        const g = goals.find(x => x.id === gId);
+        if (!g) return;
+        const newStages = (g.milestones || []).map(x => x.id === mId ? { ...x, status: x.status === "done" ? "active" : "done" } : x);
+        editGoal(gId, { milestones: newStages });
+      });
       const [openGoalId, setOpenGoalId] = useState(null);
       const [editingGoalId, setEditingGoalId] = useState(null);
       const [editGoalForm, setEditGoalForm] = useState({});
@@ -1824,13 +1839,14 @@
         });
       };
       const saveEditGoal = (id) => {
-        editGoal(id, {
+        const updates = {
           name: editGoalForm.name,
           category: editGoalForm.category,
           deadline: editGoalForm.deadline,
-          progress: Number(editGoalForm.progress) || 0,
           statId: editGoalForm.statId || null
-        });
+        };
+        if (editGoalForm.tier) updates.tier = editGoalForm.tier;
+        editGoal(id, updates);
         setEditingGoalId(null);
       };
 
@@ -1842,11 +1858,31 @@
           quadrant: Number(newTask.quadrant) || 2,
           goalId: newTask.goalId || null,
           tag: newTask.tag.trim() || "",
+          dueDate: newTask.dueDate || "",
           done: false,
           time: ""
         });
-        setNewTask({ text: "", quadrant: 2, goalId: "", tag: "" });
+        setNewTask({ text: "", quadrant: 2, goalId: "", tag: "", dueDate: "" });
         setShowAddTask(false);
+      };
+
+      // 4분면 빈 영역 클릭으로 인라인 추가
+      const [quadAddIn, setQuadAddIn] = useState(null); // quadrant id
+      const [quadAddText, setQuadAddText] = useState("");
+      const handleQuadAdd = (q) => {
+        if (!quadAddText.trim()) { setQuadAddIn(null); return; }
+        addTask({
+          id: "t" + Date.now(),
+          text: quadAddText.trim(),
+          quadrant: q,
+          goalId: null,
+          tag: "",
+          dueDate: "",
+          done: false,
+          time: ""
+        });
+        setQuadAddText("");
+        setQuadAddIn(null);
       };
 
       const saveRetro = () => {
@@ -1948,12 +1984,53 @@
                           <input type="date" value={editGoalForm.deadline} onChange={(e) => setEditGoalForm({ ...editGoalForm, deadline: e.target.value })} />
                         </div>
                         <div className="inline-add-form-row">
-                          <input type="number" min="0" max="100" value={editGoalForm.progress} onChange={(e) => setEditGoalForm({ ...editGoalForm, progress: e.target.value })} placeholder="진행률 %" />
+                          <select value={editGoalForm.tier || g.tier || "rare"} onChange={(e) => setEditGoalForm({ ...editGoalForm, tier: e.target.value })}>
+                            <option value="legend">👑 Legend</option>
+                            <option value="epic">💜 Epic</option>
+                            <option value="rare">💎 Rare</option>
+                            <option value="normal">⚪ Normal</option>
+                          </select>
                           <select value={editGoalForm.statId} onChange={(e) => setEditGoalForm({ ...editGoalForm, statId: e.target.value })}>
                             <option value="">스탯 미연결</option>
                             {stats.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.label}</option>)}
                           </select>
                         </div>
+
+                        {/* 단계(Stage) CRUD */}
+                        <div style={{ marginTop: 6, padding: 8, background: "var(--bg-2)", borderRadius: 6, border: "1px solid var(--border)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)" }}>📍 단계 (+150 XP each)</span>
+                            <button onClick={(e) => {
+                              e.stopPropagation();
+                              const newStages = [...(g.milestones || []), { id: "m" + Date.now(), name: "새 단계", status: "active", xpReward: 150 }];
+                              editGoal(g.id, { milestones: newStages });
+                            }} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "3px 10px", borderRadius: 4, fontSize: 10.5, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>+ 단계</button>
+                          </div>
+                          {(g.milestones || []).length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)", padding: 4 }}>단계 없음</div>}
+                          {(g.milestones || []).map((m, i) => (
+                            <div key={m.id} className={"stage-edit-row " + m.status}>
+                              <span className="num">{i + 1}</span>
+                              <span className="ck" onClick={(e) => { e.stopPropagation(); toggleStageInForm(g.id, m.id); }}>{m.status === "done" ? "✓" : ""}</span>
+                              <input className="s-name" value={m.name} onChange={(e) => {
+                                const newStages = (g.milestones || []).map(x => x.id === m.id ? { ...x, name: e.target.value } : x);
+                                editGoal(g.id, { milestones: newStages });
+                              }} />
+                              <span className="state">{m.status === "done" ? "완료" : m.status === "active" ? "진행중" : "예정"}</span>
+                              <span className="xp">+150</span>
+                              <button onClick={(e) => {
+                                e.stopPropagation();
+                                editGoal(g.id, { milestones: (g.milestones || []).filter(x => x.id !== m.id) });
+                              }} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 13 }}>×</button>
+                            </div>
+                          ))}
+                          {(g.milestones || []).length > 0 && (
+                            <div className="stage-bonus-banner">
+                              <span>🎁 전체 단계 완료 보너스</span>
+                              <span className="bonus-xp">+600 XP</span>
+                            </div>
+                          )}
+                        </div>
+
                         <div className="inline-add-buttons">
                           <button onClick={() => setEditingGoalId(null)}>취소</button>
                           <button className="save" onClick={() => saveEditGoal(g.id)}>저장</button>
@@ -2022,7 +2099,10 @@
                       {goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
                   </div>
-                  <input value={newTask.tag} onChange={(e) => setNewTask({ ...newTask, tag: e.target.value })} placeholder="태그 (예: 유튜브)" />
+                  <div className="inline-add-form-row">
+                    <input value={newTask.tag} onChange={(e) => setNewTask({ ...newTask, tag: e.target.value })} placeholder="태그 (예: 유튜브)" />
+                    <input type="date" value={newTask.dueDate || ""} onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })} placeholder="마감일" />
+                  </div>
                   <div className="inline-add-buttons">
                     <button onClick={() => setShowAddTask(false)}>취소</button>
                     <button className="save" onClick={handleAddTask}>저장</button>
@@ -2041,19 +2121,34 @@
                         </div>
                         <span className="eq-cell-count">{qt.filter((t) => t.done).length}/{qt.length}</span>
                       </div>
-                      <div className="eq-cell-body">
-                        {qt.length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)", padding: "8px 0", textAlign: "center" }}>없음</div>}
+                      <div className="eq-cell-body" onClick={(e) => { if (e.target === e.currentTarget) { setQuadAddIn(q.id); setQuadAddText(""); } }} style={{ cursor: quadAddIn === q.id ? "default" : "text" }}>
                         {qt.map((t) => {
                           const g = t.goalId ? goals.find((x) => x.id === t.goalId) : null;
+                          const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
+                          const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
                           return (
                             <div key={t.id} className={"eq-task-row" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
                               <div className="cb" />
                               <span className="eq-task-text">{t.text}</span>
-                              {g && <span className="gtag">{g.name.slice(0, 8)}</span>}
+                              {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
+                              {g && <span className="gtag">{g.name.slice(0, 6)}</span>}
                               <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                             </div>
                           );
                         })}
+                        {quadAddIn === q.id ? (
+                          <input
+                            autoFocus
+                            value={quadAddText}
+                            onChange={(e) => setQuadAddText(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleQuadAdd(q.id); if (e.key === "Escape") { setQuadAddIn(null); setQuadAddText(""); } }}
+                            onBlur={() => handleQuadAdd(q.id)}
+                            placeholder="할 일 입력 후 Enter"
+                            style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 5, color: "var(--text-1)", fontFamily: "Geist, sans-serif", fontSize: 11.5, padding: "5px 8px", outline: "none", width: "100%", boxSizing: "border-box" }}
+                          />
+                        ) : (
+                          qt.length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)", padding: "12px 0", textAlign: "center", fontStyle: "italic" }}>+ 클릭하여 추가</div>
+                        )}
                       </div>
                     </div>
                   );
@@ -2930,7 +3025,7 @@
             toggleStage={toggleStage}
           />}
           {tab === "gtr" && <GoalsTasksRetroTab
-            goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal}
+            goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal} toggleStage={toggleStage}
             tasks={tasks} toggleTask={toggleTask} addTask={addTask} editTask={editTask} deleteTask={deleteTask}
             retros={retros} setRetros={setRetros} dailyLog={dailyLog} stats={stats}
           />}
