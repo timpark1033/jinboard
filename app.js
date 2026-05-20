@@ -86,13 +86,13 @@
     ];
 
     const INITIAL_TASKS = [
-      { id: "t1", text: "유튜브 영상 #8 편집 마무리", done: false, quadrant: 1, goalId: "g1", time: "10:00", tag: "유튜브" },
-      { id: "t2", text: "NoteUp 마케팅 영상 #4 콘티 작성", done: true, quadrant: 2, goalId: "g2", time: "11:30", tag: "NoteUp" },
-      { id: "t3", text: "자동화 프로그램 — 큐 처리 로직 리팩터", done: false, quadrant: 2, goalId: "g3", time: "14:00", tag: "개발" },
-      { id: "t4", text: "썸네일 A/B 시안 3개 제작", done: false, quadrant: 1, goalId: "g1", time: "16:00", tag: "유튜브" },
-      { id: "t5", text: "이번주 회고 메모 정리", done: false, quadrant: 2, goalId: null, time: "21:00", tag: "회고" },
-      { id: "t6", text: "주간 뉴스레터 훑기", done: true, quadrant: 4, goalId: null, time: "09:00", tag: "리서치" },
-      { id: "t7", text: "팔로워 DM 답장", done: false, quadrant: 3, goalId: "g1", time: "12:30", tag: "유튜브" },
+      { id: "t1", text: "유튜브 영상 #8 편집 마무리", done: false, quadrant: 1, goalId: "g1", time: "10:00", tag: "유튜브", dueDate: "2026-05-25" },
+      { id: "t2", text: "NoteUp 마케팅 영상 #4 콘티 작성", done: true, quadrant: 2, goalId: "g2", time: "11:30", tag: "NoteUp", dueDate: "" },
+      { id: "t3", text: "자동화 프로그램 — 큐 처리 로직 리팩터", done: false, quadrant: 2, goalId: "g3", time: "14:00", tag: "개발", dueDate: "2026-06-01" },
+      { id: "t4", text: "썸네일 A/B 시안 3개 제작", done: false, quadrant: 1, goalId: "g1", time: "16:00", tag: "유튜브", dueDate: "2026-05-28" },
+      { id: "t5", text: "이번주 회고 메모 정리", done: false, quadrant: 2, goalId: null, time: "21:00", tag: "회고", dueDate: "" },
+      { id: "t6", text: "주간 뉴스레터 훑기", done: true, quadrant: 4, goalId: null, time: "09:00", tag: "리서치", dueDate: "" },
+      { id: "t7", text: "팔로워 DM 답장", done: false, quadrant: 3, goalId: "g1", time: "12:30", tag: "유튜브", dueDate: "" },
     ];
 
     const INITIAL_WEEKLY_GOALS = [
@@ -189,10 +189,26 @@
     ];
     const INITIAL_DAILY_LOG = {};
 
+    /* ── 드림 티어 시스템 ── */
+    const DREAM_TIERS = {
+      legend: { label: "LEGEND", xp: 5000, color: "legend" },
+      epic:   { label: "EPIC",   xp: 2500, color: "epic" },
+      rare:   { label: "RARE",   xp: 1000, color: "rare" },
+      normal: { label: "NORMAL", xp: 400,  color: "normal" }
+    };
+    function inferDreamTier(d) {
+      if (d.tier) return d.tier;
+      const amt = d.targetAmount || 0;
+      if (amt >= 100000) return "legend";
+      if (amt >= 30000) return "epic";
+      if (amt >= 5000) return "rare";
+      return "normal";
+    }
+
     const INITIAL_DREAMS = [
-      { id: "d1", name: "아파트 이사", emoji: "🏠", targetAmount: 150000, currentAmount: 30000, unit: "만원", imgUrl: "",
+      { id: "d1", name: "아파트 이사", emoji: "🏠", tier: "legend", targetAmount: 150000, currentAmount: 30000, unit: "만원", imgUrl: "",
         calc: { monthlySavings: 500, targetYears: 5 } },
-      { id: "d2", name: "제네시스 GV80", emoji: "🚗", targetAmount: 20000, currentAmount: 0, unit: "만원", imgUrl: "",
+      { id: "d2", name: "제네시스 GV80", emoji: "🚗", tier: "epic", targetAmount: 20000, currentAmount: 0, unit: "만원", imgUrl: "",
         calc: { monthlySavings: 200, targetYears: 3 } },
     ];
 
@@ -282,7 +298,7 @@
     }
 
     /* ---------- TAB 1: Dashboard ---------- */
-    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak, topThree, setTopThree, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources }) {
+    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak, topThree, setTopThree, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage }) {
       const [editingWeeklyId, setEditingWeeklyId] = useState(null);
       const [editingWeeklyText, setEditingWeeklyText] = useState("");
       const overall = useMemo(() => goals.length > 0 ? Math.round(goals.reduce((s, g) => s + g.progress, 0) / goals.length) : 0, [goals]);
@@ -332,8 +348,10 @@
               const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
               const blur = ((1 - pct / 100) * 14).toFixed(1);
               const gray = Math.round((1 - pct / 100) * 85);
+              const tier = inferDreamTier(d);
               return (
-                <div key={d.id} className="dream-strip-card">
+                <div key={d.id} className="dream-strip-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
+                  <span className={"dream-tier-badge " + tier}>{DREAM_TIERS[tier]?.label || tier.toUpperCase()}</span>
                   {d.imgUrl
                     ? <img src={d.imgUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: `blur(${blur}px) grayscale(${gray}%)` }} />
                     : <div className="dsc-bg">{d.emoji || '⭐'}</div>
@@ -416,7 +434,10 @@
                 {goals.map(g => {
                   const dday = calcDday(g.deadline);
                   const gTasks = tasksByGoal[g.id] || [];
-                  const activeMilestone = g.milestones ? g.milestones.find(m => m.status === 'active') : null;
+                  const stages = g.milestones || [];
+                  const doneStages = stages.filter(m => m.status === 'done').length;
+                  const goalTier = g.tier || (g.progress >= 70 ? "epic" : g.progress >= 40 ? "rare" : "normal");
+                  const computedProgress = stages.length > 0 ? Math.round((doneStages / stages.length) * 100) : g.progress;
                   return (
                     <div key={g.id} className="db-goal-col">
                       <div className="db-goal-col-head">
@@ -429,26 +450,45 @@
                             <span style={{ color: 'var(--text-3)' }}>{fmtDeadline(g.deadline)}</span>
                           </div>
                         </div>
-                        <RingChart value={g.progress} size={42} stroke={4} />
                       </div>
-                      {activeMilestone && (
-                        <div className="db-goal-stage">
-                          <div className="db-goal-stage-label">진행중인 단계</div>
-                          <div className="db-goal-stage-name">{activeMilestone.name}</div>
-                          <div className="mini-bar" style={{ marginTop: 6 }}>
-                            <div className="mini-bar-fill" style={{ width: `${activeMilestone.kpi ? Math.min(100, (activeMilestone.kpi.current / activeMilestone.kpi.target) * 100) : 50}%` }} />
+                      <div className="db-goal-prog-row">
+                        <span className={"db-goal-tier " + goalTier}>{goalTier.toUpperCase()}</span>
+                        <div className="pbar"><div style={{ width: computedProgress + "%" }} /></div>
+                        <span className="pct">{computedProgress}%</span>
+                      </div>
+
+                      {stages.length > 0 && (
+                        <div className="db-stage-sec">
+                          <div className="db-stage-sec-title">
+                            📍 단계 <span className="cnt">{doneStages}/{stages.length}</span>
                           </div>
+                          {stages.map((m, i) => (
+                            <div key={m.id} className={"db-stage " + m.status} onClick={() => toggleStage && toggleStage(g.id, m.id)}>
+                              <span className="db-stage-num">{i + 1}</span>
+                              <span className="db-stage-icon">{m.status === 'done' ? '✓' : ''}</span>
+                              <span className="db-stage-name">{m.name}</span>
+                              <span className="db-stage-xp">+150</span>
+                            </div>
+                          ))}
                         </div>
                       )}
-                      <div className="db-goal-tasks">
-                        <div className="db-goal-tasks-label">⚡ 연결된 할 일</div>
-                        {gTasks.length === 0 && <div style={{ fontSize: 11, color: 'var(--text-4)' }}>연결된 할 일 없음</div>}
-                        {gTasks.map(t => (
-                          <div key={t.id} className={"check-item" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)} style={{ padding: '3px 0' }}>
-                            <div className="check-box" />
-                            <div className="check-text" style={{ fontSize: 12 }}>{t.text}</div>
-                          </div>
-                        ))}
+
+                      <div className="db-stage-sec">
+                        <div className="db-stage-sec-title">
+                          ⚡ 연결 할일 <span className="cnt">{gTasks.length}</span>
+                        </div>
+                        {gTasks.length === 0 && <div style={{ fontSize: 11, color: 'var(--text-4)' }}>없음</div>}
+                        {gTasks.map(t => {
+                          const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
+                          const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
+                          return (
+                            <div key={t.id} className={"check-item" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)} style={{ padding: '3px 0', gap: 6 }}>
+                              <div className="check-box" style={{ width: 13, height: 13 }} />
+                              <div className="check-text" style={{ fontSize: 11.5, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.text}</div>
+                              {t.dueDate && <span className={"task-due " + dueClass}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -706,9 +746,20 @@
     }
 
     /* ---------- TAB 5: Vision ---------- */
-    function VisionTab({ vision, setVision, stats, setStats, dreams, setDreams }) {
+    function VisionTab({ vision, setVision, stats, setStats, dreams, setDreams, initialOpenDreamId, onDreamOpened }) {
       const [expandedStat, setExpandedStat] = useState(null);
       const [expandedDream, setExpandedDream] = useState(null);
+      useEffect(() => {
+        if (initialOpenDreamId) {
+          setExpandedDream(initialOpenDreamId);
+          // 스크롤 이동
+          setTimeout(() => {
+            const el = document.getElementById("dream-" + initialOpenDreamId);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 100);
+          onDreamOpened && onDreamOpened();
+        }
+      }, [initialOpenDreamId]);
 
       const updateStat = (id, rawVal) => {
         const num = Number(rawVal) || 0;
@@ -775,7 +826,7 @@
               const isOpen = expandedDream === d.id;
 
               return (
-                <div key={d.id} className={"dream-card" + (isOpen ? " dream-open" : "")}>
+                <div key={d.id} id={"dream-" + d.id} className={"dream-card" + (isOpen ? " dream-open" : "")}>
                   <div className="dream-img-wrap" onClick={() => setExpandedDream(isOpen ? null : d.id)}>
                     {d.imgUrl ? (
                       <img src={d.imgUrl} className="dream-img" alt="" style={{ filter:`blur(${blur}px) grayscale(${gray}%)` }} />
@@ -2766,6 +2817,53 @@
       const editGoal = (id, updates) => setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
       const deleteGoal = (id) => setGoals(prev => prev.filter(g => g.id !== id));
 
+      // 단계(Stage) 토글 + XP 보상
+      const toggleStage = (goalId, stageId) => {
+        setGoals(prev => prev.map(g => {
+          if (g.id !== goalId) return g;
+          const stages = (g.milestones || []).map(m => {
+            if (m.id !== stageId) return m;
+            const wasDone = m.status === 'done';
+            const willBeDone = !wasDone;
+            // 완료 전환 → +150 XP
+            if (willBeDone && !wasDone) {
+              const statId = g.statId || resolveStatId({ goalId, tag: null }, [g]);
+              if (statId) {
+                setStats(ps => ps.map(s => s.id === statId
+                  ? { ...s, totalXp: getStatTotalXp(s) + 150 }
+                  : s));
+                setXpToast({ id: Date.now(), xp: 150, statId });
+                setTimeout(() => setXpToast(null), 1800);
+              }
+            }
+            return { ...m, status: willBeDone ? 'done' : 'active' };
+          });
+          // 전체 단계 완료 시 +600 XP 보너스
+          const allDone = stages.length > 0 && stages.every(s => s.status === 'done');
+          const wasAllDone = (g.milestones || []).length > 0 && (g.milestones || []).every(s => s.status === 'done');
+          if (allDone && !wasAllDone) {
+            const statId = g.statId;
+            if (statId) {
+              setStats(ps => ps.map(s => s.id === statId
+                ? { ...s, totalXp: getStatTotalXp(s) + 600 }
+                : s));
+              setTimeout(() => {
+                setXpToast({ id: Date.now() + 1, xp: 600, statId });
+                setTimeout(() => setXpToast(null), 2000);
+              }, 600);
+            }
+          }
+          return { ...g, milestones: stages, progress: stages.length > 0 ? Math.round((stages.filter(s => s.status === 'done').length / stages.length) * 100) : g.progress };
+        }));
+      };
+
+      // 드림 클릭 → 비전 탭으로 이동 + 모달 자동 오픈
+      const [dreamToOpen, setDreamToOpen] = useState(null);
+      const handleDreamClick = (dreamId) => {
+        setDreamToOpen(dreamId);
+        setTab("vision");
+      };
+
       // Keyboard nav 1~4
       useEffect(() => {
         const onKey = (e) => {
@@ -2828,6 +2926,8 @@
             resources={computeResources(resources, items)}
             onOpenStatModal={() => setStatModalOpen(true)}
             onOpenResources={() => setTab("resources")}
+            onDreamClick={handleDreamClick}
+            toggleStage={toggleStage}
           />}
           {tab === "gtr" && <GoalsTasksRetroTab
             goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal}
@@ -2839,7 +2939,7 @@
             resources={resources} setResources={setResources}
             goals={goals} stats={stats} settings={settings}
           />}
-          {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} />}
+          {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} />}
 
           <div className="kbd-hints">
             <span>키보드</span>

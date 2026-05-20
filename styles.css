@@ -2691,3 +2691,335 @@
   .ai-banner .ic { font-size: 18px; }
   .ai-banner .info { flex: 1; }
   .ai-banner .info strong { color: var(--accent); }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 4: 1700px + 단계 시스템 ── */
+  /* ─────────────────────────────── */
+
+  /* 1. 1700px 폭 */
+  .app { max-width: 1700px; }
+
+  /* 2. 플레이어 스탯 게이지바 제거 */
+  .db-side { width: 220px; }
+  .stat-2col-bar, .stat-2col-bar-fill { display: none; }
+  .stat-2col-item { padding: 6px 8px; gap: 0; }
+  .stat-2col-top { padding: 0; }
+  .stat-2col-name { font-size: 12px; }
+  .stat-2col-lv strong { font-size: 13px; }
+  .stat-panel-head .who { font-size: 12px; }
+  .stat-panel-head .all-lv strong { font-size: 14px; }
+
+  /* 3. Zone1 248px + 드림 카드 200×220 */
+  .dream-strip {
+    height: 248px;
+    padding: 14px 16px;
+    align-items: stretch;
+  }
+  .dream-strip-card {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    height: 220px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.18s, border-color 0.18s;
+  }
+  .dream-strip-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-accent);
+  }
+  .dream-strip-card .dsc-bg { font-size: 80px; }
+  .dream-strip-card .dsc-name { font-size: 14px; }
+  .dream-strip-card .dsc-pct { font-size: 11px; }
+  .dream-strip-card .dsc-bar { height: 3px; }
+  .dream-strip-card .dsc-overlay {
+    padding: 12px 14px;
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.1) 60%);
+  }
+
+  /* 드림 티어 뱃지 */
+  .dream-tier-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    z-index: 2;
+    letter-spacing: 0.05em;
+  }
+  .dream-tier-badge.legend { background: rgba(245,158,11,0.9); color: #000; }
+  .dream-tier-badge.epic { background: rgba(139,92,246,0.9); color: #fff; }
+  .dream-tier-badge.rare { background: rgba(59,130,246,0.9); color: #fff; }
+  .dream-tier-badge.normal { background: rgba(160,160,160,0.9); color: #fff; }
+
+  /* 4. 대시보드 목표 카드의 단계 시스템 */
+  .db-stage-sec {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .db-stage-sec-title {
+    font-size: 10px;
+    color: var(--text-4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .db-stage-sec-title .cnt {
+    font-family: "Geist Mono", monospace;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .db-stage {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 11.5px;
+  }
+  .db-stage-num {
+    font-family: "Geist Mono", monospace;
+    font-size: 9.5px;
+    color: var(--text-4);
+    width: 16px;
+    flex-shrink: 0;
+  }
+  .db-stage-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    flex-shrink: 0;
+    color: #fff;
+    background: var(--bg-2);
+    position: relative;
+  }
+  .db-stage.done .db-stage-icon {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .db-stage.active .db-stage-icon {
+    background: rgba(245,158,11,0.2);
+    border-color: var(--amber);
+  }
+  .db-stage.active .db-stage-icon::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: var(--amber);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--amber);
+  }
+  .db-stage-name {
+    flex: 1;
+    color: var(--text-2);
+    line-height: 1.3;
+  }
+  .db-stage.done .db-stage-name {
+    color: var(--text-4);
+    text-decoration: line-through;
+  }
+  .db-stage-xp {
+    font-family: "Geist Mono", monospace;
+    font-size: 9.5px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .db-stage.done .db-stage-xp { color: var(--green); }
+
+  /* 5. 할일 마감일 뱃지 */
+  .task-due {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--text-3);
+    flex-shrink: 0;
+  }
+  .task-due.urgent { color: var(--red); font-weight: 600; }
+  .task-due.soon { color: var(--amber); }
+
+  /* 6. 목표 카드 티어 표시 */
+  .db-goal-tier {
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: "Geist Mono", monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .db-goal-tier.legend { background: rgba(245,158,11,0.85); color: #000; }
+  .db-goal-tier.epic { background: rgba(139,92,246,0.85); color: #fff; }
+  .db-goal-tier.rare { background: rgba(59,130,246,0.85); color: #fff; }
+  .db-goal-tier.normal { background: rgba(160,160,160,0.85); color: #fff; }
+
+  /* 7. 목표 카드 진행 바 + 티어 */
+  .db-goal-prog-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+  }
+  .db-goal-prog-row .pbar {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .db-goal-prog-row .pbar > div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    border-radius: 2px;
+    transition: width 0.5s;
+  }
+  .db-goal-prog-row .pct {
+    color: var(--text-2);
+    font-weight: 600;
+    min-width: 32px;
+    text-align: right;
+  }
+
+  /* Zone3 - auto height */
+  .db-zone3 {
+    flex: 0 1 auto;
+    min-height: 200px;
+  }
+  .db-zone4 { flex-shrink: 0; }
+  .db-goal-col {
+    overflow-y: auto;
+    max-height: 100%;
+  }
+
+  /* 8. 자원·아이템 탭 간소화 (Stage 3 ResourcesItemsTab 부분 오버라이드는 컴포넌트 내부에서 처리) */
+  /* 자산 항목 */
+  .asset-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 28px;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 11.5px;
+  }
+  .asset-row .nm { color: var(--text-2); }
+  .asset-row .val { font-family: "Geist Mono", monospace; color: var(--text-1); text-align: right; }
+  .asset-row input.val-input {
+    font-family: "Geist Mono", monospace;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-1);
+    padding: 3px 7px;
+    text-align: right;
+    font-size: 11px;
+    outline: none;
+  }
+  .asset-row input.val-input:focus { border-color: var(--accent); }
+  .asset-cat-title {
+    font-size: 10px;
+    color: var(--text-4);
+    padding: 8px 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-top: 1px dashed var(--border);
+    margin-top: 4px;
+  }
+  .asset-cat-title:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+  /* 9. 단계 편집 행 (Goal modal) */
+  .stage-edit-row {
+    display: grid;
+    grid-template-columns: 22px 22px 1fr 80px 60px 24px;
+    gap: 6px;
+    align-items: center;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+    border-radius: 6px;
+    margin-bottom: 5px;
+  }
+  .stage-edit-row.done { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.25); }
+  .stage-edit-row.active { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.3); }
+  .stage-edit-row .num {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--text-4);
+    text-align: center;
+  }
+  .stage-edit-row .ck {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+  }
+  .stage-edit-row.done .ck { background: var(--green); border-color: var(--green); }
+  .stage-edit-row.active .ck {
+    background: rgba(245,158,11,0.2);
+    border-color: var(--amber);
+    position: relative;
+  }
+  .stage-edit-row.active .ck::after {
+    content: "";
+    width: 8px; height: 8px;
+    background: var(--amber);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--amber);
+  }
+  .stage-edit-row input.s-name {
+    background: transparent;
+    border: none;
+    color: var(--text-1);
+    padding: 0;
+    outline: none;
+    font-size: 12px;
+    font-family: inherit;
+    width: 100%;
+  }
+  .stage-edit-row.done input.s-name { color: var(--text-4); text-decoration: line-through; }
+  .stage-edit-row .state {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    text-align: right;
+    color: var(--text-4);
+  }
+  .stage-edit-row.active .state { color: var(--amber); }
+  .stage-edit-row.done .state { color: var(--green); }
+  .stage-edit-row .xp {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-align: center;
+  }
+  .stage-bonus-banner {
+    padding: 8px 12px;
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px dashed var(--border-accent);
+    border-radius: 6px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stage-bonus-banner .bonus-xp {
+    font-family: "Geist Mono", monospace;
+    color: var(--accent);
+    font-weight: 700;
+  }
