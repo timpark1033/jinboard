@@ -824,8 +824,9 @@
                         <div className="dream-input-row">
                           <label>이미지 URL</label>
                           <input className="char-input" style={{ flex:1, textAlign:"left", fontSize:11 }} value={d.imgUrl}
-                            onChange={e => updateDream(d.id, "imgUrl", e.target.value)} placeholder="https://..." />
+                            onChange={e => updateDream(d.id, "imgUrl", e.target.value)} placeholder="https://... 또는 아래 버튼으로 업로드" />
                         </div>
+                        <DreamImageActions dream={d} updateDream={updateDream} />
                       </div>
 
                       <div className="dream-calc-grid">
@@ -2056,23 +2057,601 @@
       );
     }
 
-    /* ─── Stage 2: ResourcesItemsTab (placeholder) ─── */
-    function ResourcesItemsTab({ resources, setResources }) {
+
+    /* ─── Stage 3: 데이터 + 헬퍼 ─── */
+    const INITIAL_ITEMS = [
+      {
+        id: "i1",
+        name: "Claude Max",
+        emoji: "🤖",
+        status: "equipped",
+        description: "AI 코딩 어시스턴트. 바이브코딩 핵심 도구",
+        buffs: [
+          { type: "time", value: 20, unit: "h/월", desc: "시간 확보" },
+          { type: "stat", statId: "dev", value: 30, unit: "%", desc: "개발 XP +30%" }
+        ],
+        debuffs: [
+          { type: "money", value: 100000, unit: "원/월", desc: "월 구독비" }
+        ],
+        goalId: null,
+        devProgress: 100,
+        devTarget: ""
+      },
+      {
+        id: "i2",
+        name: "유튜브 편집 AI",
+        emoji: "🎬",
+        status: "developing",
+        description: "자동 영상 편집 도구 (개발중)",
+        buffs: [
+          { type: "money", value: 500000, unit: "원/월", desc: "완료 시 수익" }
+        ],
+        debuffs: [],
+        goalId: "g3",
+        devProgress: 60,
+        devTarget: "2026-09-30"
+      }
+    ];
+
+    const ITEM_EMOJIS = ["🤖","🎬","💎","⚔️","🛡","🏹","📱","💻","🎨","📚","🔧","⚡","🔮","🌟","🎯","💼","🎪","🚀","🧪","🎵","📸","🖥","⌨️","🖱","🎮","📺","📡","🔬","🧬","💊","🏆","🥇","🎖","🏅","🎁","💝","🔑","🗝","💰","💵","💸"];
+
+    function computeResources(baseResources, items) {
+      const equipped = items.filter((i) => i.status === "equipped");
+      let income = baseResources.money?.income || 0;
+      let expenses = baseResources.money?.expenses || 0;
+      let timeBuff = 0;
+      let energyBuff = 0;
+      const statBuffs = {};
+
+      equipped.forEach((it) => {
+        (it.buffs || []).forEach((b) => {
+          if (b.type === "money") income += b.value;
+          else if (b.type === "time") timeBuff += b.value;
+          else if (b.type === "energy") energyBuff += b.value;
+          else if (b.type === "stat" && b.statId) {
+            statBuffs[b.statId] = (statBuffs[b.statId] || 0) + b.value;
+          }
+        });
+        (it.debuffs || []).forEach((d) => {
+          if (d.type === "money") expenses += d.value;
+        });
+      });
+
+      return {
+        money: { income, expenses, profit: income - expenses, baseIncome: baseResources.money?.income || 0, baseExpenses: baseResources.money?.expenses || 0 },
+        time: { weeklyPool: baseResources.time?.weeklyPool || 72, used: baseResources.time?.used || 0, buff: timeBuff },
+        energy: { weeklyPool: baseResources.energy?.weeklyPool || 100, used: baseResources.energy?.used || 0, buff: energyBuff },
+        statBuffs
+      };
+    }
+
+    /* ─── Gemini AI helpers ─── */
+    async function geminiSuggestTask(apiKey, taskText) {
+      if (!apiKey) throw new Error("API Key 미설정");
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+      const prompt = "다음 할일에 대해 추정 XP(15~80), 에너지 소모(소=5/중=15/대=30), 예상 소요시간(분)을 JSON으로 답해. 예: {\"xp\":40,\"energy\":15,\"minutes\":60}\n할일: " + taskText;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
+        })
+      });
+      if (!res.ok) throw new Error("API 오류 " + res.status);
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      return JSON.parse(text);
+    }
+
+    async function geminiGenerateImage(apiKey, prompt) {
+      if (!apiKey) throw new Error("API Key 미설정");
+      // 2026.05 기준: Gemini 2.5 Flash Image / Imagen 4 fast
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=" + apiKey;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "꿈을 상징하는 인스피레이션 이미지: " + prompt + ". 사실적이고 아름다운, 시네마틱한 스타일." }] }],
+          generationConfig: { responseModalities: ["IMAGE"] }
+        })
+      });
+      if (!res.ok) {
+        const errTxt = await res.text();
+        throw new Error("이미지 생성 실패 " + res.status + ": " + errTxt.slice(0, 100));
+      }
+      const data = await res.json();
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      for (const p of parts) {
+        if (p.inlineData?.data) {
+          return "data:" + (p.inlineData.mimeType || "image/png") + ";base64," + p.inlineData.data;
+        }
+      }
+      throw new Error("이미지 데이터 없음");
+    }
+
+    /* ─── 이미지 압축 (Canvas) ─── */
+    function compressImage(file, maxWidth = 480, maxHeight = 320, quality = 0.75) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            const ratio = Math.min(maxWidth / w, maxHeight / h, 1);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+            const canvas = document.createElement("canvas");
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    /* ─── Stage 3: ResourcesItemsTab (실제 구현) ─── */
+    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings }) {
+      const [selectedItem, setSelectedItem] = useState(null);
+      const [filter, setFilter] = useState("all");
+      const [editBase, setEditBase] = useState(false);
+
+      const computed = useMemo(() => computeResources(resources, items), [resources, items]);
+
+      const filteredItems = filter === "all" ? items : items.filter((i) => i.status === filter);
+      const totalSlots = 32; // 8x4
+      const slots = Array.from({ length: totalSlots }, (_, i) => filteredItems[i] || null);
+
+      const addItem = () => {
+        const id = "i" + Date.now();
+        const newItem = {
+          id,
+          name: "새 아이템",
+          emoji: "💎",
+          status: "stored",
+          description: "",
+          buffs: [],
+          debuffs: [],
+          goalId: null,
+          devProgress: 0,
+          devTarget: ""
+        };
+        setItems((prev) => [...prev, newItem]);
+        setSelectedItem(newItem);
+      };
+
+      const updateItem = (id, updates) => {
+        setItems((prev) => prev.map((i) => i.id === id ? { ...i, ...updates } : i));
+        if (selectedItem?.id === id) setSelectedItem((prev) => ({ ...prev, ...updates }));
+      };
+      const deleteItem = (id) => {
+        if (!confirm("아이템을 삭제하시겠어요?")) return;
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        setSelectedItem(null);
+      };
+
+      const counts = {
+        all: items.length,
+        equipped: items.filter((i) => i.status === "equipped").length,
+        developing: items.filter((i) => i.status === "developing").length,
+        stored: items.filter((i) => i.status === "stored").length
+      };
+
+      const updateBase = (key, value) => {
+        setResources((prev) => ({
+          ...prev,
+          money: { ...prev.money, [key]: Number(value) || 0 }
+        }));
+      };
+
+      const energyPct = Math.round((computed.energy.used / (computed.energy.weeklyPool + computed.energy.buff)) * 100);
+      const timePct = Math.round((computed.time.used / (computed.time.weeklyPool + computed.time.buff)) * 100);
+
       return (
         <div className="panel-enter">
-          <div className="ri-placeholder">
-            <div className="big">⚔️ 🎒</div>
-            <div className="title">자원 · 아이템 인벤토리</div>
-            <div className="sub">
-              Stage 3에서 구현됩니다.<br />
-              자원 현황 (💰 돈 · ⚡ 에너지 · ⏰ 시간)과<br />
-              디아블로 스타일 아이템 인벤토리 (장착 / 개발중 / 보관)가 좌우 분할로 표시됩니다.<br /><br />
-              현재 자원: 수입 +{(resources.money?.income || 0).toLocaleString()}원 / 지출 -{(resources.money?.expenses || 0).toLocaleString()}원
+          <div className="ri-split">
+            {/* LEFT: 자원 현황 */}
+            <div className="ri-col">
+              {/* 돈 */}
+              <div className="res-card">
+                <div className="res-card-head">
+                  <div className="res-card-title"><span className="res-card-ic">💰</span>돈 자원</div>
+                  <button className="gtr-btn-add" onClick={() => setEditBase((v) => !v)} style={{ background: editBase ? "var(--bg-2)" : "var(--accent)", color: editBase ? "var(--text-2)" : "white", border: editBase ? "1px solid var(--border)" : "none" }}>
+                    {editBase ? "완료" : "기본값 수정"}
+                  </button>
+                </div>
+
+                <div className="res-line income">
+                  <span className="lbl">기본 수입</span>
+                  {editBase
+                    ? <input className="res-input" type="number" value={computed.money.baseIncome} onChange={(e) => updateBase("income", e.target.value)} />
+                    : <span className="val">+{computed.money.baseIncome.toLocaleString()}원</span>}
+                </div>
+                {items.filter((i) => i.status === "equipped" && (i.buffs || []).some((b) => b.type === "money")).map((i) => (
+                  <div key={"inc-" + i.id} className="res-sub">
+                    {i.emoji} {i.name}: +{(i.buffs || []).filter((b) => b.type === "money").reduce((s, b) => s + b.value, 0).toLocaleString()}원
+                  </div>
+                ))}
+
+                <div className="res-line expense" style={{ marginTop: 8 }}>
+                  <span className="lbl">기본 지출</span>
+                  {editBase
+                    ? <input className="res-input" type="number" value={computed.money.baseExpenses} onChange={(e) => updateBase("expenses", e.target.value)} />
+                    : <span className="val">-{computed.money.baseExpenses.toLocaleString()}원</span>}
+                </div>
+                {items.filter((i) => i.status === "equipped" && (i.debuffs || []).some((d) => d.type === "money")).map((i) => (
+                  <div key={"exp-" + i.id} className="res-sub">
+                    {i.emoji} {i.name}: -{(i.debuffs || []).filter((d) => d.type === "money").reduce((s, d) => s + d.value, 0).toLocaleString()}원
+                  </div>
+                ))}
+
+                <div className={"res-line profit " + (computed.money.profit >= 0 ? "positive" : "negative")}>
+                  <span className="lbl">순이익</span>
+                  <span className="val">{computed.money.profit >= 0 ? "+" : ""}{computed.money.profit.toLocaleString()}원</span>
+                </div>
+              </div>
+
+              {/* 에너지 */}
+              <div className="res-card">
+                <div className="res-card-head">
+                  <div className="res-card-title"><span className="res-card-ic">⚡</span>에너지 자원</div>
+                  <div className="res-card-sub">이번 주</div>
+                </div>
+                <div className="res-bar-wrap">
+                  <div className="res-bar-label">
+                    <span>사용 / 한계</span>
+                    <span className="val">{computed.energy.used} / {computed.energy.weeklyPool + computed.energy.buff}</span>
+                  </div>
+                  <div className="res-bar">
+                    <div className={"res-bar-fill " + (energyPct > 80 ? "warn" : "")} style={{ width: Math.min(100, energyPct) + "%" }} />
+                  </div>
+                </div>
+                <div className="res-line" style={{ marginTop: 10 }}>
+                  <span className="lbl">기본 풀</span>
+                  <span className="val">{computed.energy.weeklyPool}</span>
+                </div>
+                {computed.energy.buff > 0 && (
+                  <div className="res-line income">
+                    <span className="lbl">아이템 버프</span>
+                    <span className="val">+{computed.energy.buff}</span>
+                  </div>
+                )}
+                <div className="res-line">
+                  <span className="lbl">남은 에너지</span>
+                  <span className="val">{computed.energy.weeklyPool + computed.energy.buff - computed.energy.used}</span>
+                </div>
+              </div>
+
+              {/* 시간 */}
+              <div className="res-card">
+                <div className="res-card-head">
+                  <div className="res-card-title"><span className="res-card-ic">⏰</span>시간 자원</div>
+                  <div className="res-card-sub">이번 주</div>
+                </div>
+                <div className="res-bar-wrap">
+                  <div className="res-bar-label">
+                    <span>사용 / 한계</span>
+                    <span className="val">{computed.time.used.toFixed(1)}h / {computed.time.weeklyPool + computed.time.buff}h</span>
+                  </div>
+                  <div className="res-bar">
+                    <div className={"res-bar-fill " + (timePct > 80 ? "warn" : "")} style={{ width: Math.min(100, timePct) + "%" }} />
+                  </div>
+                </div>
+                <div className="res-line" style={{ marginTop: 10 }}>
+                  <span className="lbl">기본 풀</span>
+                  <span className="val">{computed.time.weeklyPool}h</span>
+                </div>
+                {computed.time.buff > 0 && (
+                  <div className="res-line income">
+                    <span className="lbl">아이템 버프</span>
+                    <span className="val">+{computed.time.buff}h</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 스탯 버프 요약 */}
+              {Object.keys(computed.statBuffs).length > 0 && (
+                <div className="res-card">
+                  <div className="res-card-head">
+                    <div className="res-card-title"><span className="res-card-ic">📈</span>스탯 XP 버프</div>
+                  </div>
+                  {Object.entries(computed.statBuffs).map(([sid, v]) => {
+                    const s = stats.find((x) => x.id === sid);
+                    return (
+                      <div key={sid} className="res-line income">
+                        <span className="lbl">{s ? s.icon + " " + s.label : sid}</span>
+                        <span className="val">+{v}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT: 인벤토리 */}
+            <div className="ri-col">
+              <div className="inv-head">
+                <div className="inv-tabs">
+                  {[
+                    { id: "all", label: "전체" },
+                    { id: "equipped", label: "장착" },
+                    { id: "developing", label: "개발중" },
+                    { id: "stored", label: "보관" }
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      className={"inv-tab" + (filter === t.id ? " active" : "")}
+                      onClick={() => setFilter(t.id)}
+                    >
+                      {t.label}<span className="cnt">{counts[t.id]}</span>
+                    </button>
+                  ))}
+                </div>
+                <button className="gtr-btn-add" onClick={addItem}>+ 아이템 추가</button>
+              </div>
+
+              <div className="inv-grid">
+                {slots.map((it, idx) => (
+                  <div
+                    key={it ? it.id : "empty-" + idx}
+                    className={"inv-slot " + (it ? "filled " + it.status : "empty")}
+                    onClick={() => it && setSelectedItem(it)}
+                  >
+                    {it && (
+                      <>
+                        <span className="inv-slot-emoji">{it.emoji}</span>
+                        {it.status === "developing" && (
+                          <div className="inv-slot-progress">
+                            <div className="inv-slot-progress-fill" style={{ width: (it.devProgress || 0) + "%" }} />
+                          </div>
+                        )}
+                        <div className="inv-slot-tooltip">{it.name}</div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="inv-legend">
+                <span><span className="inv-legend-dot eq" />장착됨 (자원 반영)</span>
+                <span><span className="inv-legend-dot dev" />개발중</span>
+                <span><span className="inv-legend-dot stored" />보관</span>
+              </div>
+            </div>
+          </div>
+
+          {selectedItem && (
+            <ItemDetailModal
+              item={selectedItem}
+              onClose={() => setSelectedItem(null)}
+              onUpdate={(updates) => updateItem(selectedItem.id, updates)}
+              onDelete={() => deleteItem(selectedItem.id)}
+              goals={goals}
+              stats={stats}
+            />
+          )}
+        </div>
+      );
+    }
+
+    /* ─── Item Detail Modal ─── */
+    function ItemDetailModal({ item, onClose, onUpdate, onDelete, goals, stats }) {
+      const [local, setLocal] = useState(item);
+      const [emojiPicker, setEmojiPicker] = useState(false);
+
+      useEffect(() => { setLocal(item); }, [item]);
+
+      const update = (k, v) => {
+        const next = { ...local, [k]: v };
+        setLocal(next);
+        onUpdate({ [k]: v });
+      };
+
+      const addEffect = (kind) => {
+        const next = { ...local, [kind]: [...(local[kind] || []), { type: "money", value: 0, unit: "원/월", desc: "" }] };
+        setLocal(next);
+        onUpdate({ [kind]: next[kind] });
+      };
+      const updateEffect = (kind, idx, updates) => {
+        const arr = [...(local[kind] || [])];
+        arr[idx] = { ...arr[idx], ...updates };
+        setLocal({ ...local, [kind]: arr });
+        onUpdate({ [kind]: arr });
+      };
+      const deleteEffect = (kind, idx) => {
+        const arr = (local[kind] || []).filter((_, i) => i !== idx);
+        setLocal({ ...local, [kind]: arr });
+        onUpdate({ [kind]: arr });
+      };
+
+      const STATUS_OPTS = [
+        { id: "equipped", label: "⚔️ 장착" },
+        { id: "developing", label: "🔨 개발중" },
+        { id: "stored", label: "📦 보관" }
+      ];
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal-box" style={{ width: 640 }} onClick={(e) => e.stopPropagation()}>
+            <div className="item-modal-head-bar">
+              <div className="item-modal-emoji" onClick={() => setEmojiPicker((v) => !v)} style={{ cursor: "pointer" }} title="클릭하여 이모지 변경">
+                {local.emoji}
+              </div>
+              <div className="item-modal-info">
+                <input
+                  value={local.name}
+                  onChange={(e) => update("name", e.target.value)}
+                  style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 17, fontWeight: 600, fontFamily: "Geist, sans-serif", padding: 0, outline: "none", width: "100%" }}
+                />
+                <span className={"item-modal-status " + local.status}>
+                  {local.status === "equipped" ? "⚔️ 장착됨" : local.status === "developing" ? "🔨 개발중" : "📦 보관"}
+                </span>
+              </div>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+
+            {emojiPicker && (
+              <div style={{ padding: "12px 22px", borderBottom: "1px solid var(--border)", background: "var(--bg-2)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(14, 1fr)", gap: 4 }}>
+                  {ITEM_EMOJIS.map((e) => (
+                    <button key={e} onClick={() => { update("emoji", e); setEmojiPicker(false); }} style={{ background: local.emoji === e ? "var(--accent-soft)" : "var(--bg-3)", border: local.emoji === e ? "1px solid var(--accent)" : "1px solid var(--border)", borderRadius: 5, padding: "4px 0", cursor: "pointer", fontSize: 16 }}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="modal-body">
+              <div className="item-field">
+                <label className="item-field-label">설명</label>
+                <textarea rows="2" value={local.description || ""} onChange={(e) => update("description", e.target.value)} placeholder="이 아이템이 무엇이고 어떤 역할인지" />
+              </div>
+
+              <div className="item-field-row">
+                <label>상태</label>
+                <select value={local.status} onChange={(e) => update("status", e.target.value)}>
+                  {STATUS_OPTS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                </select>
+              </div>
+              <div className="item-field-row">
+                <label>연결 목표</label>
+                <select value={local.goalId || ""} onChange={(e) => update("goalId", e.target.value || null)}>
+                  <option value="">미연결</option>
+                  {goals.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </select>
+              </div>
+
+              {local.status === "developing" && (
+                <>
+                  <div className="item-field-row">
+                    <label>진행률 %</label>
+                    <input type="number" min="0" max="100" value={local.devProgress || 0} onChange={(e) => update("devProgress", Number(e.target.value) || 0)} />
+                  </div>
+                  <div className="item-field-row">
+                    <label>완료 예정</label>
+                    <input type="date" value={local.devTarget || ""} onChange={(e) => update("devTarget", e.target.value)} />
+                  </div>
+                </>
+              )}
+
+              {/* 버프 */}
+              <div className="item-effect-section" style={{ marginTop: 16 }}>
+                <div className="item-effect-title"><span style={{ color: "var(--green)" }}>●</span>버프 (장착 시 자원 추가)</div>
+                {(local.buffs || []).map((b, i) => (
+                  <div key={i} className="item-effect-row buff">
+                    <select value={b.type} onChange={(e) => updateEffect("buffs", i, { type: e.target.value })}>
+                      <option value="money">💰 수입</option>
+                      <option value="time">⏰ 시간</option>
+                      <option value="energy">⚡ 에너지</option>
+                      <option value="stat">📈 스탯XP</option>
+                    </select>
+                    {b.type === "stat" ? (
+                      <select value={b.statId || ""} onChange={(e) => updateEffect("buffs", i, { statId: e.target.value })}>
+                        <option value="">스탯 선택</option>
+                        {stats.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.label}</option>)}
+                      </select>
+                    ) : (
+                      <input type="text" value={b.desc || ""} onChange={(e) => updateEffect("buffs", i, { desc: e.target.value })} placeholder="설명" />
+                    )}
+                    <input type="number" value={b.value} onChange={(e) => updateEffect("buffs", i, { value: Number(e.target.value) || 0 })} />
+                    <input type="text" value={b.unit || ""} onChange={(e) => updateEffect("buffs", i, { unit: e.target.value })} placeholder="단위" />
+                    <button className="btn-del" onClick={() => deleteEffect("buffs", i)}>×</button>
+                  </div>
+                ))}
+                <button className="effect-add-btn" onClick={() => addEffect("buffs")}>+ 버프 추가</button>
+              </div>
+
+              {/* 디버프 */}
+              <div className="item-effect-section">
+                <div className="item-effect-title"><span style={{ color: "var(--red)" }}>●</span>디버프 (장착 시 자원 차감)</div>
+                {(local.debuffs || []).map((d, i) => (
+                  <div key={i} className="item-effect-row debuff">
+                    <select value={d.type} onChange={(e) => updateEffect("debuffs", i, { type: e.target.value })}>
+                      <option value="money">💸 지출</option>
+                      <option value="time">⏰ 시간 소모</option>
+                      <option value="energy">⚡ 에너지 소모</option>
+                    </select>
+                    <input type="text" value={d.desc || ""} onChange={(e) => updateEffect("debuffs", i, { desc: e.target.value })} placeholder="설명" />
+                    <input type="number" value={d.value} onChange={(e) => updateEffect("debuffs", i, { value: Number(e.target.value) || 0 })} />
+                    <input type="text" value={d.unit || ""} onChange={(e) => updateEffect("debuffs", i, { unit: e.target.value })} placeholder="단위" />
+                    <button className="btn-del" onClick={() => deleteEffect("debuffs", i)}>×</button>
+                  </div>
+                ))}
+                <button className="effect-add-btn" onClick={() => addEffect("debuffs")}>+ 디버프 추가</button>
+              </div>
+            </div>
+
+            <div className="modal-foot">
+              <button className="btn-cancel" onClick={onDelete} style={{ color: "var(--red)", borderColor: "rgba(239,68,68,0.3)" }}>🗑 삭제</button>
+              <button className="btn-save" onClick={onClose}>✓ 완료</button>
             </div>
           </div>
         </div>
       );
     }
+
+    /* ─── Stage 3: 드림 이미지 액션 (업로드 + AI) ─── */
+    function DreamImageActions({ dream, updateDream }) {
+      const fileRef = useRef(null);
+      const [busy, setBusy] = useState(false);
+      const [error, setError] = useState("");
+
+      const handleFile = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          setBusy(true); setError("");
+          const dataUrl = await compressImage(file, 480, 320, 0.75);
+          updateDream(dream.id, "imgUrl", dataUrl);
+        } catch (err) {
+          setError("업로드 실패: " + err.message);
+        } finally {
+          setBusy(false);
+          if (fileRef.current) fileRef.current.value = "";
+        }
+      };
+
+      const handleAi = async () => {
+        const apiKey = loadLS("dreamboard_settings", {}).geminiKey || "";
+        if (!apiKey) {
+          setError("⚙️ 설정에서 Gemini API Key 먼저 입력하세요");
+          setTimeout(() => setError(""), 3000);
+          return;
+        }
+        try {
+          setBusy(true); setError("");
+          const url = await geminiGenerateImage(apiKey, dream.name);
+          updateDream(dream.id, "imgUrl", url);
+        } catch (err) {
+          setError(err.message);
+          setTimeout(() => setError(""), 4000);
+        } finally {
+          setBusy(false);
+        }
+      };
+
+      return (
+        <>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+          <div className="dream-img-actions">
+            <button className="dream-img-btn" disabled={busy} onClick={() => fileRef.current?.click()}>
+              {busy ? "처리중..." : "📁 파일 업로드"}
+            </button>
+            <button className="dream-img-btn ai" disabled={busy} onClick={handleAi}>
+              ✨ AI 생성 (나노바나나2)
+            </button>
+          </div>
+          {error && <div style={{ fontSize: 11, color: "var(--red)", marginTop: 6, padding: "4px 8px", background: "rgba(239,68,68,0.1)", borderRadius: 4 }}>{error}</div>}
+        </>
+      );
+    }
+
     function App({ user }) {
       const [tab, setTab] = useState("dashboard");
       const [goals, setGoals] = useState(INITIAL_GOALS);
@@ -2092,6 +2671,7 @@
 
       // Stage 1 추가: 자원, 설정, 모달
       const [resources, setResources] = useState(INITIAL_RESOURCES);
+      const [items, setItems] = useState(INITIAL_ITEMS);
       const [settings, setSettings] = useState(() => loadLS("dreamboard_settings", INITIAL_SETTINGS));
       const [statModalOpen, setStatModalOpen] = useState(false);
       const [guideModalOpen, setGuideModalOpen] = useState(false);
@@ -2116,6 +2696,7 @@
             if (d.topThree) setTopThree(d.topThree);
             if (d.dailyLog) setDailyLog(d.dailyLog);
             if (d.resources) setResources(d.resources);
+            if (d.items) setItems(d.items);
           }
           setLoaded(true);
         });
@@ -2127,10 +2708,10 @@
         clearTimeout(saveTimer.current);
         saveTimer.current = setTimeout(() => {
           _db.collection("users").doc(user.uid).set(
-            { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources }
+            { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items }
           );
         }, 1500);
-      }, [tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, loaded]);
+      }, [tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, loaded]);
 
       // dailyLog 자동 기록
       useEffect(() => {
@@ -2244,7 +2825,7 @@
             streak={streak} setStreak={setStreak}
             topThree={topThree} setTopThree={setTopThree}
             dailyLog={dailyLog} focusMode={focusMode} setFocusMode={setFocusMode}
-            resources={resources}
+            resources={computeResources(resources, items)}
             onOpenStatModal={() => setStatModalOpen(true)}
             onOpenResources={() => setTab("resources")}
           />}
@@ -2253,7 +2834,11 @@
             tasks={tasks} toggleTask={toggleTask} addTask={addTask} editTask={editTask} deleteTask={deleteTask}
             retros={retros} setRetros={setRetros} dailyLog={dailyLog} stats={stats}
           />}
-          {tab === "resources" && <ResourcesItemsTab resources={resources} setResources={setResources} />}
+          {tab === "resources" && <ResourcesItemsTab
+            items={items} setItems={setItems}
+            resources={resources} setResources={setResources}
+            goals={goals} stats={stats} settings={settings}
+          />}
           {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} />}
 
           <div className="kbd-hints">
