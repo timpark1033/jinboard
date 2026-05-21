@@ -4828,3 +4828,8 @@
 .gmini-expand-more { font-size: 11px; color: var(--text-3); padding: 4px 6px; text-align: center; font-style: italic; }
 .gmini-expand .qb-row { padding: 4px 6px; margin: 1px 0; }
 .gmini-expand .qb-row.current-stage { padding: 5px 7px; }
+
+/* 선택된 목표에 따른 업무 강조/희미 */
+.eq-task-row.conn-dim { opacity: 0.28; filter: grayscale(0.7); transition: opacity 0.25s, filter 0.25s; }
+.eq-task-row.conn-active { background: rgba(139,92,246,0.05); transition: background 0.25s; }
+.eq-task-row { transition: opacity 0.25s, filter 0.25s, background 0.25s; }

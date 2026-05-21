@@ -2313,20 +2313,20 @@
             if (!tEl) return;
             const tRect = tEl.getBoundingClientRect();
             const tx = tRect.left - cRect.left;
-            const ty = tRect.top + tRect.height / 2 - cRect.top;
-            // 직교 라우팅: goal-right → 짧은 스텁 → 갭 영역 수직 → task-left 스텁
-            // elbow는 goal column 우측 바로 바깥(갭 영역)에 위치
-            const stub = 10;
-            const elbowX = gx + 14 + (idx % 3) * 4; // 동일 goal의 여러 task 간 약간 분산
-            const r = 6;
+            // 행의 상단 가장자리 근처(행 사이 간격)로 라우팅 → 텍스트 통과 회피
+            const ty = tRect.top - cRect.top - 1 - (idx % 3); // 행 위 1~3px (행 간격 영역)
+            const tyCenter = tRect.top + tRect.height / 2 - cRect.top;
+            // goal-right → 짧은 스텁 → 갭 영역 수직 → 행 상단 가장자리 → 행 시작 직전에서 stop
+            const elbowX = gx + 14 + (idx % 3) * 4;
+            const r = 4;
             const sgnY = ty > gy ? 1 : (ty < gy ? -1 : 0);
             let d;
             if (sgnY === 0) {
               d = `M ${gx} ${gy} L ${tx} ${ty}`;
             } else {
-              d = `M ${gx} ${gy} L ${elbowX - r} ${gy} Q ${elbowX} ${gy} ${elbowX} ${gy + sgnY * r} L ${elbowX} ${ty - sgnY * r} Q ${elbowX} ${ty} ${elbowX + r} ${ty} L ${tx} ${ty}`;
+              d = `M ${gx} ${gy} L ${elbowX - r} ${gy} Q ${elbowX} ${gy} ${elbowX} ${gy + sgnY * r} L ${elbowX} ${ty - sgnY * r} Q ${elbowX} ${ty} ${elbowX + r} ${ty} L ${tx + 4} ${ty}`;
             }
-            paths.push({ key: g.id + "-" + t.id, d, color: goalColor(g.id), goalId: g.id, taskId: t.id, done: t.done, gx, gy, tx, ty });
+            paths.push({ key: g.id + "-" + t.id, d, color: goalColor(g.id), goalId: g.id, taskId: t.id, done: t.done, gx, gy, tx, ty: tyCenter });
           });
         });
         setConnPaths(paths);
@@ -2963,7 +2963,7 @@
                           const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
                           const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
                           return (
-                            <div key={t.id} data-conn-task={t.id} className={"eq-task-row" + (t.done ? " done" : "")} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
+                            <div key={t.id} data-conn-task={t.id} className={"eq-task-row" + (t.done ? " done" : "") + (openGoalId && t.goalId !== openGoalId ? " conn-dim" : "") + (openGoalId && t.goalId === openGoalId ? " conn-active" : "")} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
                               <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} title="완료 토글" />
                               <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }} title="클릭으로 수정">{t.text}</span>
                               {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
