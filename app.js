@@ -2642,6 +2642,19 @@
         const errTxt = await res.text();
         let msg = errTxt.slice(0, 200);
         try { const j = JSON.parse(errTxt); msg = j.error?.message || msg; } catch (_) {}
+        // 무료 티어 할당량 0 (limit: 0) → 결제 필요
+        if (res.status === 429 && /limit:\s*0/.test(errTxt)) {
+          throw new Error("⚠️ 이 이미지 모델은 무료 티어 미포함 (limit=0)\n→ Google Cloud 결제 활성화 필요: aistudio.google.com/app/apikey\n→ 또는 AI Studio에서 직접 생성 → 파일 업로드 사용\n[" + m + "]");
+        }
+        if (res.status === 429) {
+          throw new Error("⏱️ 분당 요청 한도 초과 — 잠시 후 재시도\n[" + m + "]");
+        }
+        if (res.status === 403) {
+          throw new Error("🚫 API 키 권한 없음 또는 모델 접근 차단\n[" + m + "] " + msg);
+        }
+        if (res.status === 404) {
+          throw new Error("❌ 모델 없음 — 모델명 확인 또는 셧다운\n[" + m + "]");
+        }
         throw new Error("[" + m + "] " + res.status + ": " + msg);
       }
       const data = await res.json();
