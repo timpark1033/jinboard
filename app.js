@@ -449,16 +449,23 @@
     }
 
 
-    /* ---------- DreamGallery 2-up Slide ---------- */
+    /* ---------- DreamGallery 3-up Slide ---------- */
     function DreamGallery2Up({ dreams, onDreamClick }) {
+      const PER_PAGE = 3;
       const n = dreams.length;
-      // 페어 배열: [0,1], [2,3], ... 홀수면 wrap-around
+      // 페이지 배열: [0,1,2], [3,4,5], ... 부족하면 wrap-around
       const pairs = React.useMemo(() => {
         if (n === 0) return [];
-        if (n === 1) return [[dreams[0], dreams[0]]];
+        if (n < PER_PAGE) {
+          const slot = [];
+          for (let k = 0; k < PER_PAGE; k++) slot.push(dreams[k % n]);
+          return [slot];
+        }
         const arr = [];
-        for (let i = 0; i < n; i += 2) {
-          arr.push([dreams[i], dreams[(i + 1) % n]]);
+        for (let i = 0; i < n; i += PER_PAGE) {
+          const slot = [];
+          for (let k = 0; k < PER_PAGE; k++) slot.push(dreams[(i + k) % n]);
+          arr.push(slot);
         }
         return arr;
       }, [dreams]);
@@ -675,7 +682,7 @@
 
           {/* ZONE DREAM: 2-up 슬라이드 (5초마다 다음 페어로 밀어냄) */}
           <div className="db2-section">
-            <div className="db2-section-head">🌟 드림 갤러리 <span className="hint">2개씩 · 5초마다 밀어내기 · 호버 시 정지</span></div>
+            <div className="db2-section-head">🌟 드림 갤러리 <span className="hint">3개씩 · 5초마다 밀어내기 · 호버 시 정지</span></div>
             <DreamGallery2Up dreams={dreams} onDreamClick={onDreamClick} />
           </div>
 
