@@ -2788,6 +2788,27 @@
     }
 
     /* ─── 이미지 압축 (Canvas) ─── */
+    /* 데이터 URL → JPEG 압축 (AI 생성 이미지를 Firestore 1MB 제한 내로) */
+    function compressDataUrl(dataUrl, maxW = 1280, maxH = 800, quality = 0.88) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          const ratio = Math.min(maxW / w, maxH / h, 1);
+          w = Math.round(w * ratio); h = Math.round(h * ratio);
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+    }
+
     function compressImage(file, maxWidth = 1600, maxHeight = 1000, quality = 0.92) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -3300,10 +3321,16 @@
         const promptText = aiPrompt.trim() || dream.name;
         try {
           setBusy(true); setError("");
-          const url = await geminiGenerateImage(apiKey, promptText);
-          updateDream(dream.id, "imgUrl", url);
+          const rawUrl = await geminiGenerateImage(apiKey, promptText);
+          // PNG 원본 → JPEG 압축 (Firestore 1MB 문서 한계 대응)
+          const compressed = await compressDataUrl(rawUrl, 1280, 800, 0.88);
+          const origKB = Math.round(rawUrl.length / 1024);
+          const newKB = Math.round(compressed.length / 1024);
+          updateDream(dream.id, "imgUrl", compressed);
           setPromptOpen(false);
           setAiPrompt("");
+          setError("✓ 저장 완료 (" + origKB + "KB → " + newKB + "KB 압축)");
+          setTimeout(() => setError(""), 3000);
         } catch (err) {
           setError(err.message);
           setTimeout(() => setError(""), 5000);
@@ -3344,7 +3371,10 @@
             </div>
           )}
 
-          {error && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 6, padding: "6px 10px", background: "rgba(239,68,68,0.1)", borderRadius: 4, whiteSpace: "pre-line", lineHeight: 1.5 }}>{error}</div>}
+          {error && (() => {
+            const isOk = error.startsWith("✓");
+            return <div style={{ fontSize: 12, color: isOk ? "var(--green)" : "var(--red)", marginTop: 6, padding: "6px 10px", background: isOk ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", borderRadius: 4, whiteSpace: "pre-line", lineHeight: 1.5 }}>{error}</div>;
+          })()}
         </>
       );
     }
