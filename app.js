@@ -2569,11 +2569,11 @@
         <div className="panel-enter">
           <div className="gtr-split" ref={gtrRef} style={{ position: "relative", gridTemplateColumns: `${colWidths[0]}% 6px ${colWidths[1]}% 6px ${colWidths[2]}%` }}>
             <svg className="gtr-connections" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1, overflow: "visible" }}>
-              {connPaths.map((p) => (
+              {connPaths.filter(p => p.goalId === openGoalId).map((p) => (
                 <g key={p.key}>
-                  <path d={p.d} fill="none" stroke={p.color} strokeWidth="1.4" strokeOpacity={p.done ? 0.25 : 0.55} strokeDasharray={p.done ? "3 3" : "none"} strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx={p.gx} cy={p.gy} r="2.5" fill={p.color} opacity={p.done ? 0.4 : 0.85} />
-                  <circle cx={p.tx} cy={p.ty} r="2.5" fill={p.color} opacity={p.done ? 0.4 : 0.85} />
+                  <path d={p.d} fill="none" stroke={p.color} strokeWidth="1.8" strokeOpacity={p.done ? 0.35 : 0.75} strokeDasharray={p.done ? "3 3" : "none"} strokeLinecap="round" strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 4px ${p.color})` }} />
+                  <circle cx={p.gx} cy={p.gy} r="3" fill={p.color} opacity={p.done ? 0.5 : 1} />
+                  <circle cx={p.tx} cy={p.ty} r="3" fill={p.color} opacity={p.done ? 0.5 : 1} />
                 </g>
               ))}
             </svg>
