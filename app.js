@@ -456,7 +456,7 @@
                   <div key={d.id} className="dream-strip-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
                     <span className={"dream-tier-badge " + tier}>{DREAM_TIERS[tier]?.label || tier.toUpperCase()}</span>
                     {d.imgUrl
-                      ? <img src={d.imgUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: `blur(${blur}px) grayscale(${gray}%)` }} />
+                      ? <img src={d.imgUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <div className="dsc-bg">{d.emoji || '⭐'}</div>
                     }
                     <div className="dsc-overlay">
@@ -945,7 +945,7 @@
                 <div key={d.id} id={"dream-" + d.id} className={"dream-card" + (isOpen ? " dream-open" : "")}>
                   <div className="dream-img-wrap" onClick={() => setExpandedDream(isOpen ? null : d.id)}>
                     {d.imgUrl ? (
-                      <img src={d.imgUrl} className="dream-img" alt="" style={{ filter:`blur(${blur}px) grayscale(${gray}%)` }} />
+                      <img src={d.imgUrl} className="dream-img" alt="" />
                     ) : (
                       <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:8 }}>
                         <span style={{ fontSize: 33 }}>{d.emoji || "⭐"}</span>
