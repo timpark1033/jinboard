@@ -4854,51 +4854,57 @@
                 </div>
               </div>
 
-              {/* RIGHT: 단계 + 퀘스트 + 통계 */}
+              {/* RIGHT: 단계+퀘스트 (2열) + 통계 */}
               <div className="gdm-right-col">
-                <div className="gdm-stages">
-                  <div className="gdm-section-title">🎯 메인 단계 ({doneStages}/{totalStages})</div>
-                  {stages.length === 0 && <div className="gdm-empty">단계가 없습니다</div>}
-                  {stages.map((m, i) => {
-                    const isDone = m.status === "done";
-                    const isActive = m === activeStage && !isDone;
-                    return (
-                      <div key={m.id || i} className="gdm-stage-node">
-                        <span className={"gdm-sn-dot " + (isDone ? "done" : isActive ? "active" : "")} onClick={() => toggleStage && toggleStage(goal.id, m.id)} style={{ cursor: toggleStage ? "pointer" : "default" }}>{isDone ? "✓" : ""}</span>
-                        <span className={"gdm-sn-name " + (isDone ? "done" : isActive ? "active" : "")}>{m.name}</span>
-                        <span className="gdm-sn-xp">+{m.xpReward || 150}{isDone ? " ✓" : ""}</span>
-                      </div>
-                    );
-                  })}
-                  {stages.length > 0 && (
-                    <div className="gdm-bonus"><span>🎁 전체 달성 보너스</span><span>+600 XP{allStagesDone ? " ✓" : ""}</span></div>
-                  )}
-                </div>
-
-                {quests.length > 0 && (
-                  <div className="gdm-quests">
-                    {quests.map(q => {
-                      const target = q.target || 1;
-                      const cur = q.current || 0;
-                      const qPct = q.done ? 100 : Math.min(100, Math.round((cur / target) * 100));
-                      const dash = 207;
-                      const off = dash - (qPct / 100) * dash;
+                <div className="gdm-stages-quests">
+                  <div className="gdm-stages">
+                    <div className="gdm-section-title">🎯 메인 단계 ({doneStages}/{totalStages})</div>
+                    {stages.length === 0 && <div className="gdm-empty">단계가 없습니다</div>}
+                    {stages.map((m, i) => {
+                      const isDone = m.status === "done";
+                      const isActive = m === activeStage && !isDone;
                       return (
-                        <div key={q.id} className="gdm-q-card">
-                          <div className="gdm-q-ring">
-                            <svg viewBox="0 0 80 80">
-                              <circle className="gdm-q-bg" cx="40" cy="40" r="33" />
-                              <circle className={"gdm-q-fg" + (q.done ? " done" : "")} cx="40" cy="40" r="33" strokeDasharray={dash} strokeDashoffset={q.done ? 0 : off} />
-                            </svg>
-                            <div className={"gdm-q-pct" + (q.done ? " done" : "")}>{q.done ? "✓" : qPct + "%"}</div>
-                          </div>
-                          <div className="gdm-q-name">{q.name}{q.repeat === "weekly" ? " 🔁" : ""}</div>
-                          <div className={"gdm-q-frac" + (q.done ? " done" : "")}>{q.done ? "완료" : cur + "/" + target + (q.repeat === "weekly" ? " (이번주)" : "")}</div>
+                        <div key={m.id || i} className="gdm-stage-node">
+                          <span className={"gdm-sn-dot " + (isDone ? "done" : isActive ? "active" : "")} onClick={() => toggleStage && toggleStage(goal.id, m.id)} style={{ cursor: toggleStage ? "pointer" : "default" }}>{isDone ? "✓" : ""}</span>
+                          <span className={"gdm-sn-name " + (isDone ? "done" : isActive ? "active" : "")}>{m.name}</span>
+                          <span className="gdm-sn-xp">+{m.xpReward || 150}{isDone ? " ✓" : ""}</span>
                         </div>
                       );
                     })}
+                    {stages.length > 0 && (
+                      <div className="gdm-bonus"><span>🎁 전체 달성 보너스</span><span>+600 XP{allStagesDone ? " ✓" : ""}</span></div>
+                    )}
                   </div>
-                )}
+
+                  <div className="gdm-stages">
+                    <div className="gdm-section-title">💎 퀘스트 ({quests.filter(q => q.done).length}/{quests.length})</div>
+                    {quests.length === 0 && <div className="gdm-empty">퀘스트가 없습니다</div>}
+                    {quests.length > 0 && (
+                      <div className="gdm-quests">
+                        {quests.map(q => {
+                          const target = q.target || 1;
+                          const cur = q.current || 0;
+                          const qPct = q.done ? 100 : Math.min(100, Math.round((cur / target) * 100));
+                          const dash = 207;
+                          const off = dash - (qPct / 100) * dash;
+                          return (
+                            <div key={q.id} className="gdm-q-card">
+                              <div className="gdm-q-ring">
+                                <svg viewBox="0 0 80 80">
+                                  <circle className="gdm-q-bg" cx="40" cy="40" r="33" />
+                                  <circle className={"gdm-q-fg" + (q.done ? " done" : "")} cx="40" cy="40" r="33" strokeDasharray={dash} strokeDashoffset={q.done ? 0 : off} />
+                                </svg>
+                                <div className={"gdm-q-pct" + (q.done ? " done" : "")}>{q.done ? "✓" : qPct + "%"}</div>
+                              </div>
+                              <div className="gdm-q-name">{q.name}{q.repeat === "weekly" ? " 🔁" : ""}</div>
+                              <div className={"gdm-q-frac" + (q.done ? " done" : "")}>{q.done ? "완료" : cur + "/" + target + (q.repeat === "weekly" ? " (이번주)" : "")}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <div className="gdm-stats-row">
                   <div className="gdm-stat-card">

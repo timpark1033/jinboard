@@ -4844,3 +4844,9 @@
 }
 .qm-add-btn:hover:not(:disabled) { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-glow); }
 .qm-add-btn:disabled { opacity: 0.35; cursor: not-allowed; background: var(--bg-3); color: var(--text-4); }
+
+/* GoalDetailModal 단계+퀘스트 2열 */
+.gdm-stages-quests { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 1100px) { .gdm-stages-quests { grid-template-columns: 1fr; } }
+/* 퀘스트가 좁은 컬럼 안에 들어가면 2x2로 자연 정렬 */
+.gdm-stages-quests .gdm-quests { grid-template-columns: repeat(2, 1fr); }
