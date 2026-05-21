@@ -4810,8 +4810,11 @@
    목표↔업무 SVG 연결선 + 줌 슬라이더
    ============================================================ */
 .gtr-connections path { transition: stroke-opacity 0.3s; }
-.gtr-zoom { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 7px; padding: 4px 10px; }
+.gtr-zoom { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 7px; padding: 4px 8px 4px 10px; }
 .gtr-zoom input[type="range"] { width: 90px; accent-color: var(--accent); cursor: pointer; }
+.gtr-zoom-apply { background: var(--accent); color: #fff; border: none; border-radius: 5px; padding: 4px 10px; font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.gtr-zoom-apply:hover:not(:disabled) { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-glow); }
+.gtr-zoom-apply:disabled { opacity: 0.35; cursor: not-allowed; background: var(--bg-3); color: var(--text-4); }
 
 /* 목표 카드 좌측 컬러 바 + 약간의 hover 강조 */
 .gmini { position: relative; }
