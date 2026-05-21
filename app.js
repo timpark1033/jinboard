@@ -1219,9 +1219,6 @@
                 </div>
               );
             })}
-            <div className="add-goal-card" onClick={addDream} style={{ minHeight:180 }}>
-              <span className="plus">+</span>새 드림 추가하기
-            </div>
           </div>
 
           {/* 드림 삭제 확인 모달 */}
