@@ -450,7 +450,7 @@
 
 
     /* ---------- TAB 1: Dashboard (B 컨셉 개편) ---------- */
-    function Dashboard({ goals, tasks, toggleTask, stats, dreams, streak, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage, adjustQuestCount, onOpenQuestGuide, onEditGoal, summaryCards, setSummaryCards, settings, onOpenGoalDetail }) {
+    function Dashboard({ goals, tasks, toggleTask, stats, dreams, streak, dailyLog, focusMode, setFocusMode, resources, onOpenSettings, onOpenResources, onDreamClick, toggleStage, adjustQuestCount, onOpenQuestGuide, onEditGoal, summaryCards, setSummaryCards, settings, onOpenGoalDetail }) {
       const [ctxMenu, setCtxMenu] = useState(null); // { x, y, cardId }
       const [editingCardId, setEditingCardId] = useState(null);
       const [iconPickerId, setIconPickerId] = useState(null);
@@ -482,11 +482,6 @@
         e.preventDefault();
         setCtxMenu({ x: e.clientX, y: e.clientY, cardId });
       };
-      useEffect(() => {
-        const close = () => setCtxMenu(null);
-        document.addEventListener("click", close);
-        return () => document.removeEventListener("click", close);
-      }, []);
 
       const fmtVal = (n) => {
         if (n >= 100000000) return (n / 100000000).toFixed(2);
@@ -550,7 +545,7 @@
                     <div style={{ fontSize: 32, marginBottom: 10 }}>📅</div>
                     <div style={{ fontSize: 13, marginBottom: 6 }}>설정에서 생년월일 입력 시</div>
                     <div style={{ fontSize: 12, color: "var(--text-4)" }}>인생 게이지가 표시됩니다</div>
-                    <button onClick={onOpenStatModal} style={{ background: "transparent", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "6px 16px", borderRadius: 6, marginTop: 10, cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 12 }}>⚙ 설정 열기</button>
+                    <button onClick={onOpenSettings} style={{ background: "transparent", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "6px 16px", borderRadius: 6, marginTop: 10, cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 12 }}>⚙ 설정 열기</button>
                   </div>
                 )}
               </div>
@@ -672,12 +667,15 @@
             </div>
           </div>
 
-          {/* 우클릭 컨텍스트 메뉴 */}
+          {/* 우클릭 컨텍스트 메뉴 (backdrop overlay 패턴) */}
           {ctxMenu && (() => {
             const c = summaryCards.find(x => x.id === ctxMenu.cardId);
             const idx = summaryCards.findIndex(x => x.id === ctxMenu.cardId);
+            if (!c) return null;
             return (
-              <div className="db2-ctxmenu" style={{ left: ctxMenu.x, top: ctxMenu.y }} onClick={(e) => e.stopPropagation()}>
+              <>
+                <div onClick={() => setCtxMenu(null)} onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null); }} style={{ position: "fixed", inset: 0, zIndex: 9998 }} />
+                <div className="db2-ctxmenu" style={{ position: "fixed", left: ctxMenu.x, top: ctxMenu.y, zIndex: 9999 }} onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => { setEditingCardId(c.id); setCtxMenu(null); }}>✏ 이름 변경</button>
                 <button onClick={() => { setIconPickerId(c.id); setCtxMenu(null); }}>🎨 아이콘 변경</button>
                 <div className="db2-ctx-sep"></div>
@@ -690,6 +688,7 @@
                 <div className="db2-ctx-sep"></div>
                 <button onClick={() => { deleteCard(c.id); setCtxMenu(null); }} style={{ color: "var(--red)" }}>🗑 삭제</button>
               </div>
+              </>
             );
           })()}
 
@@ -881,7 +880,7 @@
     }
 
     /* ---------- TAB 5: Vision ---------- */
-    function VisionTab({ vision, setVision, stats, setStats, dreams, setDreams, initialOpenDreamId, onDreamOpened }) {
+    function VisionTab({ vision, setVision, stats, setStats, dreams, setDreams, initialOpenDreamId, onDreamOpened, uid }) {
       const [expandedStat, setExpandedStat] = useState(null);
       const [expandedDream, setExpandedDream] = useState(null);
       const [editingDream, setEditingDream] = useState(null);
@@ -1091,7 +1090,7 @@
                                 <input className="char-input" style={{ flex: 1, textAlign: "left", fontSize: 12 }} value={d.imgUrl}
                                   onChange={e => updateDream(d.id, "imgUrl", e.target.value)} placeholder="https://... 또는 아래 버튼" />
                               </div>
-                              <DreamImageActions dream={d} updateDream={updateDream} />
+                              <DreamImageActions dream={d} updateDream={updateDream} uid={uid} />
                             </div>
 
                             <div className="dream-calc-grid">
@@ -2059,6 +2058,36 @@
               </div>
 
               <div className="settings-section">
+                <div className="settings-section-title">📅 개인 정보 (인생 게이지)</div>
+                <div className="settings-field">
+                  <label>생년월일</label>
+                  <input type="date" value={settings.birthDate || ""} onChange={(e) => update("birthDate", e.target.value)} />
+                </div>
+                <div className="settings-field" style={{ marginTop: 12 }}>
+                  <label>성별</label>
+                  <select value={settings.gender || "male"} onChange={(e) => {
+                    const g = e.target.value;
+                    update("gender", g);
+                    update("expectedLifespan", g === "female" ? 86.6 : 80.6);
+                  }}>
+                    <option value="male">남</option>
+                    <option value="female">여</option>
+                  </select>
+                </div>
+                <div className="settings-hint">한국 평균수명: 남 80.6 / 여 86.6</div>
+                <div className="settings-field" style={{ marginTop: 12 }}>
+                  <label>예상 수명</label>
+                  <input type="number" step="0.1" value={settings.expectedLifespan || 80.6} onChange={(e) => update("expectedLifespan", Number(e.target.value) || 80.6)} />
+                  <span style={{ fontSize: 12, color: "var(--text-3)" }}>세</span>
+                </div>
+                <div className="settings-field" style={{ marginTop: 12 }}>
+                  <label>은퇴 나이</label>
+                  <input type="number" value={settings.retireAge || 65} onChange={(e) => update("retireAge", Number(e.target.value) || 65)} />
+                  <span style={{ fontSize: 12, color: "var(--text-3)" }}>세</span>
+                </div>
+              </div>
+
+              <div className="settings-section">
                 <div className="settings-section-title">계정</div>
                 <div style={{ fontSize: 13, color: "var(--text-2)", padding: "4px 0" }}>{ALLOWED_EMAIL}</div>
                 <button onClick={onLogout} style={{ marginTop: 10, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-3)", fontSize: 13, padding: "6px 14px", cursor: "pointer", fontFamily: "Geist, sans-serif" }}>로그아웃</button>
@@ -2997,6 +3026,21 @@
       });
     }
 
+    /* Firebase Storage 업로드 — Storage 미활성화 시 null 반환(호출부에서 base64 폴백) */
+    async function uploadDreamImageToStorage(dataUrl, dreamId, uid) {
+      if (!_storage || !uid) return null;
+      try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const safeId = (dreamId || "dream") + "_" + Date.now();
+        const ref = _storage.ref("dreams/" + uid + "/" + safeId + ".jpg");
+        await ref.put(blob, { contentType: "image/jpeg" });
+        return await ref.getDownloadURL();
+      } catch (err) {
+        console.warn("Storage 업로드 실패 — base64 폴백:", err.message);
+        return null;
+      }
+    }
+
     function compressImage(file, maxWidth = 1600, maxHeight = 1000, quality = 0.92) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -3477,7 +3521,7 @@
     }
 
     /* ─── Stage 3: 드림 이미지 액션 (업로드 + AI) ─── */
-    function DreamImageActions({ dream, updateDream }) {
+    function DreamImageActions({ dream, updateDream, uid }) {
       const fileRef = useRef(null);
       const [busy, setBusy] = useState(false);
       const [error, setError] = useState("");
@@ -3490,7 +3534,13 @@
         try {
           setBusy(true); setError("");
           const dataUrl = await compressImage(file, 1600, 1000, 0.92);
-          updateDream(dream.id, "imgUrl", dataUrl);
+          // Storage 우선 → 실패 시 base64 폴백
+          const storageUrl = await uploadDreamImageToStorage(dataUrl, dream.id, uid);
+          updateDream(dream.id, "imgUrl", storageUrl || dataUrl);
+          if (storageUrl) {
+            setError("✓ Storage 업로드 완료");
+            setTimeout(() => setError(""), 2500);
+          }
         } catch (err) {
           setError("업로드 실패: " + err.message);
         } finally {
@@ -3510,14 +3560,16 @@
         try {
           setBusy(true); setError("");
           const rawUrl = await geminiGenerateImage(apiKey, promptText);
-          // PNG 원본 → JPEG 압축 (Firestore 1MB 문서 한계 대응)
+          // PNG 원본 → JPEG 압축
           const compressed = await compressDataUrl(rawUrl, 1280, 800, 0.88);
           const origKB = Math.round(rawUrl.length / 1024);
           const newKB = Math.round(compressed.length / 1024);
-          updateDream(dream.id, "imgUrl", compressed);
+          // Storage 우선 → 실패 시 base64 폴백
+          const storageUrl = await uploadDreamImageToStorage(compressed, dream.id, uid);
+          updateDream(dream.id, "imgUrl", storageUrl || compressed);
           setPromptOpen(false);
           setAiPrompt("");
-          setError("✓ 저장 완료 (" + origKB + "KB → " + newKB + "KB 압축)");
+          setError(storageUrl ? "✓ Storage 업로드 완료" : ("✓ 저장 완료 (" + origKB + "KB → " + newKB + "KB 압축)"));
           setTimeout(() => setError(""), 3000);
         } catch (err) {
           setError(err.message);
@@ -4105,7 +4157,7 @@
             streak={streak} dailyLog={dailyLog}
             focusMode={focusMode} setFocusMode={setFocusMode}
             resources={computeResources(resources, items)}
-            onOpenStatModal={() => setSettingsOpen(true)}
+            onOpenSettings={() => setSettingsOpen(true)}
             onOpenResources={() => setTab("resources")}
             onDreamClick={handleDreamClick}
             toggleStage={toggleStage}
@@ -4132,7 +4184,7 @@
             finance={finance} setFinance={setFinance}
             onOpenFinance={() => setFinanceModalOpen(true)}
           />}
-          {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} />}
+          {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} uid={user?.uid} />}
 
           <div className="kbd-hints">
             <span>키보드</span>
@@ -4217,6 +4269,207 @@
             open={questGuideOpen}
             onClose={() => setQuestGuideOpen(false)}
           />
+          <GoalDetailModal
+            open={!!goalDetailId}
+            onClose={() => setGoalDetailId(null)}
+            goal={goals.find(g => g.id === goalDetailId)}
+            stats={stats}
+            tasks={tasks}
+            onEditGoal={editGoal}
+            onDeleteGoal={deleteGoal}
+            toggleStage={toggleStage}
+          />
+        </div>
+      );
+    }
+
+    /* ---------- GoalDetailModal ---------- */
+    function GoalDetailModal({ open, onClose, goal, stats, tasks, onEditGoal, onDeleteGoal, toggleStage }) {
+      if (!open || !goal) return null;
+      const stages = goal.milestones || [];
+      const doneStages = stages.filter(m => m.status === "done").length;
+      const totalStages = stages.length;
+      const pct = totalStages > 0 ? Math.round((doneStages / totalStages) * 100) : (goal.progress || 0);
+      const activeStage = stages.find(m => m.status === "active") || stages.find(m => m.status !== "done");
+      const allStagesDone = totalStages > 0 && doneStages === totalStages;
+      const quests = goal.quests || [];
+      const dday = calcDday(goal.deadline);
+      const ddayCls = dday <= 3 ? "dday-red" : dday <= 7 ? "dday-amber" : "dday-norm";
+      const tier = goal.tier || "normal";
+      const stat = goal.statId ? stats.find(s => s.id === goal.statId) : null;
+      const goalTasks = tasks.filter(t => t.goalId === goal.id);
+      const doneTasks = goalTasks.filter(t => t.done).length;
+      const taskPct = goalTasks.length > 0 ? Math.round((doneTasks / goalTasks.length) * 100) : 0;
+
+      const totalQuestXp = quests.reduce((sum, q) => {
+        if (q.done) return sum + (q.xpReward || 0);
+        const step = q.xpPerStep || 0;
+        return sum + step * (q.current || 0);
+      }, 0);
+      const stageXp = stages.filter(m => m.status === "done").reduce((s, m) => s + (m.xpReward || 150), 0);
+      const accumulatedXp = stageXp + totalQuestXp + (allStagesDone ? 600 : 0);
+
+      // 큰 반원 게이지 — 280x160, path A 30,140 to 250,140
+      const arcLen = 345;
+      const arcOffset = arcLen - (pct / 100) * arcLen;
+
+      const handleDelete = () => {
+        if (window.confirm(`"${goal.name}" 목표를 삭제할까요? (복구 불가)`)) {
+          onDeleteGoal(goal.id);
+          onClose();
+        }
+      };
+
+      return (
+        <div className="gdm-overlay" onClick={onClose}>
+          <div className="gdm-card" onClick={(e) => e.stopPropagation()}>
+            <div className="gdm-head">
+              <button className="gdm-back" onClick={onClose}>← 대시보드</button>
+              <div className="gdm-title-block">
+                {goal.category && <div className="gdm-cat">{goal.category}</div>}
+                <div className="gdm-name">{goal.name}</div>
+                <div className="gdm-meta">
+                  <span className={"tier " + tier}>{tier.toUpperCase()}</span>
+                  {goal.deadline && <>
+                    <span className={ddayCls}>{dday >= 0 ? "D-" + dday : "D+" + Math.abs(dday)}</span>
+                    <span style={{ color: "var(--text-4)" }}>· {goal.deadline} 마감</span>
+                  </>}
+                  <span style={{ color: "var(--text-4)" }}>· 누적 XP {accumulatedXp.toLocaleString()}</span>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="gdm-action danger" onClick={handleDelete}>🗑 삭제</button>
+              </div>
+            </div>
+
+            <div className="gdm-body">
+              {/* LEFT: 큰 반원 게이지 + 현재 단계 */}
+              <div className="gdm-gauge-area">
+                <div className="gdm-gauge-title">📊 전체 진행률</div>
+                <div className="gdm-big-gauge">
+                  <svg viewBox="0 0 280 170">
+                    <path className="gdm-bg-bg" d="M 30 150 A 110 110 0 0 1 250 150" />
+                    <path className="gdm-bg-fg" d="M 30 150 A 110 110 0 0 1 250 150" strokeDasharray={arcLen} strokeDashoffset={arcOffset} />
+                  </svg>
+                  <div className="gdm-bg-pct">{pct}<span className="u">%</span></div>
+                </div>
+                <div className="gdm-bg-sub">
+                  단계 {doneStages}/{totalStages} 완료
+                  {!allStagesDone && totalStages > 0 && " · 다음 단계까지 +150 XP"}
+                  {allStagesDone && " · 🎁 전체 보너스 +600 XP 획득"}
+                </div>
+
+                <div className="gdm-current-stage-box">
+                  <div className="gdm-current-lbl">📌 현재 단계</div>
+                  {activeStage ? (
+                    <div className={"gdm-current-card" + (allStagesDone ? " done" : "")}>
+                      <div className="gdm-current-tag">📍 STAGE {stages.indexOf(activeStage) + 1} · {activeStage.status === "done" ? "완료" : "진행중"}</div>
+                      <div className="gdm-current-name">{activeStage.name}</div>
+                      <div className="gdm-current-xp">완료 시 +{activeStage.xpReward || 150} XP</div>
+                    </div>
+                  ) : (
+                    <div className="gdm-empty">단계가 없습니다 — 목표·업무 탭에서 추가</div>
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT: 단계 + 퀘스트 + 통계 */}
+              <div className="gdm-right-col">
+                <div className="gdm-stages">
+                  <div className="gdm-section-title">🎯 메인 단계 ({doneStages}/{totalStages})</div>
+                  {stages.length === 0 && <div className="gdm-empty">단계가 없습니다</div>}
+                  {stages.map((m, i) => {
+                    const isDone = m.status === "done";
+                    const isActive = m === activeStage && !isDone;
+                    return (
+                      <div key={m.id || i} className="gdm-stage-node">
+                        <span className={"gdm-sn-dot " + (isDone ? "done" : isActive ? "active" : "")} onClick={() => toggleStage && toggleStage(goal.id, m.id)} style={{ cursor: toggleStage ? "pointer" : "default" }}>{isDone ? "✓" : ""}</span>
+                        <span className={"gdm-sn-name " + (isDone ? "done" : isActive ? "active" : "")}>{m.name}</span>
+                        <span className="gdm-sn-xp">+{m.xpReward || 150}{isDone ? " ✓" : ""}</span>
+                      </div>
+                    );
+                  })}
+                  {stages.length > 0 && (
+                    <div className="gdm-bonus"><span>🎁 전체 달성 보너스</span><span>+600 XP{allStagesDone ? " ✓" : ""}</span></div>
+                  )}
+                </div>
+
+                {quests.length > 0 && (
+                  <div className="gdm-quests">
+                    {quests.map(q => {
+                      const target = q.target || 1;
+                      const cur = q.current || 0;
+                      const qPct = q.done ? 100 : Math.min(100, Math.round((cur / target) * 100));
+                      const dash = 207;
+                      const off = dash - (qPct / 100) * dash;
+                      return (
+                        <div key={q.id} className="gdm-q-card">
+                          <div className="gdm-q-ring">
+                            <svg viewBox="0 0 80 80">
+                              <circle className="gdm-q-bg" cx="40" cy="40" r="33" />
+                              <circle className={"gdm-q-fg" + (q.done ? " done" : "")} cx="40" cy="40" r="33" strokeDasharray={dash} strokeDashoffset={q.done ? 0 : off} />
+                            </svg>
+                            <div className={"gdm-q-pct" + (q.done ? " done" : "")}>{q.done ? "✓" : qPct + "%"}</div>
+                          </div>
+                          <div className="gdm-q-name">{q.name}{q.repeat === "weekly" ? " 🔁" : ""}</div>
+                          <div className={"gdm-q-frac" + (q.done ? " done" : "")}>{q.done ? "완료" : cur + "/" + target + (q.repeat === "weekly" ? " (이번주)" : "")}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="gdm-stats-row">
+                  <div className="gdm-stat-card">
+                    <div className="gdm-stat-title">📈 누적 XP</div>
+                    <div className="gdm-stat-big">{accumulatedXp.toLocaleString()}<span style={{ fontSize: 13, color: "var(--text-3)", marginLeft: 4 }}>XP</span></div>
+                    <div className="gdm-stat-sub">단계 {stageXp} + 퀘스트 {totalQuestXp}{allStagesDone ? " + 보너스 600" : ""}</div>
+                  </div>
+                  <div className="gdm-stat-card">
+                    <div className="gdm-stat-title">✓ 완료 할일</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      <div style={{ position: "relative", width: 56, height: 56 }}>
+                        <svg viewBox="0 0 60 60" style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx="30" cy="30" r="25" fill="none" stroke="var(--bg-3)" strokeWidth="6"/>
+                          <circle cx="30" cy="30" r="25" fill="none" stroke="url(#ringGrad)" strokeWidth="6" strokeDasharray="157" strokeDashoffset={157 - (taskPct / 100) * 157} strokeLinecap="round"/>
+                        </svg>
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Geist Mono, monospace", fontSize: 13, fontWeight: 800 }}>{taskPct}%</div>
+                      </div>
+                      <div>
+                        <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 20, fontWeight: 800 }}>{doneTasks}<span style={{ fontSize: 12, color: "var(--text-3)" }}> / {goalTasks.length}</span></div>
+                        <div style={{ fontSize: 11, color: "var(--text-3)" }}>연결된 할일</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="gdm-stat-card">
+                    <div className="gdm-stat-title">⚔️ 연결 스탯</div>
+                    {stat ? (() => {
+                      const tx = getStatTotalXp(stat);
+                      const lv = statLevel(tx);
+                      const prog = statLevelProgress(tx);
+                      const nextNeed = lv < 10 ? STAT_LEVEL_REQ[lv] - tx : 0;
+                      return (
+                        <>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                            <span style={{ fontSize: 26 }}>{stat.icon}</span>
+                            <div>
+                              <div style={{ fontFamily: "Geist Mono, monospace", fontSize: 20, fontWeight: 800, color: "var(--accent)" }}>Lv.{lv}</div>
+                              <div style={{ fontSize: 10.5, color: "var(--text-3)" }}>{stat.label}{lv < 10 ? ` · Lv.${lv + 1}까지 ${nextNeed.toLocaleString()} XP` : " · 만렙"}</div>
+                            </div>
+                          </div>
+                          <div style={{ height: 5, background: "var(--bg-3)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: (prog * 100) + "%", background: "linear-gradient(90deg, var(--accent-2), var(--accent))", boxShadow: "0 0 6px var(--accent-glow)" }} />
+                          </div>
+                        </>
+                      );
+                    })() : (
+                      <div className="gdm-empty">연결된 스탯 없음</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="styles.css?v=20260521ad" />
+<link rel="stylesheet" href="styles.css?v=20260521ae" />
 </head>
 <body>
   <div id="root"></div>
@@ -30,6 +30,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
   <script>
     firebase.initializeApp({
       apiKey: "AIzaSyATl0GJHDtZc5j-bBh1-s4QTmCeTgVIhdg",
@@ -41,9 +42,10 @@
     });
     const _auth = firebase.auth();
     const _db = firebase.firestore();
+    const _storage = (typeof firebase.storage === "function") ? firebase.storage() : null;
     const ALLOWED_EMAIL = "timpark1033@gmail.com";
   </script>
 
-  <script type="text/babel" data-presets="react" src="app.js?v=20260521ad"></script>
+  <script type="text/babel" data-presets="react" src="app.js?v=20260521ae"></script>
 </body>
 </html>
