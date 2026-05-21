@@ -266,10 +266,23 @@
     function sumExpenseActual(finance) {
       return (finance.expenses || []).reduce((s, e) => s + (e.actual || 0), 0);
     }
+    // 콤마 포맷 (입력 표시용): 1234567 → "1,234,567"
+    function fmtComma(n) { return Number(n || 0).toLocaleString(); }
+    function parseComma(str) { return Number(String(str || "").replace(/[^0-9-]/g, "")) || 0; }
+
     function fmtKR(n) {
-      if (n >= 100000000) return "₩" + (n / 100000000).toFixed(1) + "억";
-      if (n >= 10000) return "₩" + Math.round(n / 10000).toLocaleString() + "만";
-      return "₩" + (n || 0).toLocaleString();
+      const num = Math.round(Number(n) || 0);
+      if (num === 0) return "0원";
+      const sign = num < 0 ? "-" : "";
+      const abs = Math.abs(num);
+      const eok = Math.floor(abs / 100000000);
+      const man = Math.floor((abs % 100000000) / 10000);
+      const won = abs % 10000;
+      const parts = [];
+      if (eok > 0) parts.push(eok.toLocaleString() + "억");
+      if (man > 0) parts.push(man.toLocaleString() + "만");
+      if (won > 0) parts.push(won.toLocaleString());
+      return sign + parts.join(" ") + "원";
     }
     // 만원 단위 숫자 → "1억 1,000만원" 형식
     function fmtManwon(num) {
@@ -4800,7 +4813,7 @@
                 <div key={x.id} style={{ display: "grid", gridTemplateColumns: "1fr 160px 28px", gap: 8, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
                   <input value={x.name} onChange={(e) => updateItem(kind, x.id, { name: e.target.value })}
                     style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 13, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
-                  <input type="number" value={x.value} onChange={(e) => updateItem(kind, x.id, { value: Number(e.target.value) || 0 })}
+                  <input type="text" inputMode="numeric" value={fmtComma(x.value)} onChange={(e) => updateItem(kind, x.id, { value: parseComma(e.target.value) })}
                     placeholder="원 단위"
                     style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
                   <button onClick={() => deleteItem(kind, x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
@@ -4827,7 +4840,7 @@
                   style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-2)", padding: "4px 6px", fontSize: 12, fontFamily: "inherit", outline: "none" }}>
                   {Object.entries(DEBT_CATS).map(([c, l]) => <option key={c} value={c}>{l}</option>)}
                 </select>
-                <input type="number" value={x.value} onChange={(e) => updateItem("debts", x.id, { value: Number(e.target.value) || 0 })}
+                <input type="text" inputMode="numeric" value={fmtComma(x.value)} onChange={(e) => updateItem("debts", x.id, { value: parseComma(e.target.value) })}
                   placeholder="원 단위"
                   style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--red)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
                 <button onClick={() => deleteItem("debts", x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
@@ -4860,10 +4873,10 @@
                 <div key={x.id} style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
                   <input value={x.name} onChange={(e) => updateItem(kind, x.id, { name: e.target.value })}
                     style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 13, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
-                  <input type="number" value={x.expected} onChange={(e) => updateItem(kind, x.id, { expected: Number(e.target.value) || 0 })}
+                  <input type="text" inputMode="numeric" value={fmtComma(x.expected)} onChange={(e) => updateItem(kind, x.id, { expected: parseComma(e.target.value) })}
                     placeholder="예상"
                     style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
-                  <input type="number" value={x.actual} onChange={(e) => updateItem(kind, x.id, { actual: Number(e.target.value) || 0 })}
+                  <input type="text" inputMode="numeric" value={fmtComma(x.actual)} onChange={(e) => updateItem(kind, x.id, { actual: parseComma(e.target.value) })}
                     placeholder="실제"
                     style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
                   <button onClick={() => deleteItem(kind, x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
