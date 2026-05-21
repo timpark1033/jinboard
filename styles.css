@@ -4223,3 +4223,89 @@
     font-size: 11px;
     padding: 2px 6px;
   }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 14: 퀘스트 카운터 + 미진행 단계 작게 ── */
+  /* ─────────────────────────────── */
+
+  /* 미진행(예정) 메인 단계 = 3pt 작게 */
+  .qb-row.todo .qb-text {
+    font-size: 10px;
+    color: var(--text-4);
+  }
+  .qb-row.todo .qb-tag {
+    opacity: 0.6;
+  }
+
+  /* 대시보드 퀘스트 카운터 (진행바 + N/M + +/-) */
+  .qb-quest { gap: 4px; flex-wrap: wrap; }
+  .qb-quest-prog {
+    display: flex; align-items: center; gap: 4px;
+    flex: 1; min-width: 100px;
+    margin-left: auto;
+  }
+  .qbp-num {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--accent);
+    font-weight: 700;
+    min-width: 38px;
+    text-align: right;
+  }
+  .qbp-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 30px;
+  }
+  .qbp-fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    border-radius: 2px;
+    transition: width 0.4s;
+  }
+  .qbp-btn {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .qbp-btn:hover { background: var(--accent-soft); border-color: var(--border-accent); color: var(--accent); }
+
+  /* 모달 퀘스트 행 카운터 */
+  .qm-row.qm-quest {
+    grid-template-columns: 22px 22px 1fr 140px 80px 60px 24px;
+  }
+  .qm-counter {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .qm-counter input {
+    width: 36px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-1);
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    text-align: center;
+    padding: 2px 0;
+    outline: none;
+  }
+  .qm-counter input:focus { border-color: var(--accent); }
