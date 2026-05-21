@@ -4237,11 +4237,13 @@
   .qb-row.todo .qb-tag {
     opacity: 0.65;
   }
-  /* 완료 단계: 어둡지 않게, 밝은 회색 + 취소선 */
+  /* 완료 단계: 밝은 회색 + 또렷한 취소선 */
   .qb-row.done .qb-text {
     color: #b8b8c0 !important;
     text-decoration: line-through;
-    text-decoration-color: rgba(184,184,192,0.5);
+    text-decoration-color: #d4d4dc;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0;
     font-size: 11.5px;
   }
   .qb-row.done .qb-tag {
