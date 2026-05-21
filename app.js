@@ -950,7 +950,7 @@
     }
 
     /* ---------- TAB 5: Vision ---------- */
-    function VisionTab({ vision, setVision, stats, setStats, dreams, setDreams, initialOpenDreamId, onDreamOpened, uid }) {
+    function VisionTab({ vision, setVision, stats, setStats, dreams, setDreams, initialOpenDreamId, onDreamOpened, uid, settings, setSettings }) {
       const [expandedStat, setExpandedStat] = useState(null);
       const [expandedDream, setExpandedDream] = useState(null);
       const [editingDream, setEditingDream] = useState(null);
@@ -1250,53 +1250,17 @@
             );
           })()}
 
-          {/* 캐릭터 스탯 — 레이더 차트 + 컴팩트 리스트 */}
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-            <div className="card-title"><span className="dot-purple"/>캐릭터 스탯</div>
-            <span style={{ fontSize: 12.5, color:"var(--text-3)" }}>항목 클릭 → 수정</span>
-          </div>
-          <div className="stat-panel">
-            <RadarChart stats={stats} size={160} />
-            <div className="stat-list">
-              {stats.map(s => {
-                const isOpen = expandedStat === s.id;
-                const nextLvXp = (Math.floor(s.xp / 20) + 1) * 20;
-                return (
-                  <div key={s.id}>
-                    <div className="stat-compact-row" onClick={() => setExpandedStat(isOpen ? null : s.id)}>
-                      <span className="stat-compact-icon">{s.icon}</span>
-                      <span className="stat-compact-name">{s.label}</span>
-                      <span className="stat-compact-lv">Lv.<strong>{s.level}</strong></span>
-                      <div className="stat-compact-bar">
-                        <div className="stat-compact-fill" style={{ width:`${s.xp}%` }}/>
-                      </div>
-                      <svg style={{ width:13, height:13, flexShrink:0, color:"var(--text-4)", transition:"transform 0.2s", transform:isOpen?"rotate(90deg)":"none" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
-                    </div>
-                    {isOpen && (
-                      <div className="stat-expand-inline">
-                        <div style={{ display:"flex", justifyContent:"space-between", fontSize: 12, color:"var(--text-4)", marginBottom:7, fontFamily:"Geist Mono, ui-monospace, monospace" }}>
-                          <span>XP {s.xp} / 100</span>
-                          <span>다음 레벨까지 {Math.max(0, nextLvXp - s.xp)} XP</span>
-                        </div>
-                        <div className="char-xp-bar" style={{ marginBottom:12 }}>
-                          <div className="char-xp-fill" style={{ width:`${s.xp}%` }}/>
-                        </div>
-                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                          <span style={{ fontSize: 13.5, color:"var(--text-2)", flex:1 }}>{s.desc} 현재값</span>
-                          <input className="char-input" type="number" style={{ width:100, textAlign:"right" }}
-                            value={s.value} onChange={e => updateStat(s.id, e.target.value)} />
-                          <span style={{ fontSize: 13, color:"var(--text-3)" }}>{s.unit}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          <div className="big-timeline" style={{ "--bigt-scale": ((settings?.bigtTextSize >= 10 && settings?.bigtTextSize <= 22) ? settings.bigtTextSize : 13) / 13 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+              <div className="card-title" style={{ marginBottom: 0 }}><span className="dot-purple"/>큰 계획 타임라인</div>
+              <div className="bigt-text-size">
+                <span style={{ fontSize: 11, color: "var(--text-3)" }}>🔍</span>
+                <input type="range" min="10" max="22" step="1"
+                  value={(settings?.bigtTextSize >= 10 && settings?.bigtTextSize <= 22) ? settings.bigtTextSize : 13}
+                  onChange={(e) => setSettings(p => ({ ...p, bigtTextSize: Number(e.target.value) }))} />
+                <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", minWidth: 36, textAlign: "right" }}>{(settings?.bigtTextSize >= 10 && settings?.bigtTextSize <= 22) ? settings.bigtTextSize : 13}px</span>
+              </div>
             </div>
-          </div>
-
-          <div className="big-timeline">
-            <div className="card-title" style={{ marginBottom:18 }}><span className="dot-purple"/>큰 계획 타임라인</div>
             <div className="bigt-track">
               {vision.timeline.map(yr => (
                 <div key={yr.year} className={"bigt-year" + (yr.current ? " current" : "")}>
@@ -5371,7 +5335,7 @@
             highlightSection={resourcesHighlight}
             onHighlightConsumed={() => setResourcesHighlight(null)}
           />}
-          {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} uid={user?.uid} />}
+          {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} uid={user?.uid} settings={settings} setSettings={setSettings} />}
 
           <div className="kbd-hints">
             <span>키보드</span>

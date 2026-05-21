@@ -5114,3 +5114,12 @@
   .gem-body-grid .gem-section.main-stages { grid-row: 2; }
   .gem-body-grid .gem-section.quests { grid-row: 3; }
 }
+
+/* 큰 계획 타임라인 텍스트 크기 슬라이더 */
+.bigt-text-size { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 7px; padding: 4px 10px; }
+.bigt-text-size input[type="range"] { width: 100px; accent-color: var(--accent); cursor: pointer; }
+
+/* 텍스트 크기 변수로 비례 조정 */
+.big-timeline .bigt-item { font-size: calc(13px * var(--bigt-scale, 1)); }
+.big-timeline .bigt-year-label { font-size: calc(13px * var(--bigt-scale, 1)); }
+.big-timeline .bigt-items input { font-size: calc(12px * var(--bigt-scale, 1)); }
