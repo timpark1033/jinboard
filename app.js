@@ -611,6 +611,12 @@
                     </div>
                   );
                 })}
+                {/* 빈 슬롯 — 항상 3열 유지 */}
+                {goals.length > 0 && goals.length < 3 && Array.from({ length: 3 - goals.length }).map((_, i) => (
+                  <div key={"empty-" + i} className="db-goal-col db-goal-col-empty">
+                    {i === 0 ? "+ 목표 추가" : ""}
+                  </div>
+                ))}
               </div>
 
               {/* ZONE 4: 하단 3열 */}
