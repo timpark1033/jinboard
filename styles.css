@@ -4833,3 +4833,14 @@
 .eq-task-row.conn-dim { opacity: 0.28; filter: grayscale(0.7); transition: opacity 0.25s, filter 0.25s; }
 .eq-task-row.conn-active { background: rgba(139,92,246,0.05); transition: background 0.25s; }
 .eq-task-row { transition: opacity 0.25s, filter 0.25s, background 0.25s; }
+
+/* qm-add-row 추가 버튼 */
+.qm-add-row { display: flex; align-items: center; gap: 8px; }
+.qm-add-row input { flex: 1; }
+.qm-add-btn {
+  background: var(--accent); color: #fff; border: none;
+  padding: 5px 12px; border-radius: 5px; font-family: inherit; font-size: 11.5px;
+  font-weight: 700; cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+}
+.qm-add-btn:hover:not(:disabled) { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-glow); }
+.qm-add-btn:disabled { opacity: 0.35; cursor: not-allowed; background: var(--bg-3); color: var(--text-4); }

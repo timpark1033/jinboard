@@ -2792,9 +2792,10 @@
                             <input
                               value={getDraft(g.id, "main")}
                               onChange={(e) => setDraft(g.id, "main", e.target.value)}
-                              onKeyDown={(e) => { if (e.key === "Enter") addQuestItem(g.id, "main"); }}
-                              placeholder="메인 단계 추가 (Enter)"
+                              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) addQuestItem(g.id, "main"); }}
+                              placeholder="메인 단계 추가"
                             />
+                            <button className="qm-add-btn" onClick={() => addQuestItem(g.id, "main")} disabled={!getDraft(g.id, "main").trim()}>추가</button>
                           </div>
                           {(g.milestones || []).length > 0 && (
                             <div className="main-bonus-banner">
@@ -2862,9 +2863,10 @@
                             <input
                               value={getDraft(g.id, "quest")}
                               onChange={(e) => setDraft(g.id, "quest", e.target.value)}
-                              onKeyDown={(e) => { if (e.key === "Enter") addQuestItem(g.id, "quest"); }}
-                              placeholder="퀘스트 추가 (예: 역사 롱폼 10개 업로드, Enter)"
+                              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) addQuestItem(g.id, "quest"); }}
+                              placeholder="퀘스트 추가 (예: 역사 롱폼 10개 업로드)"
                             />
+                            <button className="qm-add-btn" onClick={() => addQuestItem(g.id, "quest")} disabled={!getDraft(g.id, "quest").trim()}>추가</button>
                           </div>
                         </div>
                       </div>
