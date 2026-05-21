@@ -4863,3 +4863,28 @@
 .goal-swatch.auto { background: repeating-linear-gradient(45deg, #555 0 4px, #777 4px 8px) !important; }
 .goal-swatch .check-mark { color: #fff; font-size: 14px; font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.7); }
 .goal-swatch .auto-mark { color: #fff; font-size: 11px; font-weight: 800; font-family: "Geist Mono", monospace; }
+
+/* ============================================================
+   보조 스탯 + 재무 상세 버튼
+   ============================================================ */
+.ch-aux-stats { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.ch-aux-title { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 8px; }
+.ch-aux-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.ch-aux-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.ch-aux-card:hover { border-color: var(--border-accent); background: var(--bg-3); }
+.ch-aux-row { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.ch-aux-icon { font-size: 16px; }
+.ch-aux-name { flex: 1; color: var(--text-2); font-weight: 600; }
+.ch-aux-lv { font-family: "Geist Mono", monospace; color: var(--accent); font-weight: 700; font-size: 11px; }
+.ch-aux-bar { height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+.ch-aux-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 2px; }
+
+.fin-detail-btn {
+  width: 100%; padding: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff; border: none; border-radius: 10px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; margin-top: 10px;
+  transition: all 0.15s;
+}
+.fin-detail-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--accent-glow); }

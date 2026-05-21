@@ -222,6 +222,7 @@
         { id: "a3", category: "account", name: "주거래 통장", value: 12000000, note: "" },
         { id: "a4", category: "account", name: "주식 계좌", value: 8500000, note: "" }
       ],
+      debts: [],
       incomes: [
         { id: "in1", category: "regular", name: "임대료", expected: 1500000, actual: 1500000, day: 1 },
         { id: "in2", category: "regular", name: "본업", expected: 3500000, actual: 3500000, day: 25 },
@@ -236,11 +237,18 @@
       ]
     };
     const ASSET_CATS = { estate: "🏠 부동산", account: "💳 계좌", other: "📦 기타" };
+    const DEBT_CATS = { mortgage: "🏠 주담대", loan: "💳 대출", card: "💸 카드" };
     const INCOME_CATS = { regular: "정기 수입", irregular: "비정기 수입" };
     const EXPENSE_CATS = { fixed: "고정 지출", variable: "변동 지출", oneoff: "1회성 지출" };
 
     function sumAssets(finance, category) {
       return (finance.assets || []).filter(a => !category || a.category === category).reduce((s, a) => s + (a.value || 0), 0);
+    }
+    function sumDebts(finance, category) {
+      return (finance.debts || []).filter(d => !category || d.category === category).reduce((s, d) => s + (d.value || 0), 0);
+    }
+    function sumNetWorth(finance) {
+      return sumAssets(finance) - sumDebts(finance);
     }
     function sumIncome(finance, items) {
       const base = (finance.incomes || []).reduce((s, i) => s + (i.expected || 0), 0);
@@ -3484,10 +3492,13 @@
         }
       };
 
-      // 6각형 레이더 — 6 스탯
-      const orderedStats = ["youtube", "estate", "dev", "english", "health", "finance"]
+      // 6각형 레이더 — 메인 6 스탯
+      const MAIN_STAT_IDS = ["youtube", "estate", "dev", "english", "health", "finance"];
+      const orderedStats = MAIN_STAT_IDS
         .map(sid => stats.find(s => s.id === sid))
         .filter(Boolean);
+      // 보조 스탯 (메인 6개 이외)
+      const auxStats = stats.filter(s => !MAIN_STAT_IDS.includes(s.id));
       const r = 130; // 외곽 반지름
       const pts = (factor) => orderedStats.map((s, i) => {
         const angle = -Math.PI / 2 + (i * Math.PI * 2 / 6); // 위에서 시작
@@ -3607,6 +3618,30 @@
                 {life.inGolden && <span style={{ color: "var(--amber)", fontWeight: 700 }}>· ✨ 황금기 진행중</span>}
               </div>
             )}
+
+            {/* 보조 스탯 (메인 6 외 추가) */}
+            {auxStats.length > 0 && (
+              <div className="ch-aux-stats">
+                <div className="ch-aux-title">🎯 보조 스탯 ({auxStats.length})</div>
+                <div className="ch-aux-grid">
+                  {auxStats.map(s => {
+                    const tx = getStatTotalXp(s);
+                    const lv = statLevel(tx);
+                    const prog = statLevelProgress(tx);
+                    return (
+                      <div key={s.id} className="ch-aux-card" onClick={onOpenStatModal} title="클릭으로 편집">
+                        <div className="ch-aux-row">
+                          <span className="ch-aux-icon">{s.icon}</span>
+                          <span className="ch-aux-name">{s.label}</span>
+                          <span className="ch-aux-lv">Lv.{lv}</span>
+                        </div>
+                        <div className="ch-aux-bar"><div style={{ width: (prog.pct || 0) + "%" }} /></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -3696,92 +3731,90 @@
         <div className="panel-enter">
           <CharacterHero stats={stats} settings={settings} setSettings={setSettings} uid={uid} onOpenStatModal={onOpenStatModal} onOpenSettings={onOpenSettings} />
           <div className="ri-split" style={{ gridTemplateColumns: "38% 20% 42%" }}>
-            {/* LEFT: 재무관리 간소화 */}
+            {/* LEFT: 재무 요약 (수정은 모달에서) */}
             <div className="ri-col">
-              {/* 순자산 요약 */}
-              <div className="fin-summary-card">
-                <div className="summary-net">
-                  <span className="lbl">💎 순자산</span>
-                  <span className="val">{fmtKR(totalAssets)}</span>
-                </div>
-                <div className="summary-chg">{totalAssets > 0 ? "↑ 전월 대비 추적 가능" : "자산 추가 시 추이 표시"}</div>
-              </div>
+              {(() => {
+                const totalDebts = sumDebts(fin);
+                const netWorth = totalAssets - totalDebts;
+                return (
+                  <>
+                    {/* 순자산 큰 카드 */}
+                    <div className="fin-summary-card" onClick={onOpenFinance} style={{ cursor: "pointer" }} title="클릭으로 상세 관리">
+                      <div className="summary-net">
+                        <span className="lbl">💎 순자산 (자산 − 부채)</span>
+                        <span className="val" style={{ color: netWorth >= 0 ? "var(--text-1)" : "var(--red)" }}>{fmtKR(netWorth)}</span>
+                      </div>
+                      <div className="summary-chg">자산 {fmtKR(totalAssets)} − 부채 {fmtKR(totalDebts)}</div>
+                    </div>
 
-              {/* 자산 */}
-              <div className="fin-card">
-                <div className="fin-card-head">
-                  <div className="fin-card-title">🏦 자산</div>
-                  <div className="fin-card-sum">{fmtKR(totalAssets)}</div>
-                </div>
-                {Object.entries(ASSET_CATS).map(([cat, label]) => {
-                  const list = (fin.assets || []).filter(a => a.category === cat);
-                  if (list.length === 0) return null;
-                  return (
-                    <div key={cat}>
-                      <div className="asset-cat-title">{label} <span style={{ color: "var(--accent)", fontFamily: "Geist Mono, monospace" }}>{fmtKR(sumAssets(fin, cat))}</span></div>
-                      {list.map(a => {
-                        const editing = editingAssetId === a.id;
+                    {/* 자산 요약 */}
+                    <div className="fin-card">
+                      <div className="fin-card-head">
+                        <div className="fin-card-title">🏦 자산</div>
+                        <div className="fin-card-sum">{fmtKR(totalAssets)}</div>
+                      </div>
+                      {Object.entries(ASSET_CATS).map(([cat, label]) => {
+                        const subtotal = sumAssets(fin, cat);
+                        const cnt = (fin.assets || []).filter(a => a.category === cat).length;
+                        if (cnt === 0) return null;
                         return (
-                          <div key={a.id} className="asset-row">
-                            {editing ? (
-                              <input type="text" value={a.name} autoFocus
-                                onChange={(e) => updateAsset(a.id, { name: e.target.value })}
-                                onKeyDown={(e) => { if (e.key === "Enter") setEditingAssetId(null); if (e.key === "Escape") setEditingAssetId(null); }}
-                                style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "3px 7px", fontSize: 13, fontFamily: "Geist, sans-serif", outline: "none", width: "100%", boxSizing: "border-box" }} />
-                            ) : (
-                              <span className="nm" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{a.name}</span>
-                            )}
-                            {editing ? (
-                              <input className="val-input" type="number" value={a.value}
-                                onChange={(e) => updateAsset(a.id, { value: Number(e.target.value) || 0 })}
-                                onKeyDown={(e) => { if (e.key === "Enter") setEditingAssetId(null); if (e.key === "Escape") setEditingAssetId(null); }} />
-                            ) : (
-                              <span className="val" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{fmtKR(a.value)}</span>
-                            )}
-                            {editing ? (
-                              <button onClick={() => setEditingAssetId(null)} style={{ background: "var(--green)", border: "none", color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600, borderRadius: 4, padding: "2px 6px" }} title="저장 (또는 Enter)">✓</button>
-                            ) : (
-                              <button onClick={() => deleteAsset(a.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
-                            )}
+                          <div key={cat} className="res-line">
+                            <span className="lbl">{label} <span style={{ color: "var(--text-4)", fontSize: 11 }}>{cnt}건</span></span>
+                            <span className="val">{fmtKR(subtotal)}</span>
                           </div>
                         );
                       })}
+                      {(fin.assets || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "6px 0", fontStyle: "italic" }}>자산 없음 — 상세에서 추가</div>}
                     </div>
-                  );
-                })}
-                <div className="fin-add-btn-row" style={{ marginTop: 10 }}>
-                  <button className="fin-add-btn" onClick={() => addAsset("estate")}>+ 부동산</button>
-                  <button className="fin-add-btn" onClick={() => addAsset("account")}>+ 계좌</button>
-                  <button className="fin-add-btn" onClick={() => addAsset("other")}>+ 기타</button>
-                </div>
-              </div>
 
-              {/* 이번달 현황 */}
-              <div className="fin-card">
-                <div className="fin-card-head">
-                  <div className="fin-card-title">📊 이번달 현황</div>
-                  <button className="fin-add-btn" onClick={onOpenFinance} style={{ padding: "4px 10px", flex: "0 0 auto", width: "auto" }}>📋 상세 관리</button>
-                </div>
-                <div className="res-line">
-                  <span className="lbl">📈 수입</span>
-                  <span className="val" style={{ color: "var(--green)" }}>+{Math.round(totalIncome/10000).toLocaleString()}만</span>
-                </div>
-                <div className="res-line">
-                  <span className="lbl">📉 지출</span>
-                  <span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExpense/10000).toLocaleString()}만</span>
-                </div>
-                <div className="fin-net" style={{ marginTop: 8 }}>
-                  <div>
-                    <div className="lbl">💵 순이익</div>
-                    <div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 2 }}>
-                      예상 {profitExpected >= 0 ? "+" : ""}{Math.round(profitExpected/10000).toLocaleString()}만 · 실제 {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만
+                    {/* 부채 요약 */}
+                    <div className="fin-card">
+                      <div className="fin-card-head">
+                        <div className="fin-card-title">🚨 부채</div>
+                        <div className="fin-card-sum" style={{ color: totalDebts > 0 ? "var(--red)" : "var(--text-3)" }}>{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "없음"}</div>
+                      </div>
+                      {Object.entries(DEBT_CATS).map(([cat, label]) => {
+                        const subtotal = sumDebts(fin, cat);
+                        const cnt = (fin.debts || []).filter(d => d.category === cat).length;
+                        if (cnt === 0) return null;
+                        return (
+                          <div key={cat} className="res-line">
+                            <span className="lbl">{label} <span style={{ color: "var(--text-4)", fontSize: 11 }}>{cnt}건</span></span>
+                            <span className="val" style={{ color: "var(--red)" }}>-{fmtKR(subtotal)}</span>
+                          </div>
+                        );
+                      })}
+                      {(fin.debts || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "6px 0", fontStyle: "italic" }}>부채 없음 — 상세에서 추가</div>}
                     </div>
-                  </div>
-                  <span className="val" style={{ color: profitActual >= 0 ? "var(--green)" : "var(--red)" }}>
-                    {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만
-                  </span>
-                </div>
-              </div>
+
+                    {/* 수입/지출 요약 */}
+                    <div className="fin-card">
+                      <div className="fin-card-head">
+                        <div className="fin-card-title">📊 이번달</div>
+                      </div>
+                      <div className="res-line">
+                        <span className="lbl">📈 수입</span>
+                        <span className="val" style={{ color: "var(--green)" }}>+{Math.round(totalIncome/10000).toLocaleString()}만</span>
+                      </div>
+                      <div className="res-line">
+                        <span className="lbl">📉 지출</span>
+                        <span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExpense/10000).toLocaleString()}만</span>
+                      </div>
+                      <div className="fin-net" style={{ marginTop: 8 }}>
+                        <div>
+                          <div className="lbl">💵 순이익</div>
+                          <div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 2 }}>실제 {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만</div>
+                        </div>
+                        <span className="val" style={{ color: profitActual >= 0 ? "var(--green)" : "var(--red)" }}>
+                          {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만
+                        </span>
+                      </div>
+                    </div>
+
+                    <button className="fin-detail-btn" onClick={onOpenFinance}>📋 재무 상세 관리 (자산/부채/수입/지출)</button>
+                  </>
+                );
+              })()}
             </div>
 
             {/* MIDDLE: 에너지·시간·스탯 버프 */}
@@ -4236,18 +4269,47 @@
     }
 
     function FinanceDetailModal({ open, onClose, finance, setFinance, items }) {
-      const [sub, setSub] = useState("income");
+      const [sub, setSub] = useState("assets");
       if (!open) return null;
 
       const updateItem = (kind, id, updates) => {
         setFinance(prev => ({ ...prev, [kind]: (prev[kind] || []).map(x => x.id === id ? { ...x, ...updates } : x) }));
       };
       const addItem = (kind, cat) => {
-        const id = (kind === "incomes" ? "in" : "ex") + Date.now();
-        setFinance(prev => ({ ...prev, [kind]: [...(prev[kind] || []), { id, category: cat, name: "새 항목", expected: 0, actual: 0, day: 1 }] }));
+        const id = (kind === "incomes" ? "in" : kind === "expenses" ? "ex" : kind === "debts" ? "dt" : "a") + Date.now();
+        const newItem = (kind === "assets" || kind === "debts")
+          ? { id, category: cat, name: "새 항목", value: 0, note: "" }
+          : { id, category: cat, name: "새 항목", expected: 0, actual: 0, day: 1 };
+        setFinance(prev => ({ ...prev, [kind]: [...(prev[kind] || []), newItem] }));
       };
       const deleteItem = (kind, id) => {
         setFinance(prev => ({ ...prev, [kind]: (prev[kind] || []).filter(x => x.id !== id) }));
+      };
+
+      // 자산/부채용 (name + value 만)
+      const renderValueItems = (kind, cats) => {
+        const list = (finance[kind] || []);
+        return Object.entries(cats).map(([cat, label]) => {
+          const filtered = list.filter(x => x.category === cat);
+          const subtotal = filtered.reduce((s, a) => s + (a.value || 0), 0);
+          return (
+            <div key={cat}>
+              <div className="asset-cat-title">{label} <span style={{ float: "right", fontFamily: "Geist Mono, monospace", color: "var(--text-3)", fontSize: 11.5 }}>{fmtKR(subtotal)}</span></div>
+              {filtered.length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0", fontStyle: "italic" }}>없음</div>}
+              {filtered.map(x => (
+                <div key={x.id} style={{ display: "grid", gridTemplateColumns: "1fr 160px 28px", gap: 8, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+                  <input value={x.name} onChange={(e) => updateItem(kind, x.id, { name: e.target.value })}
+                    style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 13, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
+                  <input type="number" value={x.value} onChange={(e) => updateItem(kind, x.id, { value: Number(e.target.value) || 0 })}
+                    placeholder="원 단위"
+                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: kind === "debts" ? "var(--red)" : "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
+                  <button onClick={() => deleteItem(kind, x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
+                </div>
+              ))}
+              <button onClick={() => addItem(kind, cat)} style={{ width: "100%", background: "var(--bg-2)", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "5px 0", borderRadius: 5, fontSize: 12, cursor: "pointer", fontFamily: "Geist, sans-serif", marginTop: 4 }}>+ {label} 추가</button>
+            </div>
+          );
+        });
       };
 
       const totalInExp = sumIncome(finance, items);
@@ -4256,6 +4318,9 @@
       const totalExAct = sumExpenseActual(finance);
       const profitExp = totalInExp - totalExExp;
       const profitAct = totalInAct - totalExAct;
+      const totalAssets = sumAssets(finance);
+      const totalDebts = sumDebts(finance);
+      const netWorth = totalAssets - totalDebts;
 
       const renderItems = (kind, cats) => {
         const list = (finance[kind] || []);
@@ -4295,13 +4360,41 @@
             </div>
 
             {/* 하위 탭 */}
-            <div style={{ padding: "10px 22px 0", display: "flex", gap: 4, borderBottom: "1px solid var(--border)" }}>
+            <div style={{ padding: "10px 22px 0", display: "flex", gap: 4, borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
+              <button className={"inv-tab" + (sub === "assets" ? " active" : "")} onClick={() => setSub("assets")}>🏦 자산</button>
+              <button className={"inv-tab" + (sub === "debts" ? " active" : "")} onClick={() => setSub("debts")}>🚨 부채</button>
               <button className={"inv-tab" + (sub === "income" ? " active" : "")} onClick={() => setSub("income")}>📈 수입</button>
               <button className={"inv-tab" + (sub === "expense" ? " active" : "")} onClick={() => setSub("expense")}>📉 지출</button>
               <button className={"inv-tab" + (sub === "summary" ? " active" : "")} onClick={() => setSub("summary")}>📊 요약</button>
             </div>
 
             <div className="modal-body">
+              {sub === "assets" && (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                    <span>항목</span><span style={{ textAlign: "right" }}>가치 (원)</span><span />
+                  </div>
+                  {renderValueItems("assets", ASSET_CATS)}
+                  <div className="fin-net" style={{ marginTop: 14 }}>
+                    <div><div className="lbl">🏦 총 자산</div></div>
+                    <span className="val green">{fmtKR(totalAssets)}</span>
+                  </div>
+                </>
+              )}
+
+              {sub === "debts" && (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                    <span>항목</span><span style={{ textAlign: "right" }}>잔액 (원)</span><span />
+                  </div>
+                  {renderValueItems("debts", DEBT_CATS)}
+                  <div className="fin-net" style={{ marginTop: 14 }}>
+                    <div><div className="lbl">🚨 총 부채</div></div>
+                    <span className="val" style={{ color: "var(--red)" }}>-{fmtKR(totalDebts)}</span>
+                  </div>
+                </>
+              )}
+
               {sub === "income" && (
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
@@ -4342,6 +4435,13 @@
               {sub === "summary" && (
                 <div>
                   <div className="fin-summary-card">
+                    <div className="summary-net">
+                      <span className="lbl">💎 순자산 (자산 − 부채)</span>
+                      <span className="val" style={{ color: netWorth >= 0 ? "var(--green)" : "var(--red)" }}>{fmtKR(netWorth)}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "right" }}>자산 {fmtKR(totalAssets)} − 부채 {fmtKR(totalDebts)}</div>
+                  </div>
+                  <div className="fin-summary-card" style={{ marginTop: 10 }}>
                     <div className="summary-net">
                       <span className="lbl">💵 이번달 순이익</span>
                       <span className="val" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>{profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만</span>
