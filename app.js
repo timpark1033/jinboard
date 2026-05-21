@@ -2510,31 +2510,85 @@
                       <span className="gmini-task-count" style={{ marginLeft: "auto" }}>{doneTasks}/{gTasks.length} 할일</span>
                     </div>
 
-                    {isEditing && (
-                      <div className="inline-add-form" style={{ marginTop: 10 }} onClick={(e) => e.stopPropagation()}>
-                        <input value={editGoalForm.name} onChange={(e) => setEditGoalForm({ ...editGoalForm, name: e.target.value })} />
-                        <div className="inline-add-form-row">
-                          <input value={editGoalForm.category} onChange={(e) => setEditGoalForm({ ...editGoalForm, category: e.target.value })} />
-                          <input type="date" value={editGoalForm.deadline} onChange={(e) => setEditGoalForm({ ...editGoalForm, deadline: e.target.value })} />
-                        </div>
-                        <div className="inline-add-form-row">
-                          <select value={editGoalForm.tier || g.tier || "rare"} onChange={(e) => setEditGoalForm({ ...editGoalForm, tier: e.target.value })}>
-                            <option value="legend">👑 Legend</option>
-                            <option value="epic">💜 Epic</option>
-                            <option value="rare">💎 Rare</option>
-                            <option value="normal">⚪ Normal</option>
-                          </select>
-                          <select value={editGoalForm.statId} onChange={(e) => setEditGoalForm({ ...editGoalForm, statId: e.target.value })}>
-                            <option value="">스탯 미연결</option>
-                            {stats.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.label}</option>)}
-                          </select>
-                        </div>
+                    {/* 수정 폼은 GoalEditModal로 이동됨 (이 컴포넌트 하단) */}
 
-                        {/* A 조합: 메인 단계 + 사이드 퀘스트 + 도전 과제 */}
+
+                    {isOpen && !isEditing && (
+                      <div className="gmini-expand" onClick={(e) => e.stopPropagation()}>
+                        {gTasks.length === 0
+                          ? <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0" }}>연결된 할 일 없음</div>
+                          : gTasks.map((t) => (
+                              <div key={t.id} className={"gmini-expand-task" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
+                                <div className="cb" />
+                                <span>{t.text}</span>
+                                <span className="qtag">Q{t.quadrant}</span>
+                              </div>
+                            ))}
+                        <div className="gmini-actions">
+                          <button className="gmini-act-btn" onClick={() => startEditGoal(g)}>✏️ 수정</button>
+                          <button className="gmini-act-btn del" onClick={() => { if (confirm("삭제하시겠어요?")) deleteGoal(g.id); }}>🗑 삭제</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* ─── 목표 수정 풀스크린 모달 ─── */}
+              {editingGoalId && (() => {
+                const g = goals.find(x => x.id === editingGoalId);
+                if (!g) return null;
+                return (
+                  <div className="gem-overlay" onClick={() => setEditingGoalId(null)}>
+                    <div className="gem-card" onClick={(e) => e.stopPropagation()}>
+                      <div className="gem-head">
+                        <div className="gem-title">
+                          <div className="gem-cat">{g.category || "목표"} · 수정</div>
+                          <div className="gem-name-display">{g.name}</div>
+                        </div>
+                        <button className="gem-close" onClick={() => setEditingGoalId(null)} title="닫기 (변경사항은 자동 저장됨)">✕</button>
+                      </div>
+
+                      <div className="gem-body">
+                        <div className="gem-section">
+                          <div className="gem-section-title">📝 기본 정보</div>
+                          <div className="gem-field">
+                            <label>목표 이름</label>
+                            <input value={editGoalForm.name} onChange={(e) => setEditGoalForm({ ...editGoalForm, name: e.target.value })} placeholder="목표 이름" />
+                          </div>
+                          <div className="gem-field-row">
+                            <div className="gem-field">
+                              <label>카테고리</label>
+                              <input value={editGoalForm.category} onChange={(e) => setEditGoalForm({ ...editGoalForm, category: e.target.value })} placeholder="예: CREATOR · 수익화" />
+                            </div>
+                            <div className="gem-field">
+                              <label>마감일</label>
+                              <input type="date" value={editGoalForm.deadline} onChange={(e) => setEditGoalForm({ ...editGoalForm, deadline: e.target.value })} />
+                            </div>
+                          </div>
+                          <div className="gem-field-row">
+                            <div className="gem-field">
+                              <label>티어</label>
+                              <select value={editGoalForm.tier || g.tier || "rare"} onChange={(e) => setEditGoalForm({ ...editGoalForm, tier: e.target.value })}>
+                                <option value="legend">👑 Legend · +5000 XP</option>
+                                <option value="epic">💜 Epic · +2500 XP</option>
+                                <option value="rare">💎 Rare · +1000 XP</option>
+                                <option value="normal">⚪ Normal · +400 XP</option>
+                              </select>
+                            </div>
+                            <div className="gem-field">
+                              <label>연결 스탯</label>
+                              <select value={editGoalForm.statId} onChange={(e) => setEditGoalForm({ ...editGoalForm, statId: e.target.value })}>
+                                <option value="">스탯 미연결</option>
+                                {stats.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.label}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
 
                         {/* 메인 단계 */}
-                        <div className="quest-section" style={{ marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
-                          <div className="quest-section-head">
+                        <div className="gem-section">
+                          <div className="quest-section-head" style={{ marginBottom: 8 }}>
                             <div>
                               <div className="quest-section-title main">📍 메인 단계 <span className="badge">🎯 {(g.milestones || []).filter(m => m.status === "done").length}/{(g.milestones || []).length}</span>
                                 <span className="help-icon" onClick={(e) => { e.stopPropagation(); onOpenQuestGuide && onOpenQuestGuide(); }}>?</span>
@@ -2562,7 +2616,6 @@
                               }}>×</button>
                             </div>
                           ))}
-                          {/* 인라인 추가 입력 */}
                           <div className="qm-add-row">
                             <span className="num">+</span>
                             <input
@@ -2580,63 +2633,59 @@
                           )}
                         </div>
 
-                        {/* 퀘스트 (사이드+도전 통합, 카운터 기반) */}
-                        <div className="quest-section" onClick={(e) => e.stopPropagation()}>
-                          <div className="quest-section-head">
+                        {/* 퀘스트 */}
+                        <div className="gem-section">
+                          <div className="quest-section-head" style={{ marginBottom: 8 }}>
                             <div>
                               <div className="quest-section-title side">💎 퀘스트 <span className="badge">{(g.quests || []).filter(q => q.done).length}/{(g.quests || []).length}</span></div>
                               <div className="quest-section-desc">자유 진행 · 카운터(N/M) · 반복(🔁) 가능 · 카운트마다 XP</div>
                             </div>
                           </div>
-                          {(g.quests || []).map((q) => {
-                            const isCounter = q.target > 1;
-                            const pct = q.target > 0 ? Math.round((q.current / q.target) * 100) : 0;
-                            return (
-                              <div key={q.id} className={"qm-row qm-quest qm-with-date " + (q.done ? "done" : "")}>
-                                <span className="num">{q.repeat ? "🔁" : "💎"}</span>
-                                <span className="ck" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, q.done ? -1 : +1); }}>{q.done ? "✓" : ""}</span>
-                                <input className="name" value={q.name} onChange={(e) => {
-                                  const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, name: e.target.value } : x);
+                          {(g.quests || []).map((q) => (
+                            <div key={q.id} className={"qm-row qm-quest qm-with-date " + (q.done ? "done" : "")}>
+                              <span className="num">{q.repeat ? "🔁" : "💎"}</span>
+                              <span className="ck" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, q.done ? -1 : +1); }}>{q.done ? "✓" : ""}</span>
+                              <input className="name" value={q.name} onChange={(e) => {
+                                const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, name: e.target.value } : x);
+                                editGoal(g.id, { quests: newQ });
+                              }} />
+                              <input type="date" className="qm-date" value={q.deadline || ""} onChange={(e) => {
+                                const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, deadline: e.target.value } : x);
+                                editGoal(g.id, { quests: newQ });
+                              }} />
+                              <div className="qm-counter">
+                                <button className="qbp-btn" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, -1); }}>−</button>
+                                <input type="number" value={q.current} min="0" onChange={(e) => {
+                                  const v = Math.max(0, Number(e.target.value) || 0);
+                                  const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, current: v, done: v >= x.target } : x);
                                   editGoal(g.id, { quests: newQ });
                                 }} />
-                                <input type="date" className="qm-date" value={q.deadline || ""} onChange={(e) => {
-                                  const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, deadline: e.target.value } : x);
+                                <span style={{ color: "var(--text-4)", fontSize: 11 }}>/</span>
+                                <input type="number" value={q.target} min="1" onChange={(e) => {
+                                  const v = Math.max(1, Number(e.target.value) || 1);
+                                  const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, target: v, done: x.current >= v } : x);
                                   editGoal(g.id, { quests: newQ });
                                 }} />
-                                <div className="qm-counter">
-                                  <button className="qbp-btn" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, -1); }}>−</button>
-                                  <input type="number" value={q.current} min="0" onChange={(e) => {
-                                    const v = Math.max(0, Number(e.target.value) || 0);
-                                    const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, current: v, done: v >= x.target } : x);
-                                    editGoal(g.id, { quests: newQ });
-                                  }} />
-                                  <span style={{ color: "var(--text-4)", fontSize: 11 }}>/</span>
-                                  <input type="number" value={q.target} min="1" onChange={(e) => {
-                                    const v = Math.max(1, Number(e.target.value) || 1);
-                                    const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, target: v, done: x.current >= v } : x);
-                                    editGoal(g.id, { quests: newQ });
-                                  }} />
-                                  <button className="qbp-btn" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, +1); }}>+</button>
-                                </div>
-                                <select value={q.repeat || ""} onChange={(e) => {
-                                  const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, repeat: e.target.value || null } : x);
-                                  editGoal(g.id, { quests: newQ });
-                                }} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-2)", fontSize: 11, padding: "3px 5px", fontFamily: "inherit", outline: "none" }}>
-                                  <option value="">1회</option>
-                                  <option value="weekly">🔁 주간</option>
-                                  <option value="monthly">🔁 월간</option>
-                                </select>
-                                <input type="number" className="xp-edit" value={q.xpReward || 100} title="완료 보너스 XP" onChange={(e) => {
-                                  const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, xpReward: Number(e.target.value) || 0 } : x);
-                                  editGoal(g.id, { quests: newQ });
-                                }} />
-                                <button className="del" onClick={(e) => {
-                                  e.stopPropagation();
-                                  editGoal(g.id, { quests: (g.quests || []).filter(x => x.id !== q.id) });
-                                }}>×</button>
+                                <button className="qbp-btn" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, +1); }}>+</button>
                               </div>
-                            );
-                          })}
+                              <select value={q.repeat || ""} onChange={(e) => {
+                                const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, repeat: e.target.value || null } : x);
+                                editGoal(g.id, { quests: newQ });
+                              }} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-2)", fontSize: 11, padding: "3px 5px", fontFamily: "inherit", outline: "none" }}>
+                                <option value="">1회</option>
+                                <option value="weekly">🔁 주간</option>
+                                <option value="monthly">🔁 월간</option>
+                              </select>
+                              <input type="number" className="xp-edit" value={q.xpReward || 100} title="완료 보너스 XP" onChange={(e) => {
+                                const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, xpReward: Number(e.target.value) || 0 } : x);
+                                editGoal(g.id, { quests: newQ });
+                              }} />
+                              <button className="del" onClick={(e) => {
+                                e.stopPropagation();
+                                editGoal(g.id, { quests: (g.quests || []).filter(x => x.id !== q.id) });
+                              }}>×</button>
+                            </div>
+                          ))}
                           <div className="qm-add-row">
                             <span className="num">+</span>
                             <input
@@ -2647,34 +2696,16 @@
                             />
                           </div>
                         </div>
-
-                        <div className="inline-add-buttons">
-                          <button onClick={() => setEditingGoalId(null)}>취소</button>
-                          <button className="save" onClick={() => saveEditGoal(g.id)}>저장</button>
-                        </div>
                       </div>
-                    )}
 
-                    {isOpen && !isEditing && (
-                      <div className="gmini-expand" onClick={(e) => e.stopPropagation()}>
-                        {gTasks.length === 0
-                          ? <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0" }}>연결된 할 일 없음</div>
-                          : gTasks.map((t) => (
-                              <div key={t.id} className={"gmini-expand-task" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
-                                <div className="cb" />
-                                <span>{t.text}</span>
-                                <span className="qtag">Q{t.quadrant}</span>
-                              </div>
-                            ))}
-                        <div className="gmini-actions">
-                          <button className="gmini-act-btn" onClick={() => startEditGoal(g)}>✏️ 수정</button>
-                          <button className="gmini-act-btn del" onClick={() => { if (confirm("삭제하시겠어요?")) deleteGoal(g.id); }}>🗑 삭제</button>
-                        </div>
+                      <div className="gem-foot">
+                        <button className="gem-btn-cancel" onClick={() => setEditingGoalId(null)}>취소</button>
+                        <button className="gem-btn-save" onClick={() => saveEditGoal(g.id)}>✓ 저장 후 닫기</button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
-              })}
+              })()}
 
               {/* 미연결 할일 */}
               <div className="unlinked-section">
