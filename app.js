@@ -3739,7 +3739,6 @@
       const totalExpenseActual = sumExpenseActual(fin);
       const profitExpected = totalIncome - totalExpense;
       const profitActual = totalIncomeActual - totalExpenseActual;
-      const netWorth = totalAssets + (fin.assets || []).filter(a => a.category === "account").reduce((s,a) => s, 0); // 단순 총자산
 
       const addAsset = (cat) => {
         const id = "a" + Date.now();
@@ -4099,6 +4098,7 @@
               </div>
 
             </main>
+          </div>
 
           {selectedItem && (
             <ItemDetailModal
