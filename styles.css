@@ -4434,19 +4434,19 @@
   /* 듀얼 게이지 카드 */
   .life-card {
     display: grid;
-    grid-template-columns: minmax(110px, auto) 1px minmax(0, 1fr);
-    gap: 11px;
+    grid-template-columns: minmax(96px, auto) 1px minmax(0, 1fr);
+    gap: 9px;
     align-items: center;
     background: linear-gradient(135deg, rgba(139,92,246,0.06), var(--bg-1));
     border: 1px solid var(--border-accent);
     border-radius: 14px;
-    padding: 14px;
+    padding: 11px 13px;
   }
   .life-left { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .life-lv-circle { position: relative; width: 90px; height: 90px; margin: 3px 0; }
+  .life-lv-circle { position: relative; width: 72px; height: 72px; margin: 2px 0; }
   .life-lv-circle svg { width: 100%; height: 100%; }
   .life-lv-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .life-lv-num { font-family: "Geist Mono", monospace; font-size: 29px; font-weight: 800; color: var(--accent); letter-spacing: -0.04em; line-height: 1; text-shadow: 0 0 16px var(--accent-glow); }
+  .life-lv-num { font-family: "Geist Mono", monospace; font-size: 23px; font-weight: 800; color: var(--accent); letter-spacing: -0.04em; line-height: 1; text-shadow: 0 0 16px var(--accent-glow); }
   .life-lv-lbl { font-family: "Geist Mono", monospace; font-size: 10px; color: var(--text-4); margin-top: 4px; letter-spacing: 0.05em; }
   .life-xp-bar { width: 100%; max-width: 130px; height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; margin-top: 8px; }
   .life-xp-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); box-shadow: 0 0 8px var(--accent-glow); border-radius: 3px; }
@@ -4467,11 +4467,11 @@
   .kpi-big {
     position: relative; overflow: hidden;
     display: flex; flex-direction: column; justify-content: space-between;
-    padding: 16px 18px;
+    padding: 13px 15px;
     background: linear-gradient(135deg, rgba(139,92,246,0.06), var(--bg-1));
     border: 1px solid var(--border);
     border-radius: 14px;
-    min-height: 180px;
+    min-height: 144px;
     cursor: context-menu;
     transition: transform 0.15s, border-color 0.15s;
   }
@@ -4481,8 +4481,8 @@
   .kpi-lbl-text { cursor: pointer; }
   .kpi-lbl-text:hover { color: var(--accent); }
   .kpi-val-huge {
-    font-family: "Geist Mono", monospace; font-size: 58px; font-weight: 800;
-    letter-spacing: -0.05em; line-height: 1; margin: 10px 0 3px;
+    font-family: "Geist Mono", monospace; font-size: 46px; font-weight: 800;
+    letter-spacing: -0.05em; line-height: 1; margin: 7px 0 2px;
     background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     text-shadow: 0 0 30px rgba(139,92,246,0.2); position: relative; z-index: 1;
