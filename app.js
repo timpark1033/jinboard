@@ -200,7 +200,7 @@
     const INITIAL_SETTINGS = {
       geminiKey: "",
       geminiTextModel: "gemini-2.5-flash",
-      geminiImageModel: "gemini-2.5-flash-image",
+      geminiImageModel: "gemini-2.5-flash-image-preview",
       weeklyTimePool: 72,
       weeklyEnergyPool: 100
     };
@@ -1840,7 +1840,7 @@
 
                 <div className="settings-field" style={{ marginTop: 12 }}>
                   <label>이미지 모델</label>
-                  <input type="text" value={settings.geminiImageModel || "gemini-2.5-flash-image"} onChange={(e) => update("geminiImageModel", e.target.value)} placeholder="gemini-2.5-flash-image" />
+                  <input type="text" value={settings.geminiImageModel || "gemini-2.5-flash-image-preview"} onChange={(e) => update("geminiImageModel", e.target.value)} placeholder="gemini-2.5-flash-image-preview" />
                   <button onClick={runImageTest} disabled={imgTesting || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
                     {imgTesting ? "..." : "테스트"}
                   </button>
@@ -1851,7 +1851,8 @@
                   </div>
                 )}
                 <div className="settings-hint" style={{ marginTop: 6 }}>
-                  추천: <code style={{ color: "var(--accent)" }}>gemini-2.5-flash-image</code>, <code style={{ color: "var(--accent)" }}>gemini-2.0-flash-preview-image-generation</code>, <code style={{ color: "var(--accent)" }}>imagen-3.0-generate-002</code>
+                  기본: <code style={{ color: "var(--accent)" }}>gemini-2.5-flash-image-preview</code> (나노바나나2 1K)<br/>
+                  대체: <code>gemini-2.5-flash-image</code>, <code>gemini-2.0-flash-preview-image-generation</code>, <code>imagen-3.0-generate-002</code>
                 </div>
               </div>
 
@@ -2422,7 +2423,7 @@
       return {
         key: s.geminiKey || "",
         textModel: s.geminiTextModel || "gemini-2.5-flash",
-        imageModel: s.geminiImageModel || "gemini-2.5-flash-image"
+        imageModel: s.geminiImageModel || "gemini-2.5-flash-image-preview"
       };
     }
 
