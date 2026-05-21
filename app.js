@@ -197,9 +197,27 @@
       return "₩" + (n || 0).toLocaleString();
     }
 
+    /* 2026.05 기준 추천 모델 (Top 3) */
+    const GEMINI_TEXT_MODELS = [
+      { id: "gemini-3.1-pro-preview",  label: "🥇 Gemini 3.1 Pro (최고 추론)" },
+      { id: "gemini-3.5-flash",        label: "🥈 Gemini 3.5 Flash (GA · 균형)" },
+      { id: "gemini-2.5-flash",        label: "🥉 Gemini 2.5 Flash (안정)" }
+    ];
+    const GEMINI_IMAGE_MODELS = [
+      { id: "gemini-3-pro-image-preview",   label: "🥇 나노바나나 Pro (최고 품질)" },
+      { id: "gemini-3.1-flash-image-preview", label: "🥈 나노바나나 2 (균형 · 1K)" },
+      { id: "gemini-2.5-flash-image",        label: "🥉 나노바나나 1 (가성비)" }
+    ];
+
+    /* 셧다운된 / 옛 모델명 → 새 기본값 자동 마이그레이션 */
+    const DEAD_MODELS = new Set([
+      "gemini-2.5-flash-image-preview",      // 셧다운 (2026.05)
+      "gemini-2.0-flash-exp-image-generation" // deprecated
+    ]);
+
     const INITIAL_SETTINGS = {
       geminiKey: "",
-      geminiTextModel: "gemini-2.5-flash",
+      geminiTextModel: "gemini-3.5-flash",
       geminiImageModel: "gemini-3.1-flash-image-preview",
       weeklyTimePool: 72,
       weeklyEnergyPool: 100
@@ -1827,7 +1845,12 @@
 
                 <div className="settings-field" style={{ marginTop: 12 }}>
                   <label>텍스트 모델</label>
-                  <input type="text" value={settings.geminiTextModel || "gemini-2.5-flash"} onChange={(e) => update("geminiTextModel", e.target.value)} placeholder="gemini-2.5-flash" />
+                  <select value={settings.geminiTextModel} onChange={(e) => update("geminiTextModel", e.target.value)} style={{ flex: 1 }}>
+                    {GEMINI_TEXT_MODELS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                    {!GEMINI_TEXT_MODELS.find(m => m.id === settings.geminiTextModel) && settings.geminiTextModel && (
+                      <option value={settings.geminiTextModel}>⚙ {settings.geminiTextModel} (커스텀)</option>
+                    )}
+                  </select>
                   <button onClick={runTextTest} disabled={testing || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
                     {testing ? "..." : "테스트"}
                   </button>
@@ -1840,7 +1863,12 @@
 
                 <div className="settings-field" style={{ marginTop: 12 }}>
                   <label>이미지 모델</label>
-                  <input type="text" value={settings.geminiImageModel || "gemini-3.1-flash-image-preview"} onChange={(e) => update("geminiImageModel", e.target.value)} placeholder="gemini-3.1-flash-image-preview" />
+                  <select value={settings.geminiImageModel} onChange={(e) => update("geminiImageModel", e.target.value)} style={{ flex: 1 }}>
+                    {GEMINI_IMAGE_MODELS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                    {!GEMINI_IMAGE_MODELS.find(m => m.id === settings.geminiImageModel) && settings.geminiImageModel && (
+                      <option value={settings.geminiImageModel}>⚙ {settings.geminiImageModel} (커스텀)</option>
+                    )}
+                  </select>
                   <button onClick={runImageTest} disabled={imgTesting || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
                     {imgTesting ? "..." : "테스트"}
                   </button>
@@ -1850,11 +1878,18 @@
                     {imgTestResult.msg}
                   </div>
                 )}
-                <div className="settings-hint" style={{ marginTop: 6, lineHeight: 1.6 }}>
-                  기본: <code style={{ color: "var(--accent)" }}>gemini-3.1-flash-image-preview</code> (나노바나나2 1K)<br/>
-                  Pro: <code>gemini-3-pro-image-preview</code> (나노바나나 Pro · 고품질)<br/>
-                  안정: <code>gemini-2.5-flash-image</code> (나노바나나 1 · 셧다운된 preview의 release 버전)<br/>
-                  Imagen: <code>imagen-4.0-generate-001</code>
+                <div className="settings-field" style={{ marginTop: 6 }}>
+                  <label style={{ fontSize: 10.5 }}>커스텀 모델</label>
+                  <input type="text" placeholder="(드롭다운에 없는 모델 직접 입력)" onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.target.value.trim()) {
+                      const isImage = /image|imagen/i.test(e.target.value);
+                      update(isImage ? "geminiImageModel" : "geminiTextModel", e.target.value.trim());
+                      e.target.value = "";
+                    }
+                  }} />
+                </div>
+                <div className="settings-hint" style={{ marginTop: 4 }}>
+                  Enter로 적용 · "image"/"imagen" 포함 시 이미지 모델로 자동 분류
                 </div>
               </div>
 
@@ -3176,7 +3211,16 @@
       const [items, setItems] = useState(INITIAL_ITEMS);
       const [finance, setFinance] = useState(INITIAL_FINANCE);
       const [financeModalOpen, setFinanceModalOpen] = useState(false);
-      const [settings, setSettings] = useState(() => loadLS("dreamboard_settings", INITIAL_SETTINGS));
+      const [settings, setSettings] = useState(() => {
+        const loaded = loadLS("dreamboard_settings", INITIAL_SETTINGS);
+        // 셧다운된 모델명 자동 마이그레이션
+        const next = { ...INITIAL_SETTINGS, ...loaded };
+        if (DEAD_MODELS.has(next.geminiImageModel)) next.geminiImageModel = INITIAL_SETTINGS.geminiImageModel;
+        if (DEAD_MODELS.has(next.geminiTextModel)) next.geminiTextModel = INITIAL_SETTINGS.geminiTextModel;
+        if (!next.geminiImageModel) next.geminiImageModel = INITIAL_SETTINGS.geminiImageModel;
+        if (!next.geminiTextModel) next.geminiTextModel = INITIAL_SETTINGS.geminiTextModel;
+        return next;
+      });
       const [statModalOpen, setStatModalOpen] = useState(false);
       const [guideModalOpen, setGuideModalOpen] = useState(false);
       const [settingsOpen, setSettingsOpen] = useState(false);
