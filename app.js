@@ -4236,7 +4236,7 @@
               <div className="ri2-sec-head"><span className="h">🏦 자산 & 💼 수익</span><span className="sub">클릭으로 상세 모달</span></div>
               <div className="ri2-detail-grid">
                 {/* 자산 */}
-                <div ref={sectionRefs.assets} className={"ri2-detail" + (pulseSection === "assets" ? " pulse" : "")}>
+                <div ref={sectionRefs.assets} className={"ri2-detail" + (pulseSection === "assets" ? " pulse" : "")} style={{ order: 1 }}>
                   <div className="dc-head">
                     <div className="dc-title">🏦 자산 상세</div>
                     <div className="dc-sum green">{fmtKR(totalAssets)}</div>
@@ -4305,7 +4305,7 @@
                 </div>
 
                 {/* 지출 */}
-                <div ref={sectionRefs.expenses} className={"ri2-detail" + (pulseSection === "expenses" ? " pulse" : "")}>
+                <div ref={sectionRefs.expenses} className={"ri2-detail" + (pulseSection === "expenses" ? " pulse" : "")} style={{ order: 4 }}>
                   <div className="dc-head">
                     <div className="dc-title">📉 지출 상세</div>
                     <div className="dc-sum red">-{Math.round(totalExpense/10000).toLocaleString()}만/월</div>
