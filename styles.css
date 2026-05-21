@@ -2744,10 +2744,12 @@
   .dream-strip-card .dsc-name { font-size: 15px; }
   .dream-strip-card .dsc-pct { font-size: 12px; }
   .dream-strip-card .dsc-bar { height: 3px; }
+  /* 하단만 70% 검은 음영 (inset 재정의: top 해제 → 컨텐츠 크기만큼만) */
   .dream-strip-card .dsc-overlay {
+    top: auto;
+    background: rgba(0,0,0,0.7);
     padding: 10px 14px 12px;
-    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.7) 75px, transparent 100%);
-    backdrop-filter: blur(2px);
+    backdrop-filter: none;
   }
   .dream-strip-card .dsc-name {
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
@@ -2757,7 +2759,7 @@
     text-shadow: 0 1px 3px rgba(0,0,0,0.9);
   }
   .dream-strip-card .dsc-bar {
-    background: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.3);
   }
 
   /* 드림 티어 뱃지 */

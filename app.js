@@ -3652,14 +3652,37 @@
         });
       }, [user.uid]);
 
-      // 변경 시 1.5초 후 Firestore에 저장 (debounce)
+      // 저장 상태 (idle | saving | saved | error)
+      const [saveStatus, setSaveStatus] = useState("idle");
+      const [saveError, setSaveError] = useState("");
+
+      // 변경 시 1.5초 후 Firestore에 저장 (debounce + 에러 처리)
       useEffect(() => {
         if (!loaded) return;
         clearTimeout(saveTimer.current);
         saveTimer.current = setTimeout(() => {
-          _db.collection("users").doc(user.uid).set(
-            { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance }
-          );
+          const payload = { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance };
+          // 페이로드 크기 추정 (대략 JSON 길이 = 바이트)
+          const size = JSON.stringify(payload).length;
+          const sizeKB = Math.round(size / 1024);
+          setSaveStatus("saving");
+          _db.collection("users").doc(user.uid).set(payload)
+            .then(() => {
+              setSaveStatus("saved");
+              setSaveError("");
+              setTimeout(() => setSaveStatus("idle"), 2000);
+            })
+            .catch((err) => {
+              console.error("Firestore save failed:", err, "payload size:", sizeKB, "KB");
+              setSaveStatus("error");
+              if (size > 1000000) {
+                setSaveError("⚠️ 데이터가 너무 큼 (" + sizeKB + "KB > 1MB). 드림 이미지 일부 삭제 필요.");
+              } else if (err.code === "permission-denied") {
+                setSaveError("⚠️ Firestore 권한 거부 — 다시 로그인 시도");
+              } else {
+                setSaveError("⚠️ 저장 실패 (" + sizeKB + "KB): " + (err.message || err.code || "알 수 없음"));
+              }
+            });
         }, 1500);
       }, [tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance, loaded]);
 
@@ -3914,6 +3937,23 @@
           </div>
 
           {xpToast && <XpToast event={xpToast} />}
+
+          {/* 저장 상태 인디케이터 (좌측 하단) */}
+          {saveStatus !== "idle" && (
+            <div style={{
+              position: "fixed", bottom: 20, left: 20, zIndex: 9999,
+              padding: "8px 14px", borderRadius: 8, fontSize: 12,
+              fontFamily: "Geist Mono, monospace",
+              background: saveStatus === "error" ? "rgba(239,68,68,0.95)" : saveStatus === "saving" ? "rgba(245,158,11,0.95)" : "rgba(16,185,129,0.95)",
+              color: "#fff", fontWeight: 600,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+              maxWidth: 400, lineHeight: 1.5
+            }}>
+              {saveStatus === "saving" && "💾 저장 중..."}
+              {saveStatus === "saved" && "✓ 저장됨"}
+              {saveStatus === "error" && saveError}
+            </div>
+          )}
 
           {/* Stage 1 모달들 */}
           <StatModal
