@@ -391,8 +391,6 @@
 
           {/* ZONE 1: 플레이어 스탯 (좌) + 드림 스트립 (우) + 자원 미니 (우상단) */}
           <div className="zone1-wrap">
-            <ResourceMini resources={resources} onClick={onOpenResources} />
-
             {/* 좌측 플레이어 스탯 */}
             <div className="db-side">
               <div className="stat-panel-head">
@@ -3260,26 +3258,34 @@
             const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
             const streakCount = streak.filter((v, i) => i <= todayIdx && v).length;
             const maxXpAtLv60 = STAT_LEVEL_REQ[9] * 6;
+            const computedRes = computeResources(resources, items);
+            const profit = computedRes.money.profit;
+            const energyLeft = (computedRes.energy.weeklyPool + computedRes.energy.buff) - computedRes.energy.used;
+            const timeUsed = computedRes.time.used;
             return (
-              <div className="topbar">
+              <div className="topbar topbar-unified">
                 <div className="brand">
                   <div className="brand-mark" />
                   <div className="brand-name">DreamBoard</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Tabs active={tab} onChange={setTab} />
+                <div className="topbar-right">
                   <div className="player-bar">
                     <span className="pb-lv">Lv.{totalLv}</span>
                     <div className="pb-bar"><div className="pb-bar-fill" style={{ width: `${Math.min(100, (totalXp / maxXpAtLv60) * 100)}%` }} /></div>
                     <span className="pb-xp">{totalXp.toLocaleString()} XP</span>
                     {streakCount > 0 && <span className="pb-streak">🔥{streakCount}</span>}
                   </div>
+                  <div className="header-resources" onClick={() => setTab("resources")} title="자원·아이템 탭으로 이동">
+                    <span className={"hr-item " + (profit >= 0 ? "pos" : "neg")}>💰 {profit >= 0 ? "+" : ""}{Math.round(profit/10000)}만</span>
+                    <span className="hr-item">⚡ {energyLeft}</span>
+                    <span className="hr-item">⏰ {timeUsed.toFixed(0)}h</span>
+                  </div>
                   <button className="gear-btn" onClick={() => setSettingsOpen(true)} title="설정">⚙</button>
                 </div>
               </div>
             );
           })()}
-
-          <Tabs active={tab} onChange={setTab} />
 
           {tab === "dashboard" && <Dashboard
             goals={goals} tasks={tasks} toggleTask={toggleTask}

@@ -3251,3 +3251,52 @@
     color: var(--accent);
     font-weight: 700;
   }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 7: 통합 헤더 (로고+탭+레벨+자원+설정) ── */
+  /* ─────────────────────────────── */
+
+  .topbar-unified {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 6px 0;
+  }
+  .topbar-unified .brand { flex-shrink: 0; }
+  .topbar-unified .tabs { margin-bottom: 0; flex-shrink: 0; }
+  .topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* 헤더 자원 미니 (구 ResourceMini 대체) */
+  .header-resources {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .header-resources:hover {
+    border-color: var(--border-accent);
+    background: var(--bg-3);
+  }
+  .header-resources .hr-item {
+    color: var(--text-1);
+    font-weight: 500;
+  }
+  .header-resources .hr-item.pos { color: var(--green); }
+  .header-resources .hr-item.neg { color: var(--red); }
+
+  /* Zone1 자원 미니 (구식) 제거 */
+  /* (이미 JSX에서 제거됨, CSS는 그대로 유지) */
