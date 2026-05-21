@@ -3300,3 +3300,159 @@
 
   /* Zone1 자원 미니 (구식) 제거 */
   /* (이미 JSX에서 제거됨, CSS는 그대로 유지) */
+
+  /* ─────────────────────────────── */
+  /* ── Stage 8: 재무 카드 정돈     ── */
+  /* ─────────────────────────────── */
+
+  /* 재무 카드 (자산/이번달 현황) — res-card와 통일감 */
+  .fin-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .fin-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .fin-card-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: -0.01em;
+  }
+  .fin-card-sum {
+    font-family: "Geist Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-1);
+  }
+  .fin-card-sum.green { color: var(--green); }
+  .fin-card-sum.red { color: var(--red); }
+
+  /* 재무 항목 행 */
+  .fin-row {
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 12px;
+    align-items: center;
+  }
+  .fin-row .nm { color: var(--text-2); }
+  .fin-row .val {
+    font-family: "Geist Mono", monospace;
+    color: var(--text-1);
+    text-align: right;
+    font-weight: 500;
+  }
+  .fin-row-head {
+    display: grid;
+    grid-template-columns: 1fr 110px 130px;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text-4);
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .fin-row-head .lbl-r { text-align: right; }
+
+  .fin-subcat {
+    font-size: 10px;
+    color: var(--text-4);
+    padding: 8px 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* 순이익 박스 */
+  .fin-net {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .fin-net .lbl { font-size: 11px; color: var(--text-3); }
+  .fin-net .val {
+    font-family: "Geist Mono", monospace;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .fin-net .val.green { color: var(--green); }
+
+  /* 요약 카드 (순자산) */
+  .fin-summary-card {
+    background:
+      radial-gradient(400px 100px at 100% 0%, rgba(139,92,246,0.08), transparent 70%),
+      linear-gradient(180deg, rgba(139,92,246,0.04), var(--bg-1));
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .fin-summary-card .summary-net {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .fin-summary-card .summary-net .lbl {
+    font-size: 11px;
+    color: var(--text-3);
+  }
+  .fin-summary-card .summary-net .val {
+    font-family: "Geist Mono", monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+  .fin-summary-card .summary-chg {
+    font-size: 10.5px;
+    color: var(--text-4);
+    font-family: "Geist Mono", monospace;
+    text-align: right;
+  }
+
+  /* 추가 버튼들 — 차분하게 */
+  .fin-add-btn-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .fin-add-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    padding: 6px 0;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: "Geist", sans-serif;
+    transition: all 0.15s;
+  }
+  .fin-add-btn:hover {
+    background: var(--bg-2);
+    border-color: var(--border-strong);
+    color: var(--text-1);
+  }
+
+  /* 인라인 자산 행 자체에 호버 */
+  .asset-row:hover { background: var(--bg-2); border-radius: 5px; }
+  .asset-row .nm { padding-left: 4px; }
+  .asset-row .val { padding-right: 4px; }
