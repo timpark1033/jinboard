@@ -6,6 +6,12 @@
       const target = new Date(dateStr);
       return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
     }
+    // 이번주 D-day (월=D-6 ~ 토=D-1, 일=D-0)
+    function weekDday() {
+      const dow = new Date().getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      if (dow === 0) return 0; // 일요일 = 종료/리셋
+      return 7 - dow; // 월(1)=6, 화=5, ..., 토(6)=1
+    }
     function fmtDeadline(dateStr) {
       const d = new Date(dateStr);
       return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
@@ -583,16 +589,18 @@
                               </div>
                               {stages.length === 0 && <div className="db-empty-mini">단계 없음</div>}
                               {(() => {
-                                // 현재 단계 = 첫 번째 active 1개만 (여러 active일 때도 첫 것만 강조)
                                 const firstActiveId = (stages.find(s => s.status === "active") || {}).id;
                                 return visibleStages.map((m) => {
                                   const isCurrent = m.id === firstActiveId;
                                   const dispStatus = m.status === "active" && !isCurrent ? "todo" : m.status;
+                                  const dday = m.deadline ? calcDday(m.deadline) : null;
+                                  const ddayClass = dday !== null ? (dday < 0 ? "over" : dday <= 3 ? "urgent" : dday <= 7 ? "soon" : "") : "";
                                   return (
                                     <div key={m.id} className={"qb-row " + dispStatus + (isCurrent ? " current-stage" : "")} onClick={() => toggleStage && toggleStage(g.id, m.id)}>
                                       <span className="qb-cb">{m.status === "done" ? "✓" : ""}</span>
                                       <span className="qb-tag main">{m._absIdx + 1}</span>
                                       <span className="qb-text">{m.name}</span>
+                                      {dday !== null && <span className={"qb-dday " + ddayClass}>{dday < 0 ? "D+" + Math.abs(dday) : "D-" + dday}</span>}
                                     </div>
                                   );
                                 });
@@ -609,11 +617,14 @@
                               {quests.map(q => {
                                 const isCounter = q.target > 1;
                                 const pct = q.target > 0 ? Math.round((q.current / q.target) * 100) : 0;
+                                const dday = q.deadline ? calcDday(q.deadline) : null;
+                                const ddayClass = dday !== null ? (dday < 0 ? "over" : dday <= 3 ? "urgent" : dday <= 7 ? "soon" : "") : "";
                                 return (
                                   <div key={"q" + q.id} className={"qb-row qb-quest " + (q.done ? "done" : "")}>
                                     <span className="qb-cb" onClick={() => adjustQuestCount && adjustQuestCount(g.id, q.id, q.done ? -1 : +1)}>{q.done ? "✓" : ""}</span>
                                     <span className="qb-tag side">{q.repeat ? "🔁" : "💎"}</span>
                                     <span className="qb-text">{q.name}</span>
+                                    {dday !== null && <span className={"qb-dday " + ddayClass}>{dday < 0 ? "D+" + Math.abs(dday) : "D-" + dday}</span>}
                                     {isCounter && (
                                       <span className="qb-quest-prog">
                                         <span className="qbp-num">{q.current}/{q.target}</span>
@@ -663,7 +674,10 @@
                 {/* 이번주 목표 */}
                 <div className="db-zone4-col">
                   <div className="db-zone4-title">
-                    이번주 목표
+                    {(() => {
+                      const dd = weekDday();
+                      return <>이번주 목표 <span style={{ color: dd <= 1 ? 'var(--red)' : dd <= 3 ? 'var(--amber)' : 'var(--accent)', fontWeight: 700, fontFamily: 'Geist Mono, monospace', marginLeft: 4 }}>{dd === 0 ? '종료' : 'D-' + dd}</span></>;
+                    })()}
                     <span style={{ fontFamily: 'Geist Mono, monospace', fontWeight: 400 }}>{weeklyGoals.filter(w=>w.done).length}/{weeklyGoals.length} · W{getWeekNumber()}</span>
                   </div>
                   <input className="next-week-input" placeholder="+ Enter 눌러서 추가" onKeyDown={e => { if (e.key === "Enter" && e.target.value.trim()) { setWeeklyGoals(prev => [...prev, { id: "w" + Date.now(), text: e.target.value.trim(), done: false }]); e.target.value = ""; } }} />
@@ -2437,11 +2451,15 @@
                             </div>
                           </div>
                           {(g.milestones || []).map((m, i) => (
-                            <div key={m.id} className={"qm-row " + m.status}>
+                            <div key={m.id} className={"qm-row qm-with-date " + m.status}>
                               <span className="num">{i + 1}</span>
                               <span className="ck" onClick={(e) => { e.stopPropagation(); toggleStageInForm(g.id, m.id); }}>{m.status === "done" ? "✓" : ""}</span>
                               <input className="name" value={m.name} onChange={(e) => {
                                 const newStages = (g.milestones || []).map(x => x.id === m.id ? { ...x, name: e.target.value } : x);
+                                editGoal(g.id, { milestones: newStages });
+                              }} />
+                              <input type="date" className="qm-date" value={m.deadline || ""} onChange={(e) => {
+                                const newStages = (g.milestones || []).map(x => x.id === m.id ? { ...x, deadline: e.target.value } : x);
                                 editGoal(g.id, { milestones: newStages });
                               }} />
                               <span className="state">{m.status === "done" ? "완료" : m.status === "active" ? "진행중" : "예정"}</span>
@@ -2482,11 +2500,15 @@
                             const isCounter = q.target > 1;
                             const pct = q.target > 0 ? Math.round((q.current / q.target) * 100) : 0;
                             return (
-                              <div key={q.id} className={"qm-row qm-quest " + (q.done ? "done" : "")}>
+                              <div key={q.id} className={"qm-row qm-quest qm-with-date " + (q.done ? "done" : "")}>
                                 <span className="num">{q.repeat ? "🔁" : "💎"}</span>
                                 <span className="ck" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, q.done ? -1 : +1); }}>{q.done ? "✓" : ""}</span>
                                 <input className="name" value={q.name} onChange={(e) => {
                                   const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, name: e.target.value } : x);
+                                  editGoal(g.id, { quests: newQ });
+                                }} />
+                                <input type="date" className="qm-date" value={q.deadline || ""} onChange={(e) => {
+                                  const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, deadline: e.target.value } : x);
                                   editGoal(g.id, { quests: newQ });
                                 }} />
                                 <div className="qm-counter">

@@ -4320,3 +4320,44 @@
     outline: none;
   }
   .qm-counter input:focus { border-color: var(--accent); }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 15: 단계/퀘스트 D-day + 마감일 ── */
+  /* ─────────────────────────────── */
+
+  /* 대시보드 행에 D-day 뱃지 */
+  .qb-row .qb-dday {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--text-3);
+    padding: 1px 5px;
+    background: var(--bg-2);
+    border-radius: 3px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .qb-row .qb-dday.soon { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .qb-row .qb-dday.urgent { background: rgba(239,68,68,0.15); color: var(--red); }
+  .qb-row .qb-dday.over { background: rgba(239,68,68,0.3); color: #fff; }
+  .qb-row.done .qb-dday { opacity: 0.5; }
+
+  /* 모달 폼: 단계/퀘스트 행에 마감일 input 추가 → grid 컬럼 재정의 */
+  .qm-row.qm-with-date:not(.qm-quest) {
+    grid-template-columns: 22px 22px 1fr 120px 80px 60px 24px;
+  }
+  .qm-row.qm-quest.qm-with-date {
+    grid-template-columns: 22px 22px 1fr 120px 140px 80px 60px 24px;
+  }
+  .qm-row .qm-date {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-2);
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    padding: 3px 6px;
+    outline: none;
+    color-scheme: dark;
+    min-width: 0;
+  }
+  .qm-row .qm-date:focus { border-color: var(--accent); color: var(--text-1); }
