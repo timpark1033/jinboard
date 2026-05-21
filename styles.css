@@ -1782,13 +1782,30 @@
   /* GoalsTasksRetro merged tab — 3-col split */
   .gtr-split {
     display: grid;
-    grid-template-columns: 35% 40% 25%;
+    grid-template-columns: 35% 6px 40% 6px 25%;
     height: calc(100vh - 200px);
     background: var(--border);
-    gap: 1px;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
+  }
+  .gtr-resize-handle {
+    background: var(--border);
+    cursor: col-resize;
+    transition: background 0.15s;
+    z-index: 2;
+    position: relative;
+  }
+  .gtr-resize-handle:hover, .gtr-resize-handle:active {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .gtr-resize-handle::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    left: -3px;
+    right: -3px;
   }
   .gtr-col {
     background: var(--bg-0);

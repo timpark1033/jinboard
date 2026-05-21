@@ -304,7 +304,8 @@
       retireAge: 65,
       dreamGalleryNameSize: 19,
       characterAvatarUrl: "",
-      characterName: ""
+      characterName: "",
+      gtrColumnWidths: [35, 40, 25]
     };
 
     const INITIAL_RETROS = [
@@ -2219,7 +2220,8 @@
       goals, setGoals, addGoal, editGoal, deleteGoal, toggleStage, adjustQuestCount,
       tasks, toggleTask, addTask, editTask, deleteTask,
       retros, setRetros, dailyLog, stats, onOpenQuestGuide,
-      initialOpenGoalId, onGoalOpened
+      initialOpenGoalId, onGoalOpened,
+      settings, setSettings
     }) {
       const toggleStageInForm = toggleStage || ((gId, mId) => {
         const g = goals.find(x => x.id === gId);
@@ -2234,6 +2236,54 @@
       const gtrRef = useRef(null);
       const [connPaths, setConnPaths] = useState([]);
       const [gtrZoom, setGtrZoom] = useState(1);
+
+      /* ─── 컬럼 폭 (드래그 리사이즈, settings 영구 저장) ─── */
+      const savedWidths = Array.isArray(settings?.gtrColumnWidths) && settings.gtrColumnWidths.length === 3
+        ? settings.gtrColumnWidths : [35, 40, 25];
+      const [colWidths, setColWidths] = useState(savedWidths);
+      const dragInfoRef = useRef(null);
+
+      // 핸들 드래그 시작 (idx: 0 = col0|col1 사이, 1 = col1|col2 사이)
+      const startResize = (idx) => (e) => {
+        e.preventDefault();
+        const containerW = gtrRef.current?.getBoundingClientRect().width || 1;
+        dragInfoRef.current = {
+          idx,
+          startX: e.clientX,
+          startWidths: [...colWidths],
+          containerW
+        };
+        const onMove = (ev) => {
+          const info = dragInfoRef.current;
+          if (!info) return;
+          const deltaPct = ((ev.clientX - info.startX) / info.containerW) * 100;
+          const next = [...info.startWidths];
+          const leftIdx = info.idx;
+          const rightIdx = info.idx + 1;
+          let newLeft = info.startWidths[leftIdx] + deltaPct;
+          let newRight = info.startWidths[rightIdx] - deltaPct;
+          // 최소 10%, 최대 75% 클램프
+          if (newLeft < 10) { newRight -= (10 - newLeft); newLeft = 10; }
+          if (newRight < 10) { newLeft -= (10 - newRight); newRight = 10; }
+          if (newLeft > 75) { newRight += (newLeft - 75); newLeft = 75; }
+          if (newRight > 75) { newLeft += (newRight - 75); newRight = 75; }
+          next[leftIdx] = newLeft;
+          next[rightIdx] = newRight;
+          setColWidths(next);
+        };
+        const onUp = () => {
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+          dragInfoRef.current = null;
+          // 드래그 종료 시 settings에 영구 저장
+          if (setSettings) setSettings(prev => ({ ...prev, gtrColumnWidths: colWidthsRef.current }));
+        };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+      };
+
+      const colWidthsRef = useRef(colWidths);
+      React.useEffect(() => { colWidthsRef.current = colWidths; }, [colWidths]);
 
       // 목표 id → 색상 (deterministic HSL)
       const goalColor = React.useCallback((gId) => {
@@ -2505,7 +2555,7 @@
 
       return (
         <div className="panel-enter">
-          <div className="gtr-split" ref={gtrRef} style={{ position: "relative" }}>
+          <div className="gtr-split" ref={gtrRef} style={{ position: "relative", gridTemplateColumns: `${colWidths[0]}% 6px ${colWidths[1]}% 6px ${colWidths[2]}%` }}>
             <svg className="gtr-connections" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1, overflow: "visible" }}>
               {connPaths.map((p) => (
                 <path key={p.key} d={p.d} fill="none" stroke={p.color} strokeWidth="2" strokeOpacity={p.done ? 0.35 : 0.85} strokeDasharray={p.done ? "4 4" : "none"} style={{ filter: `drop-shadow(0 0 4px ${p.color})` }} />
@@ -2791,6 +2841,8 @@
               </div>
             </div>
 
+            <div className="gtr-resize-handle" onMouseDown={startResize(0)} title="드래그로 폭 조절" />
+
             {/* ── MIDDLE: TASKS 4분면 ── */}
             <div className="gtr-col tasks" style={{ zoom: gtrZoom }}>
               <div className="gtr-col-head">
@@ -2889,6 +2941,8 @@
                 })}
               </div>
             </div>
+
+            <div className="gtr-resize-handle" onMouseDown={startResize(1)} title="드래그로 폭 조절" />
 
             {/* ── RIGHT: RETRO ── */}
             <div className="gtr-col">
@@ -4544,6 +4598,7 @@
             retros={retros} setRetros={setRetros} dailyLog={dailyLog} stats={stats}
             onOpenQuestGuide={() => setQuestGuideOpen(true)}
             initialOpenGoalId={goalToOpen} onGoalOpened={() => setGoalToOpen(null)}
+            settings={settings} setSettings={setSettings}
           />}
           {tab === "resources" && <ResourcesItemsTab
             items={items} setItems={setItems}
