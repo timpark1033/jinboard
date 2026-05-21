@@ -2288,12 +2288,30 @@
       const colWidthsRef = useRef(colWidths);
       React.useEffect(() => { colWidthsRef.current = colWidths; }, [colWidths]);
 
-      // 목표 id → 색상 (deterministic HSL)
+      // 목표 id → 색상: g.color 있으면 사용, 없으면 HSL hash 폴백
       const goalColor = React.useCallback((gId) => {
-        const idx = goals.findIndex(g => g.id === gId);
+        const g = goals.find(x => x.id === gId);
+        if (g?.color) return g.color;
+        const idx = goals.findIndex(x => x.id === gId);
         const hue = (idx * 47) % 360;
         return `hsl(${hue}, 70%, 62%)`;
       }, [goals]);
+
+      // 구글 캘린더 스타일 색상 팔레트
+      const GOAL_COLORS = [
+        { name: "자동", value: "" },
+        { name: "토마토", value: "#d50000" },
+        { name: "탄제린", value: "#f4511e" },
+        { name: "바나나", value: "#f6bf26" },
+        { name: "세이지", value: "#33b679" },
+        { name: "바질", value: "#0b8043" },
+        { name: "공작", value: "#039be5" },
+        { name: "블루베리", value: "#3f51b5" },
+        { name: "라벤더", value: "#7986cb" },
+        { name: "포도", value: "#8e24aa" },
+        { name: "플라밍고", value: "#e67c73" },
+        { name: "그래파이트", value: "#616161" }
+      ];
 
       // 경로 컴퓨트 — 직교 라우팅 (텍스트 통과 회피)
       const recomputePaths = React.useCallback(() => {
@@ -2753,6 +2771,31 @@
                                 <option value="">스탯 미연결</option>
                                 {stats.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.label}</option>)}
                               </select>
+                            </div>
+                          </div>
+                          <div className="gem-field" style={{ marginTop: 14 }}>
+                            <label>색상 (목표 카드 · 연결선 · 업무 뱃지에 반영)</label>
+                            <div className="goal-color-swatches">
+                              {GOAL_COLORS.map((c) => {
+                                const isSelected = (g.color || "") === c.value;
+                                const previewColor = c.value || (() => {
+                                  const idx = goals.findIndex(x => x.id === g.id);
+                                  return `hsl(${(idx * 47) % 360}, 70%, 62%)`;
+                                })();
+                                return (
+                                  <button
+                                    key={c.value || "auto"}
+                                    type="button"
+                                    title={c.name + (c.value ? " " + c.value : " (인덱스 기반)")}
+                                    onClick={() => editGoal(g.id, { color: c.value || null })}
+                                    className={"goal-swatch" + (isSelected ? " selected" : "") + (!c.value ? " auto" : "")}
+                                    style={{ background: previewColor }}
+                                  >
+                                    {!c.value && <span className="auto-mark">A</span>}
+                                    {isSelected && <span className="check-mark">✓</span>}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         </div>
