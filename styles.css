@@ -3456,3 +3456,363 @@
   .asset-row:hover { background: var(--bg-2); border-radius: 5px; }
   .asset-row .nm { padding-left: 4px; }
   .asset-row .val { padding-right: 4px; }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 9: 퀘스트북(C) + 메인·사이드·도전(A) ── */
+  /* ─────────────────────────────── */
+
+  /* C — Quest book filter tabs */
+  .qb-filters { display:flex; gap:3px; margin: 10px 0 8px; flex-wrap: wrap; }
+  .qb-tab {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-3);
+    font-size: 10px;
+    padding: 3px 7px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .qb-tab:hover { background: var(--bg-3); color: var(--text-2); }
+  .qb-tab.active {
+    background: var(--accent-soft);
+    border-color: var(--border-accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .qb-tab .cnt { color: var(--text-4); margin-left: 3px; font-family: "Geist Mono", monospace; }
+  .qb-tab.active .cnt { color: var(--accent); }
+
+  /* C — Quest row (unified list item) */
+  .qb-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .qb-row:hover { background: var(--bg-2); padding-left: 4px; padding-right: 4px; }
+  .qb-cb {
+    width: 13px; height: 13px;
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    color: #fff;
+    position: relative;
+  }
+  .qb-row.done .qb-cb { background: var(--green); border-color: var(--green); }
+  .qb-row.active .qb-cb {
+    background: rgba(245,158,11,0.2);
+    border-color: var(--amber);
+  }
+  .qb-row.active .qb-cb::after {
+    content: "";
+    width: 6px; height: 6px;
+    background: var(--amber);
+    border-radius: 50%;
+    box-shadow: 0 0 5px var(--amber);
+  }
+  .qb-tag {
+    font-family: "Geist Mono", monospace;
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .qb-tag.main { background: rgba(139,92,246,0.18); color: var(--accent); }
+  .qb-tag.side { background: rgba(59,130,246,0.18); color: var(--blue); }
+  .qb-tag.chal { background: rgba(245,158,11,0.18); color: var(--amber); }
+  .qb-text {
+    flex: 1;
+    color: var(--text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .qb-row.done .qb-text { color: var(--text-4); text-decoration: line-through; }
+  .qb-xp {
+    font-family: "Geist Mono", monospace;
+    font-size: 9.5px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .qb-row.done .qb-xp { color: var(--green); }
+  .qb-add {
+    margin-top: 6px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-4);
+    font-size: 10px;
+    padding: 4px 0;
+    border-radius: 4px;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .qb-add:hover {
+    border-color: var(--border-accent);
+    color: var(--accent);
+  }
+
+  /* A — Modal quest sections */
+  .quest-section {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .quest-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .quest-section-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-1);
+  }
+  .quest-section-title .badge {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .quest-section-title.main .badge { background: rgba(139,92,246,0.2); color: var(--accent); }
+  .quest-section-title.side .badge { background: rgba(59,130,246,0.2); color: var(--blue); }
+  .quest-section-title.chal .badge { background: rgba(245,158,11,0.2); color: var(--amber); }
+  .quest-section-desc {
+    font-size: 10.5px;
+    color: var(--text-4);
+    margin-top: 3px;
+    font-style: italic;
+  }
+  .quest-add-mini {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    font-size: 10.5px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .quest-add-mini:hover {
+    background: var(--bg-3);
+    color: var(--text-1);
+    border-color: var(--border-strong);
+  }
+
+  /* A — Modal quest row */
+  .qm-row {
+    display: grid;
+    grid-template-columns: 22px 22px 1fr 80px 60px 24px;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+    border-radius: 6px;
+    margin-bottom: 5px;
+  }
+  .qm-row.done { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.25); }
+  .qm-row.active { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.3); }
+  .qm-row .num {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--text-4);
+    text-align: center;
+  }
+  .qm-row .ck {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+    position: relative;
+  }
+  .qm-row.done .ck { background: var(--green); border-color: var(--green); }
+  .qm-row.active .ck {
+    background: rgba(245,158,11,0.2);
+    border-color: var(--amber);
+  }
+  .qm-row.active .ck::after {
+    content: "";
+    width: 8px; height: 8px;
+    background: var(--amber);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--amber);
+  }
+  .qm-row .name {
+    background: transparent;
+    border: none;
+    color: var(--text-1);
+    padding: 0;
+    outline: none;
+    font-size: 12px;
+    font-family: inherit;
+    min-width: 0;
+    width: 100%;
+  }
+  .qm-row.done .name { color: var(--text-4); text-decoration: line-through; }
+  .qm-row .state {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    text-align: right;
+    color: var(--text-4);
+  }
+  .qm-row.active .state { color: var(--amber); }
+  .qm-row.done .state { color: var(--green); }
+  .qm-row .xp-edit {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--accent);
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    text-align: center;
+    padding: 2px 0;
+    width: 100%;
+    outline: none;
+  }
+  .qm-row .xp-edit:focus { border-color: var(--accent); }
+  .qm-row .del {
+    background: none;
+    border: none;
+    color: var(--text-4);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+  }
+  .qm-row .del:hover { color: var(--red); }
+
+  .main-bonus-banner {
+    padding: 8px 12px;
+    background: linear-gradient(135deg, var(--accent-soft), transparent);
+    border: 1px dashed var(--border-accent);
+    border-radius: 6px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .main-bonus-banner strong { color: var(--accent); }
+  .main-bonus-banner .bonus-xp {
+    font-family: "Geist Mono", monospace;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* 도움말 ? 아이콘 */
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: "Geist", sans-serif;
+    transition: all 0.15s;
+    margin-left: 4px;
+  }
+  .help-icon:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  /* QuestGuideModal */
+  .guide-quest-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .guide-quest-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .guide-quest-card.main { border-color: var(--border-accent); background: linear-gradient(180deg, rgba(139,92,246,0.06), var(--bg-2)); }
+  .guide-quest-card.side { border-color: rgba(59,130,246,0.35); background: linear-gradient(180deg, rgba(59,130,246,0.06), var(--bg-2)); }
+  .guide-quest-card.chal { border-color: rgba(245,158,11,0.35); background: linear-gradient(180deg, rgba(245,158,11,0.06), var(--bg-2)); }
+  .guide-quest-card .ic { font-size: 32px; margin-bottom: 6px; display: block; }
+  .guide-quest-card .nm { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .guide-quest-card.main .nm { color: var(--accent); }
+  .guide-quest-card.side .nm { color: var(--blue); }
+  .guide-quest-card.chal .nm { color: var(--amber); }
+  .guide-quest-card .desc {
+    font-size: 11px;
+    color: var(--text-3);
+    line-height: 1.5;
+  }
+  .guide-rule-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12px;
+  }
+  .guide-rule-table th, .guide-rule-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .guide-rule-table th {
+    font-size: 10.5px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+  .guide-rule-table td { color: var(--text-2); }
+  .guide-rule-table td.tag-cell { text-align: center; }
+  .guide-rule-table .tag-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .tag-pill.main { background: rgba(139,92,246,0.2); color: var(--accent); }
+  .tag-pill.side { background: rgba(59,130,246,0.2); color: var(--blue); }
+  .tag-pill.chal { background: rgba(245,158,11,0.2); color: var(--amber); }
+  .guide-decision-box {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border-accent);
+    border-radius: 8px;
+    font-size: 11.5px;
+    color: var(--text-2);
+    line-height: 1.7;
+  }
+  .guide-decision-box strong { color: var(--accent); }

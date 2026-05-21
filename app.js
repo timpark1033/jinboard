@@ -50,6 +50,15 @@
             kpi: { label: "구독자", current: 230, target: 1000, unit: "명" } },
         ],
         currentMilestone: { name: "영상 10개 업로드", kpi: "7/10", pct: 70 },
+        sideQuests: [
+          { id: "g1s1", name: "첫 협업 영상", done: true, xpReward: 60 },
+          { id: "g1s2", name: "라이브 첫 시도", done: false, xpReward: 50 },
+          { id: "g1s3", name: "굿즈 1종 출시", done: false, xpReward: 120 },
+        ],
+        challenges: [
+          { id: "g1c1", name: "구독자 1,000명 달성", done: false, xpReward: 500 },
+          { id: "g1c2", name: "매주 영상 2편 업로드", done: false, xpReward: 30, repeat: "weekly" },
+        ],
       },
       {
         id: "g2",
@@ -368,7 +377,8 @@
     }
 
     /* ---------- TAB 1: Dashboard ---------- */
-    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak, topThree, setTopThree, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage }) {
+    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak, topThree, setTopThree, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage, toggleSideQuest, toggleChallenge, onOpenQuestGuide }) {
+      const [qbFilter, setQbFilter] = useState({}); // {goalId: 'all'|'main'|'side'|'chal'}
       const [editingWeeklyId, setEditingWeeklyId] = useState(null);
       const [editingWeeklyText, setEditingWeeklyText] = useState("");
       const overall = useMemo(() => goals.length > 0 ? Math.round(goals.reduce((s, g) => s + g.progress, 0) / goals.length) : 0, [goals]);
@@ -523,60 +533,60 @@
                         <span className="pct">{computedProgress}%</span>
                       </div>
 
-                      {stages.length > 0 && (() => {
-                        const allDone = stages.every(s => s.status === "done");
-                        const activeStage = stages.find(s => s.status === "active") || (!allDone ? stages.find(s => s.status === "todo") : null);
-                        const activeIdx = activeStage ? stages.indexOf(activeStage) : -1;
+                      {/* C 퀘스트북 — 메인/사이드/도전 통합 필터 리스트 */}
+                      {(() => {
+                        const sides = g.sideQuests || [];
+                        const chals = g.challenges || [];
+                        const filter = qbFilter[g.id] || "all";
+                        const allCount = stages.length + sides.length + chals.length;
+                        if (allCount === 0) return null;
+                        const items = [];
+                        if (filter === "all" || filter === "main") stages.forEach((s, i) => items.push({ type: "main", num: i + 1, ...s, _isStage: true }));
+                        if (filter === "all" || filter === "side") sides.forEach(s => items.push({ type: "side", ...s, _isSide: true }));
+                        if (filter === "all" || filter === "chal") chals.forEach(c => items.push({ type: "chal", ...c, _isChal: true }));
                         return (
                           <div className="db-stage-sec">
-                            {/* 가로 타임라인 */}
-                            <div className="stage-timeline-meta">
-                              <span>📍 단계 진행 <span className="pct">{doneStages}/{stages.length}</span></span>
-                              <span>{Math.round((doneStages / stages.length) * 100)}%</span>
+                            <div className="db-stage-sec-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 4 }}>
+                              <span>📋 퀘스트 <span className="cnt">{allCount}</span>
+                                <span className="help-icon" onClick={(e) => { e.stopPropagation(); onOpenQuestGuide && onOpenQuestGuide(); }}>?</span>
+                              </span>
                             </div>
-                            <div className="stage-timeline">
-                              {stages.map((m, i) => (
-                                <React.Fragment key={m.id}>
-                                  <div className={"stage-timeline-node " + m.status} onClick={() => toggleStage && toggleStage(g.id, m.id)} title={m.name}>
-                                    <div className="stage-timeline-dot">{m.status === "done" ? "✓" : ""}</div>
-                                    <div className="stage-timeline-label">{i + 1}. {m.name.length > 6 ? m.name.slice(0, 6) + "…" : m.name}</div>
+                            <div className="qb-filters">
+                              <button className={"qb-tab" + (filter === "all" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "all" }))}>전체<span className="cnt">{allCount}</span></button>
+                              <button className={"qb-tab" + (filter === "main" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "main" }))}>🎯<span className="cnt">{stages.length}</span></button>
+                              <button className={"qb-tab" + (filter === "side" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "side" }))}>💎<span className="cnt">{sides.length}</span></button>
+                              <button className={"qb-tab" + (filter === "chal" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "chal" }))}>🏆<span className="cnt">{chals.length}</span></button>
+                            </div>
+                            {items.map(it => {
+                              if (it._isStage) {
+                                return (
+                                  <div key={"m" + it.id} className={"qb-row " + it.status} onClick={() => toggleStage && toggleStage(g.id, it.id)}>
+                                    <span className="qb-cb">{it.status === "done" ? "✓" : ""}</span>
+                                    <span className="qb-tag main">🎯{it.num}</span>
+                                    <span className="qb-text">{it.name}</span>
+                                    <span className="qb-xp">+150</span>
                                   </div>
-                                  {i < stages.length - 1 && (
-                                    <div className={"stage-timeline-connector" + (m.status === "done" ? " done" : "")} />
-                                  )}
-                                </React.Fragment>
-                              ))}
-                            </div>
-
-                            {/* 현재 단계 카드 */}
-                            <div className={"current-stage-card " + (allDone ? "all-done" : activeStage ? "" : "no-active")}>
-                              {allDone ? (
-                                <>
-                                  <div className="current-stage-head">🎉 모든 단계 완료</div>
-                                  <div className="current-stage-name">목표 달성! 보너스 +600 XP 수령</div>
-                                </>
-                              ) : activeStage ? (
-                                <>
-                                  <div className="current-stage-head">
-                                    <span>📍 STAGE {activeIdx + 1} · 진행중</span>
-                                    <span className="current-stage-meta">+150 XP</span>
+                                );
+                              }
+                              if (it._isSide) {
+                                return (
+                                  <div key={"s" + it.id} className={"qb-row " + (it.done ? "done" : "")} onClick={() => toggleSideQuest && toggleSideQuest(g.id, it.id)}>
+                                    <span className="qb-cb">{it.done ? "✓" : ""}</span>
+                                    <span className="qb-tag side">💎</span>
+                                    <span className="qb-text">{it.name}</span>
+                                    <span className="qb-xp">+{it.xpReward || 80}</span>
                                   </div>
-                                  <div className="current-stage-name">{activeStage.name}</div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="current-stage-head">대기중</div>
-                                  <div className="current-stage-name">단계를 시작하세요</div>
-                                </>
-                              )}
-                            </div>
-
-                            {!allDone && (
-                              <div className="stage-bonus-mini">
-                                <span>🎁 전체 완료 보너스</span>
-                                <span className="xp">+600 XP</span>
-                              </div>
-                            )}
+                                );
+                              }
+                              return (
+                                <div key={"c" + it.id} className={"qb-row " + (it.done ? "done" : "")} onClick={() => toggleChallenge && toggleChallenge(g.id, it.id)}>
+                                  <span className="qb-cb">{it.done ? "✓" : ""}</span>
+                                  <span className="qb-tag chal">{it.repeat ? "🔁" : "🏆"}</span>
+                                  <span className="qb-text">{it.name}</span>
+                                  <span className="qb-xp">+{it.xpReward || 500}</span>
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       })()}
@@ -1968,9 +1978,9 @@
 
     /* ─── Stage 2: GoalsTasksRetroTab ─── */
     function GoalsTasksRetroTab({
-      goals, setGoals, addGoal, editGoal, deleteGoal, toggleStage,
+      goals, setGoals, addGoal, editGoal, deleteGoal, toggleStage, toggleSideQuest, toggleChallenge,
       tasks, toggleTask, addTask, editTask, deleteTask,
-      retros, setRetros, dailyLog, stats
+      retros, setRetros, dailyLog, stats, onOpenQuestGuide
     }) {
       const toggleStageInForm = toggleStage || ((gId, mId) => {
         const g = goals.find(x => x.id === gId);
@@ -2179,39 +2189,113 @@
                           </select>
                         </div>
 
-                        {/* 단계(Stage) CRUD */}
-                        <div style={{ marginTop: 6, padding: 8, background: "var(--bg-2)", borderRadius: 6, border: "1px solid var(--border)" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)" }}>📍 단계 (+150 XP each)</span>
-                            <button onClick={(e) => {
+                        {/* A 조합: 메인 단계 + 사이드 퀘스트 + 도전 과제 */}
+
+                        {/* 메인 단계 */}
+                        <div className="quest-section" style={{ marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
+                          <div className="quest-section-head">
+                            <div>
+                              <div className="quest-section-title main">📍 메인 단계 <span className="badge">🎯 {(g.milestones || []).filter(m => m.status === "done").length}/{(g.milestones || []).length}</span>
+                                <span className="help-icon" onClick={(e) => { e.stopPropagation(); onOpenQuestGuide && onOpenQuestGuide(); }}>?</span>
+                              </div>
+                              <div className="quest-section-desc">순서대로 진행 · 각 +150 XP</div>
+                            </div>
+                            <button className="quest-add-mini" onClick={(e) => {
                               e.stopPropagation();
                               const newStages = [...(g.milestones || []), { id: "m" + Date.now(), name: "새 단계", status: "active", xpReward: 150 }];
                               editGoal(g.id, { milestones: newStages });
-                            }} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "3px 10px", borderRadius: 4, fontSize: 10.5, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>+ 단계</button>
+                            }}>+ 메인</button>
                           </div>
-                          {(g.milestones || []).length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)", padding: 4 }}>단계 없음</div>}
                           {(g.milestones || []).map((m, i) => (
-                            <div key={m.id} className={"stage-edit-row " + m.status}>
+                            <div key={m.id} className={"qm-row " + m.status}>
                               <span className="num">{i + 1}</span>
                               <span className="ck" onClick={(e) => { e.stopPropagation(); toggleStageInForm(g.id, m.id); }}>{m.status === "done" ? "✓" : ""}</span>
-                              <input className="s-name" value={m.name} onChange={(e) => {
+                              <input className="name" value={m.name} onChange={(e) => {
                                 const newStages = (g.milestones || []).map(x => x.id === m.id ? { ...x, name: e.target.value } : x);
                                 editGoal(g.id, { milestones: newStages });
                               }} />
                               <span className="state">{m.status === "done" ? "완료" : m.status === "active" ? "진행중" : "예정"}</span>
-                              <span className="xp">+150</span>
-                              <button onClick={(e) => {
+                              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", textAlign: "center" }}>+150</span>
+                              <button className="del" onClick={(e) => {
                                 e.stopPropagation();
                                 editGoal(g.id, { milestones: (g.milestones || []).filter(x => x.id !== m.id) });
-                              }} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 13 }}>×</button>
+                              }}>×</button>
                             </div>
                           ))}
                           {(g.milestones || []).length > 0 && (
-                            <div className="stage-bonus-banner">
-                              <span>🎁 전체 단계 완료 보너스</span>
+                            <div className="main-bonus-banner">
+                              <span>🎁 <strong>메인 전체 달성</strong> 시 보너스</span>
                               <span className="bonus-xp">+600 XP</span>
                             </div>
                           )}
+                        </div>
+
+                        {/* 사이드 퀘스트 */}
+                        <div className="quest-section" onClick={(e) => e.stopPropagation()}>
+                          <div className="quest-section-head">
+                            <div>
+                              <div className="quest-section-title side">💎 사이드 퀘스트 <span className="badge">{(g.sideQuests || []).filter(s => s.done).length}/{(g.sideQuests || []).length}</span></div>
+                              <div className="quest-section-desc">순서 무관 · 선택 · XP 가변</div>
+                            </div>
+                            <button className="quest-add-mini" onClick={(e) => {
+                              e.stopPropagation();
+                              const newSide = [...(g.sideQuests || []), { id: "s" + Date.now(), name: "새 사이드 퀘스트", done: false, xpReward: 80 }];
+                              editGoal(g.id, { sideQuests: newSide });
+                            }}>+ 사이드</button>
+                          </div>
+                          {(g.sideQuests || []).map((s) => (
+                            <div key={s.id} className={"qm-row " + (s.done ? "done" : "")}>
+                              <span className="num">💎</span>
+                              <span className="ck" onClick={(e) => { e.stopPropagation(); toggleSideQuest && toggleSideQuest(g.id, s.id); }}>{s.done ? "✓" : ""}</span>
+                              <input className="name" value={s.name} onChange={(e) => {
+                                const newSide = (g.sideQuests || []).map(x => x.id === s.id ? { ...x, name: e.target.value } : x);
+                                editGoal(g.id, { sideQuests: newSide });
+                              }} />
+                              <span className="state">{s.done ? "완료" : "대기"}</span>
+                              <input type="number" className="xp-edit" value={s.xpReward || 80} onChange={(e) => {
+                                const newSide = (g.sideQuests || []).map(x => x.id === s.id ? { ...x, xpReward: Number(e.target.value) || 0 } : x);
+                                editGoal(g.id, { sideQuests: newSide });
+                              }} />
+                              <button className="del" onClick={(e) => {
+                                e.stopPropagation();
+                                editGoal(g.id, { sideQuests: (g.sideQuests || []).filter(x => x.id !== s.id) });
+                              }}>×</button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* 도전 과제 */}
+                        <div className="quest-section" onClick={(e) => e.stopPropagation()}>
+                          <div className="quest-section-head">
+                            <div>
+                              <div className="quest-section-title chal">🏆 도전 과제 <span className="badge">{(g.challenges || []).filter(c => c.done).length}/{(g.challenges || []).length}</span></div>
+                              <div className="quest-section-desc">장기 · 누적 · 반복 가능 (🔁)</div>
+                            </div>
+                            <button className="quest-add-mini" onClick={(e) => {
+                              e.stopPropagation();
+                              const newChal = [...(g.challenges || []), { id: "c" + Date.now(), name: "새 도전 과제", done: false, xpReward: 500 }];
+                              editGoal(g.id, { challenges: newChal });
+                            }}>+ 도전</button>
+                          </div>
+                          {(g.challenges || []).map((c) => (
+                            <div key={c.id} className={"qm-row " + (c.done ? "done" : "")}>
+                              <span className="num">{c.repeat ? "🔁" : "🏆"}</span>
+                              <span className="ck" onClick={(e) => { e.stopPropagation(); toggleChallenge && toggleChallenge(g.id, c.id); }}>{c.done ? "✓" : ""}</span>
+                              <input className="name" value={c.name} onChange={(e) => {
+                                const newChal = (g.challenges || []).map(x => x.id === c.id ? { ...x, name: e.target.value } : x);
+                                editGoal(g.id, { challenges: newChal });
+                              }} />
+                              <span className="state">{c.done ? "완료" : c.repeat || "장기"}</span>
+                              <input type="number" className="xp-edit" value={c.xpReward || 500} onChange={(e) => {
+                                const newChal = (g.challenges || []).map(x => x.id === c.id ? { ...x, xpReward: Number(e.target.value) || 0 } : x);
+                                editGoal(g.id, { challenges: newChal });
+                              }} />
+                              <button className="del" onClick={(e) => {
+                                e.stopPropagation();
+                                editGoal(g.id, { challenges: (g.challenges || []).filter(x => x.id !== c.id) });
+                              }}>×</button>
+                            </div>
+                          ))}
                         </div>
 
                         <div className="inline-add-buttons">
@@ -3053,6 +3137,80 @@
     }
 
     /* ─── Stage 4-B: 재무 상세 관리 모달 ─── */
+    /* ─── Stage 9: 퀘스트 가이드 모달 ─── */
+    function QuestGuideModal({ open, onClose }) {
+      if (!open) return null;
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal-box" style={{ width: 640 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div className="modal-title">❓ 퀘스트 분류 가이드</div>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            <div className="modal-body">
+
+              <div className="guide-quest-grid">
+                <div className="guide-quest-card main">
+                  <span className="ic">🎯</span>
+                  <div className="nm">메인 단계</div>
+                  <div className="desc">목표 달성의 <strong style={{color:"var(--accent)"}}>필수</strong> 경로<br/>순서 강제 (1→2→3)<br/>각 +150 XP</div>
+                </div>
+                <div className="guide-quest-card side">
+                  <span className="ic">💎</span>
+                  <div className="nm">사이드 퀘스트</div>
+                  <div className="desc"><strong style={{color:"var(--blue)"}}>선택적</strong> 부가 활동<br/>순서 무관·병렬<br/>XP 가변 (50~150)</div>
+                </div>
+                <div className="guide-quest-card chal">
+                  <span className="ic">🏆</span>
+                  <div className="nm">도전 과제</div>
+                  <div className="desc"><strong style={{color:"var(--amber)"}}>장기·누적·반복</strong><br/>큰 XP (+500 등)<br/>🔁 반복 가능</div>
+                </div>
+              </div>
+
+              <div className="guide-section">
+                <div className="guide-section-title">📊 비교표</div>
+                <table className="guide-rule-table">
+                  <thead>
+                    <tr><th>속성</th><th className="tag-cell">🎯 메인</th><th className="tag-cell">💎 사이드</th><th className="tag-cell">🏆 도전</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>필수 여부</td><td className="tag-cell">필수</td><td className="tag-cell">선택</td><td className="tag-cell">선택</td></tr>
+                    <tr><td>순서 강제</td><td className="tag-cell">⭕ Yes</td><td className="tag-cell">❌ No</td><td className="tag-cell">❌ No</td></tr>
+                    <tr><td>XP 범위</td><td className="tag-cell">150 고정</td><td className="tag-cell">50~150</td><td className="tag-cell">300~1000+</td></tr>
+                    <tr><td>진행률 반영</td><td className="tag-cell">⭕ Yes</td><td className="tag-cell">❌ No</td><td className="tag-cell">❌ No</td></tr>
+                    <tr><td>반복 가능</td><td className="tag-cell">❌</td><td className="tag-cell">❌</td><td className="tag-cell">🔁 Yes</td></tr>
+                    <tr><td>완료 보너스</td><td className="tag-cell">+600 (전체)</td><td className="tag-cell">없음</td><td className="tag-cell">없음</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="guide-section">
+                <div className="guide-section-title">💡 분류 결정 가이드</div>
+                <table className="guide-rule-table">
+                  <thead><tr><th>스스로 던지는 질문</th><th className="tag-cell">YES → 분류</th></tr></thead>
+                  <tbody>
+                    <tr><td>이거 안 하면 목표 달성 못 함?</td><td className="tag-cell"><span className="tag-pill main">🎯 메인</span></td></tr>
+                    <tr><td>도움 되지만 안 해도 됨?</td><td className="tag-cell"><span className="tag-pill side">💎 사이드</span></td></tr>
+                    <tr><td>숫자가 점점 쌓이는 일?</td><td className="tag-cell"><span className="tag-pill chal">🏆 도전</span></td></tr>
+                    <tr><td>매주·매월 반복되는 일?</td><td className="tag-cell"><span className="tag-pill chal">🏆 도전 🔁</span></td></tr>
+                    <tr><td>큰 보상 (+500 XP) 줄 만큼 중요?</td><td className="tag-cell"><span className="tag-pill chal">🏆 도전</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="guide-decision-box">
+                <strong>📚 예시:</strong> "유튜브 월 500만원" 목표<br/>
+                🎯 메인: 채널구매 → 프리랜서 → 월100만 → 확장 (이 순서대로 해야 됨)<br/>
+                💎 사이드: 첫 협업, 라이브 첫 시도, 굿즈 출시 (있으면 좋음)<br/>
+                🏆 도전: 구독자 1,000명 누적, 매주 영상 2편 반복
+              </div>
+
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function FinanceDetailModal({ open, onClose, finance, setFinance, items }) {
       const [sub, setSub] = useState("income");
       if (!open) return null;
@@ -3362,6 +3520,55 @@
         setTab("vision");
       };
 
+      // 퀘스트 가이드 모달
+      const [questGuideOpen, setQuestGuideOpen] = useState(false);
+
+      // 사이드 퀘스트 토글 + XP
+      const toggleSideQuest = (goalId, sideId) => {
+        setGoals(prev => prev.map(g => {
+          if (g.id !== goalId) return g;
+          const sides = (g.sideQuests || []).map(s => {
+            if (s.id !== sideId) return s;
+            const willBeDone = !s.done;
+            if (willBeDone && !s.done) {
+              const statId = g.statId;
+              const xp = s.xpReward || 80;
+              if (statId) {
+                setStats(ps => ps.map(st => st.id === statId
+                  ? { ...st, totalXp: getStatTotalXp(st) + xp } : st));
+                setXpToast({ id: Date.now(), xp, statId });
+                setTimeout(() => setXpToast(null), 1800);
+              }
+            }
+            return { ...s, done: willBeDone };
+          });
+          return { ...g, sideQuests: sides };
+        }));
+      };
+
+      // 도전 과제 토글 + XP (반복 가능)
+      const toggleChallenge = (goalId, chalId) => {
+        setGoals(prev => prev.map(g => {
+          if (g.id !== goalId) return g;
+          const chals = (g.challenges || []).map(c => {
+            if (c.id !== chalId) return c;
+            const willBeDone = !c.done;
+            if (willBeDone && !c.done) {
+              const statId = g.statId;
+              const xp = c.xpReward || 500;
+              if (statId) {
+                setStats(ps => ps.map(st => st.id === statId
+                  ? { ...st, totalXp: getStatTotalXp(st) + xp } : st));
+                setXpToast({ id: Date.now(), xp, statId });
+                setTimeout(() => setXpToast(null), 1800);
+              }
+            }
+            return { ...c, done: willBeDone };
+          });
+          return { ...g, challenges: chals };
+        }));
+      };
+
       // Keyboard nav 1~4
       useEffect(() => {
         const onKey = (e) => {
@@ -3434,11 +3641,16 @@
             onOpenResources={() => setTab("resources")}
             onDreamClick={handleDreamClick}
             toggleStage={toggleStage}
+            toggleSideQuest={toggleSideQuest}
+            toggleChallenge={toggleChallenge}
+            onOpenQuestGuide={() => setQuestGuideOpen(true)}
           />}
           {tab === "gtr" && <GoalsTasksRetroTab
-            goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal} toggleStage={toggleStage}
+            goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal}
+            toggleStage={toggleStage} toggleSideQuest={toggleSideQuest} toggleChallenge={toggleChallenge}
             tasks={tasks} toggleTask={toggleTask} addTask={addTask} editTask={editTask} deleteTask={deleteTask}
             retros={retros} setRetros={setRetros} dailyLog={dailyLog} stats={stats}
+            onOpenQuestGuide={() => setQuestGuideOpen(true)}
           />}
           {tab === "resources" && <ResourcesItemsTab
             items={items} setItems={setItems}
@@ -3486,6 +3698,10 @@
             finance={finance}
             setFinance={setFinance}
             items={items}
+          />
+          <QuestGuideModal
+            open={questGuideOpen}
+            onClose={() => setQuestGuideOpen(false)}
           />
         </div>
       );
