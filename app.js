@@ -2265,6 +2265,9 @@
       const [quadAddIn, setQuadAddIn] = useState(null); // quadrant id
       const [quadAddText, setQuadAddText] = useState("");
 
+      // 할일 세부 편집 모달
+      const [editingTaskId, setEditingTaskId] = useState(null);
+
       // 메인/사이드/도전 인라인 추가 텍스트
       const [questDraft, setQuestDraft] = useState({}); // {goalId+kind: text}
 
@@ -2706,6 +2709,7 @@
                               <span className="eq-task-text">{t.text}</span>
                               {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
                               {g && <span className="gtag">{g.name.slice(0, 6)}</span>}
+                              <button className="del-x" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} title="세부 편집">✏</button>
                               <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                             </div>
                           );
@@ -2779,6 +2783,81 @@
               </div>
             </div>
           </div>
+
+          {/* ── 할일 세부 편집 모달 ── */}
+          {editingTaskId && (() => {
+            const t = tasks.find(x => x.id === editingTaskId);
+            if (!t) return null;
+            const linkedGoal = t.goalId ? goals.find(x => x.id === t.goalId) : null;
+            const availQuests = (linkedGoal?.quests || []).filter(q => !q.done || q.id === t.questId);
+            const update = (k, v) => editTask(t.id, { [k]: v });
+            return (
+              <div className="modal-overlay" onClick={() => setEditingTaskId(null)}>
+                <div className="modal-box" style={{ width: 520 }} onClick={(e) => e.stopPropagation()}>
+                  <div className="modal-head">
+                    <div className="modal-title">✏️ 할일 편집</div>
+                    <button className="modal-close" onClick={() => setEditingTaskId(null)}>×</button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="item-field">
+                      <label className="item-field-label">할 일</label>
+                      <input type="text" value={t.text} onChange={(e) => update("text", e.target.value)} />
+                    </div>
+                    <div className="item-field-row">
+                      <label>4분면</label>
+                      <select value={t.quadrant} onChange={(e) => update("quadrant", Number(e.target.value))}>
+                        <option value="1">🔴 Q1 · 긴급+중요</option>
+                        <option value="2">🟡 Q2 · 중요</option>
+                        <option value="3">🟠 Q3 · 긴급</option>
+                        <option value="4">⚪ Q4 · 나중에</option>
+                      </select>
+                    </div>
+                    <div className="item-field-row">
+                      <label>연결 목표</label>
+                      <select value={t.goalId || ""} onChange={(e) => { update("goalId", e.target.value || null); update("questId", null); }}>
+                        <option value="">미연결</option>
+                        {goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                      </select>
+                    </div>
+                    {linkedGoal && availQuests.length > 0 && (
+                      <div className="item-field-row">
+                        <label>✨ 연결 퀘스트</label>
+                        <select value={t.questId || ""} onChange={(e) => update("questId", e.target.value || null)}>
+                          <option value="">선택 안 함</option>
+                          {availQuests.map(q => (
+                            <option key={q.id} value={q.id}>
+                              💎 {q.name} ({q.current}/{q.target}{q.unit ? " " + q.unit : ""}){q.xpPerStep > 0 ? " +" + q.xpPerStep + " XP/회" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div className="item-field-row">
+                      <label>태그</label>
+                      <input type="text" value={t.tag || ""} onChange={(e) => update("tag", e.target.value)} placeholder="예: 유튜브" />
+                    </div>
+                    <div className="item-field-row">
+                      <label>마감일</label>
+                      <input type="date" value={t.dueDate || ""} onChange={(e) => update("dueDate", e.target.value)} />
+                    </div>
+                    <div className="item-field-row">
+                      <label>예정 시간</label>
+                      <input type="text" value={t.time || ""} onChange={(e) => update("time", e.target.value)} placeholder="HH:MM (선택)" />
+                    </div>
+                    {t.questId && (
+                      <div style={{ marginTop: 10, padding: 10, background: "var(--accent-soft)", border: "1px solid var(--border-accent)", borderRadius: 6, fontSize: 11, color: "var(--text-2)", lineHeight: 1.6 }}>
+                        💡 이 할일 완료 시 연결 퀘스트 카운트 +1<br/>해제 시 -1
+                      </div>
+                    )}
+                  </div>
+                  <div className="modal-foot">
+                    <button onClick={() => { deleteTask(t.id); setEditingTaskId(null); }} style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "var(--red)", padding: "7px 14px", borderRadius: 6, fontSize: 12, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>🗑 삭제</button>
+                    <button className="btn-save" onClick={() => setEditingTaskId(null)}>✓ 완료</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       );
     }
