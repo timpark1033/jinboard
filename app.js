@@ -2681,7 +2681,7 @@
                       return (
                         <div className="gmini-expand" onClick={(e) => e.stopPropagation()}>
                           <div className="gmini-expand-grid">
-                            {/* LEFT: 단계 */}
+                            {/* LEFT: 단계 + 퀘스트 */}
                             <div className="gmini-expand-col">
                               <div className="gmini-expand-col-title">📍 단계 ({stages.filter(m => m.status === "done").length}/{stages.length})</div>
                               {stages.length === 0 && <div className="gmini-expand-empty">단계 없음</div>}
@@ -2695,6 +2695,34 @@
                                   </div>
                                 );
                               })}
+
+                              {/* 퀘스트 — 단계 아래 */}
+                              {(() => {
+                                const quests = g.quests || [];
+                                return (
+                                  <>
+                                    <div className="gmini-expand-col-title" style={{ marginTop: 10, paddingTop: 8, borderTop: "1px dashed var(--border)" }}>💎 퀘스트 ({quests.filter(q => q.done).length}/{quests.length})</div>
+                                    {quests.length === 0 && <div className="gmini-expand-empty">퀘스트 없음</div>}
+                                    {quests.map((q) => {
+                                      const target = q.target || 1;
+                                      const cur = q.current || 0;
+                                      const pct = q.done ? 100 : Math.min(100, Math.round((cur / target) * 100));
+                                      return (
+                                        <div key={q.id} className={"qb-row " + (q.done ? "done" : "active")} style={{ cursor: "default", display: "flex", alignItems: "center", gap: 8 }}>
+                                          <span className="qb-cb" style={{ width: 14, height: 14, border: "1.5px solid var(--border-strong)", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, q.done ? -1 : +1); }} title={q.done ? "되돌리기" : "+1"}>{q.done ? "✓" : (q.repeat ? "🔁" : "")}</span>
+                                          <span className="qb-text" style={{ flex: 1, fontSize: 11 }}>{q.name}</span>
+                                          <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: q.done ? "var(--green)" : "var(--accent)", fontWeight: 700, minWidth: 40, textAlign: "right" }}>{q.done ? "완료" : cur + "/" + target}</span>
+                                          {target > 1 && !q.done && (
+                                            <div style={{ width: 36, height: 4, background: "var(--bg-3)", borderRadius: 2, overflow: "hidden", flexShrink: 0 }}>
+                                              <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg, var(--accent-2), var(--accent))" }} />
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </>
+                                );
+                              })()}
                             </div>
                             {/* RIGHT: 연결 업무 (최대 3) */}
                             <div className="gmini-expand-col">
