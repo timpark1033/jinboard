@@ -3819,3 +3819,84 @@
     line-height: 1.7;
   }
   .guide-decision-box strong { color: var(--accent); }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 10: 비전·드림 탭 정돈 ── */
+  /* ─────────────────────────────── */
+
+  /* 사명을 헤더 우측으로 인라인 배치 */
+  .vision-head-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .vision-mission-inline {
+    flex: 1;
+    max-width: 720px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.06), var(--bg-1));
+    border: 1px solid var(--border-accent);
+    border-radius: 10px;
+    padding: 10px 16px;
+  }
+  .vision-mission-label-inline {
+    font-size: 12px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
+  }
+  .vision-mission-input-inline {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--border-accent);
+    color: var(--text-1);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    padding: 4px 0;
+    outline: none;
+  }
+  .vision-mission-input-inline::placeholder { color: var(--text-4); font-weight: 400; }
+
+  /* 기존 별도 사명 박스 제거 (인라인으로 옮겼으니) */
+  .vision-mission { display: none; }
+
+  /* 드림 카드 이미지 영역 20% 축소 — aspect 16/9 → 16/7.2 (높이 감소) */
+  .dream-img-wrap {
+    aspect-ratio: 16 / 7;
+  }
+  .dream-card-body {
+    padding: 11px 14px;
+  }
+  .dream-card-name {
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  .dream-card-meta {
+    font-size: 11.5px;
+  }
+
+  /* 캐릭터 스탯 패널 20% 축소 — 패딩/요소 사이즈 감소 */
+  .stat-panel {
+    padding: 16px 18px;
+    gap: 20px;
+    grid-template-columns: 180px 1fr;
+    margin-bottom: 18px;
+  }
+  .stat-compact-row {
+    padding: 5px 8px;
+    gap: 8px;
+  }
+  .stat-compact-icon { font-size: 14px; width: 18px; }
+  .stat-compact-name { font-size: 12.5px; min-width: 40px; }
+  .stat-compact-lv { font-size: 11px; }
+  .stat-compact-lv strong { font-size: 14px; }
+  .stat-compact-bar { height: 2.5px; }
+
+  /* 레이더 차트는 SVG라 size prop으로 작아져야 하지만 컨테이너만 조정 */

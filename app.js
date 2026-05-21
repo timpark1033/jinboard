@@ -911,18 +911,17 @@
 
       return (
         <div className="panel-enter">
-          <div className="section-head">
+          <div className="section-head vision-head-inline">
             <div>
               <div className="section-title">비전 & 성장</div>
               <div className="section-sub">나의 큰 그림과 현재 레벨을 한눈에</div>
             </div>
-          </div>
-
-          <div className="vision-mission">
-            <div className="vision-mission-label"><span className="dot-purple" />나의 사명</div>
-            <input className="vision-mission-input" value={vision.mission}
-              onChange={e => setVision(v => ({ ...v, mission: e.target.value }))}
-              placeholder="내가 이 모든 것을 하는 이유는..." />
+            <div className="vision-mission-inline">
+              <span className="vision-mission-label-inline"><span className="dot-purple" />나의 사명</span>
+              <input className="vision-mission-input-inline" value={vision.mission}
+                onChange={e => setVision(v => ({ ...v, mission: e.target.value }))}
+                placeholder="내가 이 모든 것을 하는 이유는..." />
+            </div>
           </div>
 
           {/* Dream Board — 사명 바로 아래 */}
@@ -1069,7 +1068,7 @@
             <span style={{ fontSize: 12.5, color:"var(--text-3)" }}>항목 클릭 → 수정</span>
           </div>
           <div className="stat-panel">
-            <RadarChart stats={stats} size={200} />
+            <RadarChart stats={stats} size={160} />
             <div className="stat-list">
               {stats.map(s => {
                 const isOpen = expandedStat === s.id;
