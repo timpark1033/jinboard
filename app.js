@@ -2229,6 +2229,61 @@
       });
       const [openGoalId, setOpenGoalId] = useState(null);
       const [editingGoalId, setEditingGoalId] = useState(null);
+
+      /* ─── SVG 연결선 + 줌 ─── */
+      const gtrRef = useRef(null);
+      const [connPaths, setConnPaths] = useState([]);
+      const [gtrZoom, setGtrZoom] = useState(1);
+
+      // 목표 id → 색상 (deterministic HSL)
+      const goalColor = React.useCallback((gId) => {
+        const idx = goals.findIndex(g => g.id === gId);
+        const hue = (idx * 47) % 360;
+        return `hsl(${hue}, 70%, 62%)`;
+      }, [goals]);
+
+      // 경로 컴퓨트
+      const recomputePaths = React.useCallback(() => {
+        if (!gtrRef.current) return;
+        const container = gtrRef.current;
+        const cRect = container.getBoundingClientRect();
+        const paths = [];
+        goals.forEach((g) => {
+          const gEl = container.querySelector(`[data-conn-goal="${g.id}"]`);
+          if (!gEl) return;
+          const gRect = gEl.getBoundingClientRect();
+          const gx = gRect.right - cRect.left;
+          const gy = gRect.top + gRect.height / 2 - cRect.top;
+          const linkedTasks = tasks.filter(t => t.goalId === g.id);
+          linkedTasks.forEach((t) => {
+            const tEl = container.querySelector(`[data-conn-task="${t.id}"]`);
+            if (!tEl) return;
+            const tRect = tEl.getBoundingClientRect();
+            const tx = tRect.left - cRect.left;
+            const ty = tRect.top + tRect.height / 2 - cRect.top;
+            // 부드러운 베지어 곡선
+            const dx = Math.max(40, (tx - gx) * 0.5);
+            const d = `M ${gx} ${gy} C ${gx + dx} ${gy}, ${tx - dx} ${ty}, ${tx} ${ty}`;
+            paths.push({ key: g.id + "-" + t.id, d, color: goalColor(g.id), goalId: g.id, taskId: t.id, done: t.done });
+          });
+        });
+        setConnPaths(paths);
+      }, [goals, tasks, goalColor]);
+
+      React.useLayoutEffect(() => {
+        recomputePaths();
+      }, [recomputePaths, openGoalId, editingGoalId, gtrZoom]);
+
+      React.useEffect(() => {
+        const onResize = () => recomputePaths();
+        window.addEventListener("resize", onResize);
+        window.addEventListener("scroll", onResize, true);
+        return () => {
+          window.removeEventListener("resize", onResize);
+          window.removeEventListener("scroll", onResize, true);
+        };
+      }, [recomputePaths]);
+
       // 대시보드 ✏️ 버튼으로 진입한 경우 해당 목표 자동 열기 + 편집 모드
       useEffect(() => {
         if (initialOpenGoalId) {
@@ -2450,16 +2505,28 @@
 
       return (
         <div className="panel-enter">
-          <div className="gtr-split">
+          <div className="gtr-split" ref={gtrRef} style={{ position: "relative" }}>
+            <svg className="gtr-connections" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1, overflow: "visible" }}>
+              {connPaths.map((p) => (
+                <path key={p.key} d={p.d} fill="none" stroke={p.color} strokeWidth="2" strokeOpacity={p.done ? 0.35 : 0.85} strokeDasharray={p.done ? "4 4" : "none"} style={{ filter: `drop-shadow(0 0 4px ${p.color})` }} />
+              ))}
+            </svg>
             {/* ── LEFT: GOALS ── */}
-            <div className="gtr-col">
+            <div className="gtr-col goals" style={{ zoom: gtrZoom }}>
               <div className="gtr-col-head">
                 <div className="gtr-col-title">
                   🎯 목표 <span className="gtr-col-count">{goals.length}</span>
                 </div>
-                <button className="gtr-btn-add" onClick={() => setShowAddGoal((v) => !v)}>
-                  {showAddGoal ? "✕" : "+ 추가"}
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+                  <div className="gtr-zoom" title="목표·업무 텍스트 크기 (90~150%)">
+                    <span style={{ fontSize: 11, color: "var(--text-3)" }}>🔍</span>
+                    <input type="range" min="90" max="150" step="5" value={Math.round(gtrZoom * 100)} onChange={(e) => setGtrZoom(Number(e.target.value) / 100)} />
+                    <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", minWidth: 32 }}>{Math.round(gtrZoom * 100)}%</span>
+                  </div>
+                  <button className="gtr-btn-add" onClick={() => setShowAddGoal((v) => !v)}>
+                    {showAddGoal ? "✕" : "+ 추가"}
+                  </button>
+                </div>
               </div>
 
               {showAddGoal && (
@@ -2488,7 +2555,8 @@
                 const isEditing = editingGoalId === g.id;
                 const linkedStat = g.statId ? stats.find((s) => s.id === g.statId) : null;
                 return (
-                  <div key={g.id} data-goal-id={g.id}
+                  <div key={g.id} data-goal-id={g.id} data-conn-goal={g.id}
+                    style={{ borderLeft: `4px solid ${goalColor(g.id)}` }}
                     className={"gmini" + (isOpen ? " open" : "") + (dragId === g.id ? " dragging" : "") + (dragOverId === g.id ? " drag-over" : "")}
                     draggable={!isEditing}
                     onDragStart={handleDragStart(g.id)}
@@ -2724,7 +2792,7 @@
             </div>
 
             {/* ── MIDDLE: TASKS 4분면 ── */}
-            <div className="gtr-col">
+            <div className="gtr-col tasks" style={{ zoom: gtrZoom }}>
               <div className="gtr-col-head">
                 <div className="gtr-col-title">
                   📋 업무 4분면 <span className="gtr-col-count">{tasks.length}</span>
@@ -2792,11 +2860,11 @@
                           const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
                           const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
                           return (
-                            <div key={t.id} className={"eq-task-row" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
+                            <div key={t.id} data-conn-task={t.id} className={"eq-task-row" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
                               <div className="cb" />
                               <span className="eq-task-text">{t.text}</span>
                               {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
-                              {g && <span className="gtag">{g.name.slice(0, 6)}</span>}
+                              {g && <span className="gtag" style={{ background: goalColor(g.id) + "22", color: goalColor(g.id), borderColor: goalColor(g.id) + "55" }}>{g.name.slice(0, 6)}</span>}
                               <button className="del-x" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} title="세부 편집">✏</button>
                               <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                             </div>

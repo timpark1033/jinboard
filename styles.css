@@ -4788,3 +4788,14 @@
 /* 대시보드 캐릭터 카드 클릭 가능 표시 */
 .life-card.clickable { cursor: pointer; transition: border-color 0.2s, transform 0.15s; }
 .life-card.clickable:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+/* ============================================================
+   목표↔업무 SVG 연결선 + 줌 슬라이더
+   ============================================================ */
+.gtr-connections path { transition: stroke-opacity 0.3s; }
+.gtr-zoom { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 7px; padding: 4px 10px; }
+.gtr-zoom input[type="range"] { width: 90px; accent-color: var(--accent); cursor: pointer; }
+
+/* 목표 카드 좌측 컬러 바 + 약간의 hover 강조 */
+.gmini { position: relative; }
+.gtr-col.tasks .eq-task-row { position: relative; }
