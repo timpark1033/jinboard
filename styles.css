@@ -4819,3 +4819,12 @@
 /* 목표 카드 좌측 컬러 바 + 약간의 hover 강조 */
 .gmini { position: relative; }
 .gtr-col.tasks .eq-task-row { position: relative; }
+
+/* gmini-expand 2열 (단계 | 연결 업무) */
+.gmini-expand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.gmini-expand-col { display: flex; flex-direction: column; gap: 4px; }
+.gmini-expand-col-title { font-size: 11px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.gmini-expand-empty { font-size: 11px; color: var(--text-4); padding: 4px 2px; font-style: italic; }
+.gmini-expand-more { font-size: 11px; color: var(--text-3); padding: 4px 6px; text-align: center; font-style: italic; }
+.gmini-expand .qb-row { padding: 4px 6px; margin: 1px 0; }
+.gmini-expand .qb-row.current-stage { padding: 5px 7px; }

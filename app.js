@@ -2655,23 +2655,52 @@
                     {/* 수정 폼은 GoalEditModal로 이동됨 (이 컴포넌트 하단) */}
 
 
-                    {isOpen && !isEditing && (
-                      <div className="gmini-expand" onClick={(e) => e.stopPropagation()}>
-                        {gTasks.length === 0
-                          ? <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0" }}>연결된 할 일 없음</div>
-                          : gTasks.map((t) => (
-                              <div key={t.id} className={"gmini-expand-task" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
-                                <div className="cb" />
-                                <span>{t.text}</span>
-                                <span className="qtag">Q{t.quadrant}</span>
-                              </div>
-                            ))}
-                        <div className="gmini-actions">
-                          <button className="gmini-act-btn" onClick={() => startEditGoal(g)}>✏️ 수정</button>
-                          <button className="gmini-act-btn del" onClick={() => { if (confirm("삭제하시겠어요?")) deleteGoal(g.id); }}>🗑 삭제</button>
+                    {isOpen && !isEditing && (() => {
+                      const stages = g.milestones || [];
+                      const activeStageIdx = stages.findIndex(m => m.status !== "done");
+                      const visibleTasks = gTasks.slice(0, 3);
+                      const moreTasks = gTasks.length - visibleTasks.length;
+                      return (
+                        <div className="gmini-expand" onClick={(e) => e.stopPropagation()}>
+                          <div className="gmini-expand-grid">
+                            {/* LEFT: 단계 */}
+                            <div className="gmini-expand-col">
+                              <div className="gmini-expand-col-title">📍 단계 ({stages.filter(m => m.status === "done").length}/{stages.length})</div>
+                              {stages.length === 0 && <div className="gmini-expand-empty">단계 없음</div>}
+                              {stages.map((m, i) => {
+                                const cls = m.status === "done" ? "done" : (i === activeStageIdx ? "current-stage" : "todo");
+                                return (
+                                  <div key={m.id} className={"qb-row " + cls} onClick={(e) => { e.stopPropagation(); toggleStageInForm(g.id, m.id); }} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span className="qb-cb" style={{ width: 14, height: 14, border: "1.5px solid var(--border-strong)", borderRadius: 3, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative" }}>{m.status === "done" ? "✓" : ""}</span>
+                                    <span className="qb-text" style={{ flex: 1, fontSize: 11 }}>{m.name}</span>
+                                    <span className="qb-xp" style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: "var(--accent)", fontWeight: 700 }}>+150</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {/* RIGHT: 연결 업무 (최대 3) */}
+                            <div className="gmini-expand-col">
+                              <div className="gmini-expand-col-title">⚡ 연결 업무 ({gTasks.filter(t => t.done).length}/{gTasks.length})</div>
+                              {gTasks.length === 0 && <div className="gmini-expand-empty">연결된 업무 없음</div>}
+                              {visibleTasks.map((t) => (
+                                <div key={t.id} className={"gmini-expand-task" + (t.done ? " done" : "")}>
+                                  <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} />
+                                  <span onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ flex: 1, cursor: "text" }}>{t.text}</span>
+                                  <span className="qtag">Q{t.quadrant}</span>
+                                </div>
+                              ))}
+                              {moreTasks > 0 && (
+                                <div className="gmini-expand-more">+{moreTasks}개 더</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="gmini-actions">
+                            <button className="gmini-act-btn" onClick={() => startEditGoal(g)}>✏️ 수정</button>
+                            <button className="gmini-act-btn del" onClick={() => { if (confirm("삭제하시겠어요?")) deleteGoal(g.id); }}>🗑 삭제</button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 );
               })}
