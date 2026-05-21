@@ -2200,6 +2200,25 @@
       // 4분면 빈 영역 클릭으로 인라인 추가
       const [quadAddIn, setQuadAddIn] = useState(null); // quadrant id
       const [quadAddText, setQuadAddText] = useState("");
+
+      // 메인/사이드/도전 인라인 추가 텍스트
+      const [questDraft, setQuestDraft] = useState({}); // {goalId+kind: text}
+      const getDraft = (gId, kind) => questDraft[gId + ":" + kind] || "";
+      const setDraft = (gId, kind, v) => setQuestDraft(p => ({ ...p, [gId + ":" + kind]: v }));
+      const addQuestItem = (gId, kind, value) => {
+        const text = (value ?? getDraft(gId, kind)).trim();
+        if (!text) return;
+        const g = goals.find(x => x.id === gId);
+        if (!g) return;
+        if (kind === "main") {
+          editGoal(gId, { milestones: [...(g.milestones || []), { id: "m" + Date.now(), name: text, status: "active", xpReward: 150 }] });
+        } else if (kind === "side") {
+          editGoal(gId, { sideQuests: [...(g.sideQuests || []), { id: "s" + Date.now(), name: text, done: false, xpReward: 80 }] });
+        } else if (kind === "chal") {
+          editGoal(gId, { challenges: [...(g.challenges || []), { id: "c" + Date.now(), name: text, done: false, xpReward: 500 }] });
+        }
+        setDraft(gId, kind, "");
+      };
       const handleQuadAdd = (q) => {
         if (!quadAddText.trim()) { setQuadAddIn(null); return; }
         addTask({
@@ -2357,11 +2376,6 @@
                               </div>
                               <div className="quest-section-desc">순서대로 진행 · 각 +150 XP</div>
                             </div>
-                            <button className="quest-add-mini" onClick={(e) => {
-                              e.stopPropagation();
-                              const newStages = [...(g.milestones || []), { id: "m" + Date.now(), name: "새 단계", status: "active", xpReward: 150 }];
-                              editGoal(g.id, { milestones: newStages });
-                            }}>+ 메인</button>
                           </div>
                           {(g.milestones || []).map((m, i) => (
                             <div key={m.id} className={"qm-row " + m.status}>
@@ -2379,6 +2393,16 @@
                               }}>×</button>
                             </div>
                           ))}
+                          {/* 인라인 추가 입력 */}
+                          <div className="qm-add-row">
+                            <span className="num">+</span>
+                            <input
+                              value={getDraft(g.id, "main")}
+                              onChange={(e) => setDraft(g.id, "main", e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") addQuestItem(g.id, "main"); }}
+                              placeholder="메인 단계 추가 (Enter)"
+                            />
+                          </div>
                           {(g.milestones || []).length > 0 && (
                             <div className="main-bonus-banner">
                               <span>🎁 <strong>메인 전체 달성</strong> 시 보너스</span>
@@ -2394,11 +2418,6 @@
                               <div className="quest-section-title side">💎 사이드 퀘스트 <span className="badge">{(g.sideQuests || []).filter(s => s.done).length}/{(g.sideQuests || []).length}</span></div>
                               <div className="quest-section-desc">순서 무관 · 선택 · XP 가변</div>
                             </div>
-                            <button className="quest-add-mini" onClick={(e) => {
-                              e.stopPropagation();
-                              const newSide = [...(g.sideQuests || []), { id: "s" + Date.now(), name: "새 사이드 퀘스트", done: false, xpReward: 80 }];
-                              editGoal(g.id, { sideQuests: newSide });
-                            }}>+ 사이드</button>
                           </div>
                           {(g.sideQuests || []).map((s) => (
                             <div key={s.id} className={"qm-row " + (s.done ? "done" : "")}>
@@ -2419,6 +2438,15 @@
                               }}>×</button>
                             </div>
                           ))}
+                          <div className="qm-add-row">
+                            <span className="num">+</span>
+                            <input
+                              value={getDraft(g.id, "side")}
+                              onChange={(e) => setDraft(g.id, "side", e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") addQuestItem(g.id, "side"); }}
+                              placeholder="사이드 퀘스트 추가 (Enter)"
+                            />
+                          </div>
                         </div>
 
                         {/* 도전 과제 */}
@@ -2428,11 +2456,6 @@
                               <div className="quest-section-title chal">🏆 도전 과제 <span className="badge">{(g.challenges || []).filter(c => c.done).length}/{(g.challenges || []).length}</span></div>
                               <div className="quest-section-desc">장기 · 누적 · 반복 가능 (🔁)</div>
                             </div>
-                            <button className="quest-add-mini" onClick={(e) => {
-                              e.stopPropagation();
-                              const newChal = [...(g.challenges || []), { id: "c" + Date.now(), name: "새 도전 과제", done: false, xpReward: 500 }];
-                              editGoal(g.id, { challenges: newChal });
-                            }}>+ 도전</button>
                           </div>
                           {(g.challenges || []).map((c) => (
                             <div key={c.id} className={"qm-row " + (c.done ? "done" : "")}>
@@ -2453,6 +2476,15 @@
                               }}>×</button>
                             </div>
                           ))}
+                          <div className="qm-add-row">
+                            <span className="num">+</span>
+                            <input
+                              value={getDraft(g.id, "chal")}
+                              onChange={(e) => setDraft(g.id, "chal", e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") addQuestItem(g.id, "chal"); }}
+                              placeholder="도전 과제 추가 (Enter)"
+                            />
+                          </div>
                         </div>
 
                         <div className="inline-add-buttons">
