@@ -1355,21 +1355,24 @@
   .top3-check { width: 14px; height: 14px; border: 1px solid var(--border-strong); border-radius: 3px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .top3-check.checked { background: var(--accent); border-color: var(--accent); }
 
-  /* 집중 모드 */
-  .focus-overlay { position: fixed; inset: 0; background: var(--bg-0); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; font-family: Geist, sans-serif; }
-  .focus-context { font-size: 14px; color: var(--text-4); text-align: center; line-height: 2; }
-  .focus-task-box { background: var(--bg-2); border: 1px solid var(--border-accent); border-radius: 16px; padding: 32px 48px; text-align: center; min-width: 400px; }
-  .focus-task-text { font-size: 23px; font-weight: 600; color: var(--text-1); line-height: 1.4; }
-  .focus-timer { font-size: 53px; font-weight: 700; color: var(--accent); font-family: 'Geist Mono', monospace; letter-spacing: -2px; }
-  .focus-timer-label { font-size: 13px; color: var(--text-4); margin-top: 4px; }
-  .focus-btns { display: flex; gap: 12px; }
-  .focus-btn { background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text-2); font-size: 14px; padding: 10px 20px; cursor: pointer; font-family: Geist, sans-serif; }
-  .focus-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-  .focus-progress { display: flex; gap: 6px; align-items: center; }
-  .focus-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-3); }
-  .focus-dot.done { background: var(--accent); }
-  .focus-dot.active { background: var(--text-1); }
-  .focus-exit { position: absolute; top: 24px; right: 24px; background: transparent; border: none; color: var(--text-4); font-size: 21px; cursor: pointer; }
+  /* 집중 모드 — 풀스크린 몰입형 (4x scale) */
+  .focus-overlay { position: fixed; inset: 0; background: var(--bg-0); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 56px; font-family: Geist, sans-serif; padding: 40px; box-sizing: border-box; overflow: auto; }
+  .focus-context { font-size: 28px; color: var(--text-3); text-align: center; line-height: 1.6; font-weight: 500; letter-spacing: 0.02em; }
+  .focus-task-box { background: var(--bg-2); border: 2px solid var(--border-accent); border-radius: 24px; padding: 64px 96px; text-align: center; min-width: 640px; max-width: 90vw; }
+  .focus-task-text { font-size: 80px; font-weight: 700; color: var(--text-1); line-height: 1.25; letter-spacing: -0.02em; }
+  .focus-timer { font-size: 180px; font-weight: 800; color: var(--accent); font-family: 'Geist Mono', monospace; letter-spacing: -7px; line-height: 1; }
+  .focus-timer-label { font-size: 28px; color: var(--text-4); margin-top: 14px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+  .focus-btns { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+  .focus-btn { background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; color: var(--text-2); font-size: 26px; padding: 16px 34px; cursor: pointer; font-family: Geist, sans-serif; font-weight: 500; transition: all 0.15s; }
+  .focus-btn:hover { background: var(--bg-3); color: var(--text-1); border-color: var(--border-strong); }
+  .focus-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  .focus-btn.primary:hover { background: #9d6dff; }
+  .focus-progress { display: flex; gap: 16px; align-items: center; }
+  .focus-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--bg-3); border: 2px solid var(--border); transition: all 0.2s; }
+  .focus-dot.done { background: var(--green); border-color: var(--green); box-shadow: 0 0 14px rgba(16,185,129,0.4); }
+  .focus-dot.active { background: var(--text-1); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+  .focus-exit { position: absolute; top: 32px; right: 32px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; color: var(--text-3); font-size: 28px; cursor: pointer; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.15s; }
+  .focus-exit:hover { background: var(--bg-3); color: var(--text-1); }
 
   /* 회고 자동 요약 */
   .retro-summary { background: var(--bg-2); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 20px; }
