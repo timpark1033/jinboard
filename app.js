@@ -2674,7 +2674,7 @@
     }
 
     /* ─── 이미지 압축 (Canvas) ─── */
-    function compressImage(file, maxWidth = 480, maxHeight = 320, quality = 0.75) {
+    function compressImage(file, maxWidth = 1600, maxHeight = 1000, quality = 0.92) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -2687,6 +2687,8 @@
             const canvas = document.createElement("canvas");
             canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
             ctx.drawImage(img, 0, 0, w, h);
             resolve(canvas.toDataURL("image/jpeg", quality));
           };
@@ -3162,7 +3164,7 @@
         if (!file) return;
         try {
           setBusy(true); setError("");
-          const dataUrl = await compressImage(file, 480, 320, 0.75);
+          const dataUrl = await compressImage(file, 1600, 1000, 0.92);
           updateDream(dream.id, "imgUrl", dataUrl);
         } catch (err) {
           setError("업로드 실패: " + err.message);
