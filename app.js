@@ -302,7 +302,7 @@
       gender: "male",
       expectedLifespan: 80.6,
       retireAge: 65,
-      dreamGalleryTextScale: 100
+      dreamGalleryNameSize: 19
     };
 
     const INITIAL_RETROS = [
@@ -451,7 +451,7 @@
 
 
     /* ---------- DreamGallery 3-up Slide ---------- */
-    function DreamGallery2Up({ dreams, onDreamClick, textScale = 100 }) {
+    function DreamGallery2Up({ dreams, onDreamClick, nameSize = 19 }) {
       const PER_PAGE = 3;
       const n = dreams.length;
       // 페이지 배열: [0,1,2], [3,4,5], ... 부족하면 wrap-around
@@ -490,7 +490,7 @@
       }
 
       return (
-        <div className="dc2-viewport" style={{ "--dc2-scale": (textScale / 100) }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        <div className="dc2-viewport" style={{ "--dc2-scale": (nameSize / 19) }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
           <div className="dc2-track" style={{ width: (pairs.length * 100) + "%", transform: "translateX(-" + (pairIdx * (100 / pairs.length)) + "%)" }}>
             {pairs.map((pair, pi) => (
               <div key={pi} className="dc2-pair" style={{ width: (100 / pairs.length) + "%" }}>
@@ -684,7 +684,7 @@
           {/* ZONE DREAM: 2-up 슬라이드 (5초마다 다음 페어로 밀어냄) */}
           <div className="db2-section">
             <div className="db2-section-head">🌟 드림 갤러리 <span className="hint">3개씩 · 5초마다 밀어내기 · 호버 시 정지</span></div>
-            <DreamGallery2Up dreams={dreams} onDreamClick={onDreamClick} textScale={settings?.dreamGalleryTextScale || 100} />
+            <DreamGallery2Up dreams={dreams} onDreamClick={onDreamClick} nameSize={(settings?.dreamGalleryNameSize >= 14 && settings?.dreamGalleryNameSize <= 32) ? settings.dreamGalleryNameSize : 19} />
           </div>
 
           {/* ZONE GOALS: 큰 원형 게이지들 (클릭 → 세부 모달) */}
@@ -2117,11 +2117,11 @@
               <div className="settings-section">
                 <div className="settings-section-title">🌟 드림 갤러리</div>
                 <div className="settings-field">
-                  <label>텍스트 크기</label>
-                  <input type="range" min="70" max="150" step="5" value={settings.dreamGalleryTextScale || 100} onChange={(e) => update("dreamGalleryTextScale", Number(e.target.value))} style={{ flex: 1 }} />
-                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--accent)", minWidth: 50, textAlign: "right" }}>{settings.dreamGalleryTextScale || 100}%</span>
+                  <label>이름 크기</label>
+                  <input type="range" min="14" max="32" step="1" value={(settings.dreamGalleryNameSize >= 14 && settings.dreamGalleryNameSize <= 32) ? settings.dreamGalleryNameSize : 19} onChange={(e) => update("dreamGalleryNameSize", Number(e.target.value))} style={{ flex: 1 }} />
+                  <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--accent)", minWidth: 56, textAlign: "right" }}>{((settings.dreamGalleryNameSize >= 14 && settings.dreamGalleryNameSize <= 32) ? settings.dreamGalleryNameSize : 19)}px</span>
                 </div>
-                <div className="settings-hint">드림 이름·퍼센트·티어 뱃지가 비례 조정됩니다 (70~150%)</div>
+                <div className="settings-hint">드림 이름 폰트 (14~32px) · 퍼센트·티어 뱃지도 비례 조정됨 (기본 19px)</div>
               </div>
 
               <div className="settings-section">
