@@ -644,8 +644,9 @@
                 const isAsset = c.type === "asset";
                 const pct = isAsset && c.target > 0 ? Math.min(100, (c.value / c.target) * 100) : null;
                 const isLast = idx === summaryCards.length - 1;
+                const linked = c.linkedSection || (c.type === "asset" ? "assets" : (idx === 1 ? "main-income" : "side-income"));
                 return (
-                  <div key={c.id} className="kpi-big" onContextMenu={onCardContext(c.id)}>
+                  <div key={c.id} className="kpi-big" onContextMenu={onCardContext(c.id)} onClick={() => onOpenResources && onOpenResources(linked)} style={{ cursor: "pointer" }} title={"클릭 → 자원·아이템 탭의 " + linked + " 섹션"}>
                     {isLast && summaryCards.length < 4 && (
                       <button onClick={(e) => { e.stopPropagation(); addCard(); }} className="kpi-add-mini" title="새 KPI 카드 추가">+</button>
                     )}
@@ -3647,7 +3648,82 @@
       );
     }
 
-    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings, setSettings, finance, setFinance, onOpenFinance, onOpenStatModal, onOpenSettings, uid }) {
+    /* ─── CharacterSidebar — ResourcesItemsTab 좌측 사이드바용 캐릭터 카드 ─── */
+    function CharacterSidebar({ stats, settings, setSettings, uid, totalLv, totalXp, xpPct }) {
+      const fileRef = useRef(null);
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState("");
+      const [promptOpen, setPromptOpen] = useState(false);
+      const [aiPrompt, setAiPrompt] = useState("");
+      const [editingName, setEditingName] = useState(false);
+      const avatarUrl = settings?.characterAvatarUrl || "";
+      const charName = settings?.characterName || "";
+      const setSetting = (key, value) => setSettings(prev => ({ ...prev, [key]: value }));
+
+      const handleFile = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          setBusy(true); setMsg("");
+          const dataUrl = await compressImage(file, 1200, 1200, 0.92);
+          const storageUrl = await uploadDreamImageToStorage(dataUrl, "char_" + (uid || "u"), uid);
+          setSetting("characterAvatarUrl", storageUrl || dataUrl);
+          setMsg(storageUrl ? "✓ 업로드 완료" : "⚠ base64 폴백");
+          setTimeout(() => setMsg(""), 2500);
+        } catch (err) { setMsg("실패: " + err.message); }
+        finally { setBusy(false); if (fileRef.current) fileRef.current.value = ""; }
+      };
+      const runAi = async () => {
+        const apiKey = loadLS("dreamboard_settings", {}).geminiKey || settings?.geminiKey || "";
+        if (!apiKey) { setMsg("⚙️ Gemini API Key 먼저"); setTimeout(() => setMsg(""), 3000); return; }
+        const promptText = aiPrompt.trim() || (charName ? charName + " RPG 캐릭터 초상화" : "RPG 캐릭터 초상화");
+        try {
+          setBusy(true); setMsg("");
+          const rawUrl = await geminiGenerateImage(apiKey, promptText, settings?.geminiImageModel);
+          const compressed = await compressDataUrl(rawUrl, 1024, 1024, 0.88);
+          const storageUrl = await uploadDreamImageToStorage(compressed, "char_" + (uid || "u"), uid);
+          setSetting("characterAvatarUrl", storageUrl || compressed);
+          setPromptOpen(false); setAiPrompt("");
+          setMsg(storageUrl ? "✓ AI 생성 완료" : "⚠ base64 폴백");
+          setTimeout(() => setMsg(""), 2500);
+        } catch (err) { setMsg(err.message); setTimeout(() => setMsg(""), 4000); }
+        finally { setBusy(false); }
+      };
+
+      return (
+        <div className="ri2-sb-card accent">
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+          <div className="ri2-avatar" onClick={() => !busy && fileRef.current?.click()} title="클릭으로 업로드">
+            {avatarUrl ? <img src={avatarUrl} alt="" /> : <span style={{ fontSize: 56 }}>🦸</span>}
+            {busy && <div className="ri2-busy">처리중...</div>}
+          </div>
+          <div className="ri2-name">
+            {editingName ? (
+              <input autoFocus value={charName} onChange={(e) => setSetting("characterName", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") setEditingName(false); }} onBlur={() => setEditingName(false)} placeholder="이름" className="ri2-name-input" />
+            ) : (
+              <span onClick={() => setEditingName(true)}>{charName || "이름 없음"} <span style={{ color: "var(--text-4)", fontSize: 10 }}>✎</span></span>
+            )}
+          </div>
+          <div className="ri2-lv">Lv.{totalLv}</div>
+          <div className="ri2-lv-sub">/ 60 만렙</div>
+          <div className="ri2-xp-bar"><div style={{ width: xpPct + "%" }} /></div>
+          <div className="ri2-xp-txt">{totalXp.toLocaleString()} XP · {xpPct}%</div>
+          <div className="ri2-sb-actions">
+            <button className="sb-btn" disabled={busy} onClick={() => fileRef.current?.click()}>📁 업로드</button>
+            <button className="sb-btn ai" disabled={busy} onClick={() => { setPromptOpen(v => !v); if (!aiPrompt) setAiPrompt(charName ? charName + " RPG 캐릭터 초상화" : ""); }}>✨ AI</button>
+          </div>
+          {promptOpen && (
+            <div className="ri2-sb-prompt">
+              <input type="text" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="프롬프트" onKeyDown={(e) => { if (e.key === "Enter") runAi(); }} />
+              <button className="sb-btn ai" disabled={busy} onClick={runAi}>{busy ? "..." : "GO"}</button>
+            </div>
+          )}
+          {msg && <div className="ri2-sb-msg">{msg}</div>}
+        </div>
+      );
+    }
+
+    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings, setSettings, finance, setFinance, onOpenFinance, onOpenStatModal, onOpenSettings, uid, highlightSection, onHighlightConsumed }) {
       const [selectedItem, setSelectedItem] = useState(null);
       const [filter, setFilter] = useState("all");
       const [editingAssetId, setEditingAssetId] = useState(null);
@@ -3727,205 +3803,302 @@
       const energyPct = Math.round((computed.energy.used / (computed.energy.weeklyPool + computed.energy.buff)) * 100);
       const timePct = Math.round((computed.time.used / (computed.time.weeklyPool + computed.time.buff)) * 100);
 
+      // 수입을 주수익/부수익으로 분류 (regular = 주, irregular = 부)
+      const mainIncomes = (fin.incomes || []).filter(i => i.category === "regular");
+      const sideIncomes = (fin.incomes || []).filter(i => i.category !== "regular");
+      const mainIncomeSum = mainIncomes.reduce((s, i) => s + (i.expected || 0), 0);
+      const sideIncomeSum = sideIncomes.reduce((s, i) => s + (i.expected || 0), 0);
+      const totalDebts = sumDebts(fin);
+      const netWorth = totalAssets - totalDebts;
+      const life = calcLifeStats(settings?.birthDate, settings?.expectedLifespan, settings?.retireAge);
+
+      // 하이라이트 섹션 → 스크롤 + 펄스
+      const sectionRefs = {
+        assets: useRef(null),
+        debts: useRef(null),
+        "main-income": useRef(null),
+        "side-income": useRef(null),
+        expenses: useRef(null),
+        "net-worth": useRef(null)
+      };
+      const [pulseSection, setPulseSection] = useState(null);
+      useEffect(() => {
+        if (!highlightSection) return;
+        const ref = sectionRefs[highlightSection];
+        if (ref?.current) {
+          ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          setPulseSection(highlightSection);
+          setTimeout(() => setPulseSection(null), 2000);
+        }
+        onHighlightConsumed && onHighlightConsumed();
+      }, [highlightSection]);
+
+      // CharacterHero를 사이드바용으로 그대로 사용하기 어려우니 별도 인라인 렌더
+      const totalLv = stats.reduce((a, s) => a + statLevel(getStatTotalXp(s)), 0);
+      const totalXp = stats.reduce((a, s) => a + getStatTotalXp(s), 0);
+      const maxXp = STAT_LEVEL_REQ[9] * 6;
+      const xpPct = Math.min(100, Math.round((totalXp / maxXp) * 100));
+      const MAIN_STAT_IDS = ["youtube", "estate", "dev", "english", "health", "finance"];
+      const orderedStats = MAIN_STAT_IDS.map(sid => stats.find(s => s.id === sid)).filter(Boolean);
+      const auxStats = stats.filter(s => !MAIN_STAT_IDS.includes(s.id));
+
       return (
         <div className="panel-enter">
-          <CharacterHero stats={stats} settings={settings} setSettings={setSettings} uid={uid} onOpenStatModal={onOpenStatModal} onOpenSettings={onOpenSettings} />
-          <div className="ri-split" style={{ gridTemplateColumns: "38% 20% 42%" }}>
-            {/* LEFT: 재무 요약 (수정은 모달에서) */}
-            <div className="ri-col">
-              {(() => {
-                const totalDebts = sumDebts(fin);
-                const netWorth = totalAssets - totalDebts;
-                return (
+          <div className="ri2-layout">
+            {/* ━━━━ SIDEBAR (280px sticky) ━━━━ */}
+            <aside className="ri2-sidebar">
+              {/* 캐릭터 카드 */}
+              <CharacterSidebar stats={stats} settings={settings} setSettings={setSettings} uid={uid} totalLv={totalLv} totalXp={totalXp} xpPct={xpPct} />
+
+              {/* 능력치 */}
+              <div className="ri2-sb-card">
+                <div className="ri2-sb-title">⚔️ 능력치 ({orderedStats.length}) <span className="edit-link" onClick={onOpenStatModal}>편집 →</span></div>
+                {orderedStats.map(s => {
+                  const tx = getStatTotalXp(s);
+                  const lv = statLevel(tx);
+                  const prog = statLevelProgress(tx);
+                  return (
+                    <React.Fragment key={s.id}>
+                      <div className="ri2-stat-line">
+                        <span className="ic">{s.icon}</span>
+                        <span className="nm">{s.label}</span>
+                        <span className="lv">Lv.{lv}</span>
+                      </div>
+                      <div className="ri2-stat-bar"><div style={{ width: (prog.pct || 0) + "%" }} /></div>
+                    </React.Fragment>
+                  );
+                })}
+                {auxStats.length > 0 && (
                   <>
-                    {/* 순자산 큰 카드 */}
-                    <div className="fin-summary-card" onClick={onOpenFinance} style={{ cursor: "pointer" }} title="클릭으로 상세 관리">
-                      <div className="summary-net">
-                        <span className="lbl">💎 순자산 (자산 − 부채)</span>
-                        <span className="val" style={{ color: netWorth >= 0 ? "var(--text-1)" : "var(--red)" }}>{fmtKR(netWorth)}</span>
-                      </div>
-                      <div className="summary-chg">자산 {fmtKR(totalAssets)} − 부채 {fmtKR(totalDebts)}</div>
-                    </div>
-
-                    {/* 자산 요약 */}
-                    <div className="fin-card">
-                      <div className="fin-card-head">
-                        <div className="fin-card-title">🏦 자산</div>
-                        <div className="fin-card-sum">{fmtKR(totalAssets)}</div>
-                      </div>
-                      {Object.entries(ASSET_CATS).map(([cat, label]) => {
-                        const subtotal = sumAssets(fin, cat);
-                        const cnt = (fin.assets || []).filter(a => a.category === cat).length;
-                        if (cnt === 0) return null;
-                        return (
-                          <div key={cat} className="res-line">
-                            <span className="lbl">{label} <span style={{ color: "var(--text-4)", fontSize: 11 }}>{cnt}건</span></span>
-                            <span className="val">{fmtKR(subtotal)}</span>
-                          </div>
-                        );
-                      })}
-                      {(fin.assets || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "6px 0", fontStyle: "italic" }}>자산 없음 — 상세에서 추가</div>}
-                    </div>
-
-                    {/* 부채 요약 */}
-                    <div className="fin-card">
-                      <div className="fin-card-head">
-                        <div className="fin-card-title">🚨 부채</div>
-                        <div className="fin-card-sum" style={{ color: totalDebts > 0 ? "var(--red)" : "var(--text-3)" }}>{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "없음"}</div>
-                      </div>
-                      {Object.entries(DEBT_CATS).map(([cat, label]) => {
-                        const subtotal = sumDebts(fin, cat);
-                        const cnt = (fin.debts || []).filter(d => d.category === cat).length;
-                        if (cnt === 0) return null;
-                        return (
-                          <div key={cat} className="res-line">
-                            <span className="lbl">{label} <span style={{ color: "var(--text-4)", fontSize: 11 }}>{cnt}건</span></span>
-                            <span className="val" style={{ color: "var(--red)" }}>-{fmtKR(subtotal)}</span>
-                          </div>
-                        );
-                      })}
-                      {(fin.debts || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "6px 0", fontStyle: "italic" }}>부채 없음 — 상세에서 추가</div>}
-                    </div>
-
-                    {/* 수입/지출 요약 */}
-                    <div className="fin-card">
-                      <div className="fin-card-head">
-                        <div className="fin-card-title">📊 이번달</div>
-                      </div>
-                      <div className="res-line">
-                        <span className="lbl">📈 수입</span>
-                        <span className="val" style={{ color: "var(--green)" }}>+{Math.round(totalIncome/10000).toLocaleString()}만</span>
-                      </div>
-                      <div className="res-line">
-                        <span className="lbl">📉 지출</span>
-                        <span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExpense/10000).toLocaleString()}만</span>
-                      </div>
-                      <div className="fin-net" style={{ marginTop: 8 }}>
-                        <div>
-                          <div className="lbl">💵 순이익</div>
-                          <div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 2 }}>실제 {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만</div>
+                    <div className="ri2-sb-divider"></div>
+                    <div className="ri2-sb-subtitle">보조 ({auxStats.length})</div>
+                    {auxStats.map(s => {
+                      const lv = statLevel(getStatTotalXp(s));
+                      return (
+                        <div key={s.id} className="ri2-stat-line">
+                          <span className="ic">{s.icon}</span>
+                          <span className="nm">{s.label}</span>
+                          <span className="lv">Lv.{lv}</span>
                         </div>
-                        <span className="val" style={{ color: profitActual >= 0 ? "var(--green)" : "var(--red)" }}>
-                          {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만
-                        </span>
-                      </div>
-                    </div>
-
-                    <button className="fin-detail-btn" onClick={onOpenFinance}>📋 재무 상세 관리 (자산/부채/수입/지출)</button>
+                      );
+                    })}
                   </>
-                );
-              })()}
-            </div>
-
-            {/* MIDDLE: 에너지·시간·스탯 버프 */}
-            <div className="ri-col">
-              <div className="res-card">
-                <div className="res-card-head">
-                  <div className="res-card-title"><span className="res-card-ic">⚡</span>에너지</div>
-                </div>
-                <div className="res-bar-wrap">
-                  <div className="res-bar-label">
-                    <span>사용/한계</span>
-                    <span className="val">{computed.energy.used} / {computed.energy.weeklyPool + computed.energy.buff}</span>
-                  </div>
-                  <div className="res-bar">
-                    <div className={"res-bar-fill " + (energyPct > 80 ? "warn" : "")} style={{ width: Math.min(100, energyPct) + "%" }} />
-                  </div>
-                </div>
-                <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>
-                  남은: <strong style={{ color: "var(--green)", fontFamily: "Geist Mono, monospace" }}>{computed.energy.weeklyPool + computed.energy.buff - computed.energy.used}</strong>
-                </div>
-              </div>
-
-              <div className="res-card">
-                <div className="res-card-head">
-                  <div className="res-card-title"><span className="res-card-ic">⏰</span>시간</div>
-                </div>
-                <div className="res-bar-wrap">
-                  <div className="res-bar-label">
-                    <span>사용/한계</span>
-                    <span className="val">{computed.time.used.toFixed(1)} / {computed.time.weeklyPool + computed.time.buff}h</span>
-                  </div>
-                  <div className="res-bar">
-                    <div className={"res-bar-fill " + (timePct > 80 ? "warn" : "")} style={{ width: Math.min(100, timePct) + "%" }} />
-                  </div>
-                </div>
-                {computed.time.buff > 0 && (
-                  <div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 6 }}>
-                    기본 {computed.time.weeklyPool}h + 아이템 <strong style={{ color: "var(--green)" }}>+{computed.time.buff}h</strong>
-                  </div>
                 )}
               </div>
 
-              {Object.keys(computed.statBuffs).length > 0 && (
-                <div className="res-card">
-                  <div className="res-card-head">
-                    <div className="res-card-title"><span className="res-card-ic">📈</span>스탯 버프</div>
+              {/* 자원 */}
+              <div className="ri2-sb-card">
+                <div className="ri2-sb-title">⚡ 자원</div>
+                <div className="ri2-res-row">
+                  <div className="head"><span>⚡ 에너지</span><span className="v">{computed.energy.used} / {computed.energy.weeklyPool + computed.energy.buff}</span></div>
+                  <div className="ri2-res-bar"><div className={energyPct > 80 ? "warn" : ""} style={{ width: Math.min(100, energyPct) + "%" }} /></div>
+                  <div className="sub">남은 {computed.energy.weeklyPool + computed.energy.buff - computed.energy.used}</div>
+                </div>
+                <div className="ri2-res-row">
+                  <div className="head"><span>⏰ 시간</span><span className="v">{computed.time.used.toFixed(1)} / {computed.time.weeklyPool + computed.time.buff}h</span></div>
+                  <div className="ri2-res-bar"><div className={timePct > 80 ? "warn" : ""} style={{ width: Math.min(100, timePct) + "%" }} /></div>
+                  {computed.time.buff > 0 && <div className="sub">기본 {computed.time.weeklyPool}h + 아이템 <strong style={{ color: "var(--green)" }}>+{computed.time.buff}h</strong></div>}
+                </div>
+                {Object.keys(computed.statBuffs).length > 0 && (
+                  <>
+                    <div className="ri2-sb-divider"></div>
+                    <div className="ri2-sb-subtitle">📈 스탯 버프</div>
+                    {Object.entries(computed.statBuffs).map(([sid, v]) => {
+                      const s = stats.find((x) => x.id === sid);
+                      return (
+                        <div key={sid} className="ri2-stat-line">
+                          <span className="nm" style={{ paddingLeft: 0 }}>{s ? s.icon + " " + s.label : sid}</span>
+                          <span className="lv" style={{ color: "var(--green)" }}>+{v}%</span>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+
+              {/* 인생 */}
+              {life && (
+                <div className="ri2-sb-card">
+                  <div className="ri2-sb-title">🕯️ 인생 <span className="edit-link" onClick={onOpenSettings}>편집 →</span></div>
+                  <div className="ri2-res-row">
+                    <div className="head"><span>나이</span><span className="v">{life.age} / {settings.expectedLifespan}</span></div>
+                    <div className="ri2-res-bar"><div className="amber" style={{ width: Math.min(100, life.livedPercent || 0) + "%" }} /></div>
+                    <div className="sub">남은 {life.remainingYears}년{life.inGolden ? " · ✨ 황금기" : ""}</div>
                   </div>
-                  {Object.entries(computed.statBuffs).map(([sid, v]) => {
-                    const s = stats.find((x) => x.id === sid);
-                    return (
-                      <div key={sid} className="res-line income">
-                        <span className="lbl">{s ? s.icon + " " + s.label : sid}</span>
-                        <span className="val">+{v}%</span>
-                      </div>
-                    );
-                  })}
                 </div>
               )}
-            </div>
+            </aside>
 
-            {/* RIGHT: 인벤토리 */}
-            <div className="ri-col">
-              <div className="inv-head">
-                <div className="inv-tabs">
-                  {[
-                    { id: "all", label: "전체" },
-                    { id: "equipped", label: "장착" },
-                    { id: "developing", label: "개발중" },
-                    { id: "stored", label: "보관" }
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      className={"inv-tab" + (filter === t.id ? " active" : "")}
-                      onClick={() => setFilter(t.id)}
-                    >
-                      {t.label}<span className="cnt">{counts[t.id]}</span>
-                    </button>
+            {/* ━━━━ MAIN AREA ━━━━ */}
+            <main className="ri2-main">
+
+              {/* 💰 TOP KPI 5칸 */}
+              <div className="ri2-sec-head"><span className="h">💰 재무 한눈에</span><span className="sub">대시보드 KPI와 연결</span></div>
+              <div className="ri2-kpi-row">
+                <div ref={sectionRefs.assets} className={"ri2-kpi linked" + (pulseSection === "assets" ? " pulse" : "")} onClick={onOpenFinance}>
+                  <div className="kc-lbl">🏦 총 자산<span className="kc-link">DB ←</span></div>
+                  <div className="kc-val green">{fmtKR(totalAssets)}</div>
+                  <div className="kc-sub">{Object.entries(ASSET_CATS).filter(([c]) => sumAssets(fin, c) > 0).map(([c, l]) => l.replace(/^[^ ]+ /, "")).join(" + ") || "없음"}</div>
+                </div>
+                <div ref={sectionRefs.debts} className={"ri2-kpi" + (pulseSection === "debts" ? " pulse" : "")} onClick={onOpenFinance}>
+                  <div className="kc-lbl">🚨 총 부채</div>
+                  <div className="kc-val red">{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "없음"}</div>
+                  <div className="kc-sub">{totalDebts > 0 ? "주담대 + 카드 등" : "부채 없음"}</div>
+                </div>
+                <div ref={sectionRefs["net-worth"]} className={"ri2-kpi linked" + (pulseSection === "net-worth" ? " pulse" : "")} onClick={onOpenFinance}>
+                  <div className="kc-lbl">💎 순자산<span className="kc-link">DB ←</span></div>
+                  <div className="kc-val accent">{fmtKR(netWorth)}</div>
+                  <div className="kc-sub">자산 − 부채</div>
+                </div>
+                <div className="ri2-kpi linked" onClick={onOpenFinance}>
+                  <div className="kc-lbl">📈 월수입<span className="kc-link">DB ←</span></div>
+                  <div className="kc-val green">+{Math.round(totalIncome/10000).toLocaleString()}만</div>
+                  <div className="kc-sub">주 {Math.round(mainIncomeSum/10000).toLocaleString()} + 부 {Math.round(sideIncomeSum/10000).toLocaleString()}</div>
+                </div>
+                <div ref={sectionRefs.expenses} className={"ri2-kpi" + (pulseSection === "expenses" ? " pulse" : "")} onClick={onOpenFinance}>
+                  <div className="kc-lbl">📉 월지출</div>
+                  <div className="kc-val red">-{Math.round(totalExpense/10000).toLocaleString()}만</div>
+                  <div className="kc-sub">고정 + 변동</div>
+                </div>
+              </div>
+
+              {/* 🏦 자산 & 💼 수익 (2×2 그리드) */}
+              <div className="ri2-sec-head"><span className="h">🏦 자산 & 💼 수익</span><span className="sub">클릭으로 상세 모달</span></div>
+              <div className="ri2-detail-grid">
+                {/* 자산 */}
+                <div ref={sectionRefs.assets} className={"ri2-detail" + (pulseSection === "assets" ? " pulse" : "")}>
+                  <div className="dc-head">
+                    <div className="dc-title">🏦 자산 상세</div>
+                    <div className="dc-sum green">{fmtKR(totalAssets)}</div>
+                  </div>
+                  {Object.entries(ASSET_CATS).map(([cat, label]) => {
+                    const list = (fin.assets || []).filter(a => a.category === cat);
+                    if (list.length === 0) return null;
+                    return (
+                      <React.Fragment key={cat}>
+                        <div className="ri2-cat-title">{label} <span className="ct-sum">{fmtKR(sumAssets(fin, cat))}</span></div>
+                        {list.map(a => (
+                          <div key={a.id} className="ri2-item-row"><span className="nm">{a.name}</span><span className="val">{fmtKR(a.value)}</span></div>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
+                  {(fin.assets || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "8px 0", fontStyle: "italic", textAlign: "center" }}>자산 없음</div>}
+                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 자산 추가 / 수정</button>
+                </div>
+
+                {/* 주수익 + 부수익 */}
+                <div className={"ri2-detail" + (pulseSection === "main-income" || pulseSection === "side-income" ? " pulse" : "")}>
+                  <div ref={sectionRefs["main-income"]}></div>
+                  <div className="dc-head">
+                    <div className="dc-title">💼 주수익 <span className="kc-link">DB ←</span></div>
+                    <div className="dc-sum green">+{Math.round(mainIncomeSum/10000).toLocaleString()}만/월</div>
+                  </div>
+                  {mainIncomes.length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0", fontStyle: "italic" }}>주수익 없음</div>}
+                  {mainIncomes.map(i => (
+                    <div key={i.id} className="ri2-item-row"><span className="nm">{i.name}</span><span className="val green">+{Math.round((i.expected||0)/10000).toLocaleString()}만</span></div>
+                  ))}
+
+                  <div ref={sectionRefs["side-income"]} style={{ marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--border-strong)" }}>
+                    <div className="dc-head">
+                      <div className="dc-title">🎬 부수익 <span className="kc-link">DB ←</span></div>
+                      <div className="dc-sum green">+{Math.round(sideIncomeSum/10000).toLocaleString()}만/월</div>
+                    </div>
+                    {sideIncomes.length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0", fontStyle: "italic" }}>부수익 없음</div>}
+                    {sideIncomes.map(i => (
+                      <div key={i.id} className="ri2-item-row"><span className="nm">{i.name}</span><span className="val green">+{Math.round((i.expected||0)/10000).toLocaleString()}만</span></div>
+                    ))}
+                  </div>
+                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 수익 추가 / 수정</button>
+                </div>
+
+                {/* 부채 */}
+                <div ref={sectionRefs.debts} className={"ri2-detail" + (pulseSection === "debts" ? " pulse" : "")}>
+                  <div className="dc-head">
+                    <div className="dc-title">🚨 부채 상세</div>
+                    <div className="dc-sum red">{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "없음"}</div>
+                  </div>
+                  {Object.entries(DEBT_CATS).map(([cat, label]) => {
+                    const list = (fin.debts || []).filter(d => d.category === cat);
+                    if (list.length === 0) return null;
+                    return (
+                      <React.Fragment key={cat}>
+                        <div className="ri2-cat-title">{label} <span className="ct-sum">-{fmtKR(sumDebts(fin, cat))}</span></div>
+                        {list.map(d => (
+                          <div key={d.id} className="ri2-item-row"><span className="nm">{d.name}</span><span className="val red">-{fmtKR(d.value)}</span></div>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
+                  {(fin.debts || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "8px 0", fontStyle: "italic", textAlign: "center" }}>부채 없음</div>}
+                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 부채 추가 / 수정</button>
+                </div>
+
+                {/* 지출 */}
+                <div ref={sectionRefs.expenses} className={"ri2-detail" + (pulseSection === "expenses" ? " pulse" : "")}>
+                  <div className="dc-head">
+                    <div className="dc-title">📉 지출 상세</div>
+                    <div className="dc-sum red">-{Math.round(totalExpense/10000).toLocaleString()}만/월</div>
+                  </div>
+                  {Object.entries(EXPENSE_CATS).map(([cat, label]) => {
+                    const list = (fin.expenses || []).filter(e => e.category === cat);
+                    if (list.length === 0) return null;
+                    const sub = list.reduce((s, e) => s + (e.expected || 0), 0);
+                    return (
+                      <React.Fragment key={cat}>
+                        <div className="ri2-cat-title">{label} <span className="ct-sum">-{Math.round(sub/10000).toLocaleString()}만</span></div>
+                        {list.map(e => (
+                          <div key={e.id} className="ri2-item-row"><span className="nm">{e.name}</span><span className="val red">-{Math.round((e.expected||0)/10000).toLocaleString()}만</span></div>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
+                  {(fin.expenses || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "8px 0", fontStyle: "italic", textAlign: "center" }}>지출 없음</div>}
+                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 지출 추가 / 수정</button>
+                </div>
+              </div>
+
+              {/* 🎒 인벤토리 (전체 폭) */}
+              <div className="ri2-sec-head"><span className="h">🎒 인벤토리</span><span className="sub">아이템 장착 → 자원·스탯 반영</span></div>
+              <div className="ri2-inv-section">
+                <div className="ri2-inv-head">
+                  <div className="inv-tabs">
+                    {[
+                      { id: "all", label: "전체" },
+                      { id: "equipped", label: "장착" },
+                      { id: "developing", label: "개발중" },
+                      { id: "stored", label: "보관" }
+                    ].map((t) => (
+                      <button key={t.id} className={"inv-tab" + (filter === t.id ? " active" : "")} onClick={() => setFilter(t.id)}>
+                        {t.label}<span className="cnt">{counts[t.id]}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button className="gtr-btn-add" onClick={addItem}>+ 아이템 추가</button>
+                </div>
+                <div className="inv-grid">
+                  {slots.map((it, idx) => (
+                    <div key={it ? it.id : "empty-" + idx} className={"inv-slot " + (it ? "filled " + it.status : "empty")} onClick={() => it && setSelectedItem(it)}>
+                      {it && (
+                        <>
+                          <span className="inv-slot-emoji">{it.emoji}</span>
+                          {it.status === "developing" && (
+                            <div className="inv-slot-progress"><div className="inv-slot-progress-fill" style={{ width: (it.devProgress || 0) + "%" }} /></div>
+                          )}
+                          <div className="inv-slot-tooltip">{it.name}</div>
+                        </>
+                      )}
+                    </div>
                   ))}
                 </div>
-                <button className="gtr-btn-add" onClick={addItem}>+ 아이템 추가</button>
+                <div className="inv-legend">
+                  <span><span className="inv-legend-dot eq" />장착됨 (자원 반영)</span>
+                  <span><span className="inv-legend-dot dev" />개발중</span>
+                  <span><span className="inv-legend-dot stored" />보관</span>
+                </div>
               </div>
 
-              <div className="inv-grid">
-                {slots.map((it, idx) => (
-                  <div
-                    key={it ? it.id : "empty-" + idx}
-                    className={"inv-slot " + (it ? "filled " + it.status : "empty")}
-                    onClick={() => it && setSelectedItem(it)}
-                  >
-                    {it && (
-                      <>
-                        <span className="inv-slot-emoji">{it.emoji}</span>
-                        {it.status === "developing" && (
-                          <div className="inv-slot-progress">
-                            <div className="inv-slot-progress-fill" style={{ width: (it.devProgress || 0) + "%" }} />
-                          </div>
-                        )}
-                        <div className="inv-slot-tooltip">{it.name}</div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="inv-legend">
-                <span><span className="inv-legend-dot eq" />장착됨 (자원 반영)</span>
-                <span><span className="inv-legend-dot dev" />개발중</span>
-                <span><span className="inv-legend-dot stored" />보관</span>
-              </div>
-            </div>
-          </div>
+            </main>
 
           {selectedItem && (
             <ItemDetailModal
@@ -4680,6 +4853,7 @@
 
       // 목표 카드 수정 → 목표·업무 탭 이동
       const [goalToOpen, setGoalToOpen] = useState(null);
+      const [resourcesHighlight, setResourcesHighlight] = useState(null);
       const handleEditGoal = (goalId) => {
         setGoalToOpen(goalId);
         setTab("gtr");
@@ -4804,7 +4978,7 @@
             focusMode={focusMode} setFocusMode={setFocusMode}
             resources={computeResources(resources, items)}
             onOpenSettings={() => setSettingsOpen(true)}
-            onOpenResources={() => setTab("resources")}
+            onOpenResources={(section) => { setTab("resources"); if (section) setResourcesHighlight(section); }}
             onDreamClick={handleDreamClick}
             toggleStage={toggleStage}
             adjustQuestCount={adjustQuestCount}
@@ -4833,6 +5007,8 @@
             onOpenStatModal={() => setStatModalOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
             uid={user?.uid}
+            highlightSection={resourcesHighlight}
+            onHighlightConsumed={() => setResourcesHighlight(null)}
           />}
           {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} uid={user?.uid} />}
 

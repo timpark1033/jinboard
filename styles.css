@@ -4888,3 +4888,101 @@
   transition: all 0.15s;
 }
 .fin-detail-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--accent-glow); }
+
+/* 자원·아이템 탭 v2 - 사이드바 + 위젯 그리드 */
+.ri2-layout { display: grid; grid-template-columns: 280px 1fr; gap: 22px; align-items: start; }
+@media (max-width: 1100px) { .ri2-layout { grid-template-columns: 1fr; } }
+
+.ri2-sidebar { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 130px); overflow-y: auto; scrollbar-width: thin; }
+.ri2-sb-card { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+.ri2-sb-card.accent { background: linear-gradient(180deg, rgba(139,92,246,0.10), var(--bg-1) 70%); border-color: var(--border-accent); padding: 22px 18px; text-align: center; }
+
+.ri2-avatar { position: relative; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--accent-2), var(--accent)); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; box-shadow: 0 0 24px var(--accent-glow); border: 3px solid var(--accent); margin: 0 auto; transition: transform 0.2s; }
+.ri2-avatar:hover { transform: scale(1.03); }
+.ri2-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ri2-busy { position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.ri2-name { font-size: 13px; color: var(--text-2); font-weight: 600; margin-top: 12px; cursor: pointer; }
+.ri2-name:hover { color: var(--accent); }
+.ri2-name-input { background: var(--bg-2); border: 1px solid var(--accent); color: var(--text-1); border-radius: 5px; padding: 3px 8px; font-family: inherit; font-size: 13px; outline: none; text-align: center; max-width: 160px; }
+.ri2-lv { font-family: "Geist Mono", monospace; font-size: 42px; font-weight: 800; color: var(--accent); letter-spacing: -0.04em; line-height: 1; margin-top: 6px; text-shadow: 0 0 16px var(--accent-glow); }
+.ri2-lv-sub { font-size: 11px; color: var(--text-4); font-family: "Geist Mono", monospace; margin-top: 2px; }
+.ri2-xp-bar { height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; margin-top: 14px; }
+.ri2-xp-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); box-shadow: 0 0 8px var(--accent-glow); border-radius: 3px; transition: width 0.4s; }
+.ri2-xp-txt { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--text-3); margin-top: 6px; }
+.ri2-sb-actions { display: flex; gap: 6px; margin-top: 12px; }
+.ri2-sb-actions .sb-btn { flex: 1; background: var(--bg-2); border: 1px solid var(--border); color: var(--text-2); padding: 7px; border-radius: 7px; font-family: inherit; font-size: 11.5px; cursor: pointer; transition: all 0.15s; }
+.ri2-sb-actions .sb-btn:hover:not(:disabled) { background: var(--bg-3); color: var(--text-1); border-color: var(--border-accent); }
+.ri2-sb-actions .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ri2-sb-actions .sb-btn.ai { background: var(--accent-soft); color: var(--accent); border-color: var(--border-accent); }
+.ri2-sb-actions .sb-btn.ai:hover:not(:disabled) { background: rgba(139,92,246,0.18); }
+.ri2-sb-prompt { display: flex; gap: 6px; margin-top: 8px; }
+.ri2-sb-prompt input { flex: 1; background: var(--bg-2); border: 1px solid var(--border); color: var(--text-1); border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 11px; outline: none; }
+.ri2-sb-prompt input:focus { border-color: var(--accent); }
+.ri2-sb-prompt .sb-btn { flex: 0 0 auto; padding: 6px 10px; font-size: 11px; }
+.ri2-sb-msg { margin-top: 8px; font-size: 11px; color: var(--text-3); font-family: "Geist Mono", monospace; }
+
+.ri2-sb-title { font-size: 11px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.ri2-sb-title .edit-link { font-family: inherit; font-size: 10.5px; color: var(--text-4); cursor: pointer; text-transform: none; letter-spacing: 0; font-weight: 500; }
+.ri2-sb-title .edit-link:hover { color: var(--accent); }
+.ri2-sb-subtitle { font-size: 10.5px; color: var(--text-4); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 8px 0 6px; }
+.ri2-sb-divider { height: 1px; background: var(--border); margin: 10px 0 6px; }
+
+.ri2-stat-line { display: grid; grid-template-columns: 22px 1fr 40px; gap: 8px; align-items: center; padding: 4px 0; font-size: 12.5px; }
+.ri2-stat-line .ic { font-size: 16px; text-align: center; }
+.ri2-stat-line .nm { color: var(--text-2); font-weight: 500; }
+.ri2-stat-line .lv { font-family: "Geist Mono", monospace; color: var(--accent); font-weight: 700; font-size: 11.5px; text-align: right; }
+.ri2-stat-bar { height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden; margin: 0 0 6px 30px; }
+.ri2-stat-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 2px; transition: width 0.4s; }
+
+.ri2-res-row { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.ri2-res-row:last-child { border-bottom: none; padding-bottom: 0; }
+.ri2-res-row .head { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-2); margin-bottom: 5px; }
+.ri2-res-row .head .v { font-family: "Geist Mono", monospace; color: var(--text-1); font-weight: 700; font-size: 11.5px; }
+.ri2-res-bar { height: 5px; background: var(--bg-3); border-radius: 3px; overflow: hidden; }
+.ri2-res-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 3px; transition: width 0.4s; }
+.ri2-res-bar > div.warn { background: linear-gradient(90deg, var(--amber), #fb923c); }
+.ri2-res-bar > div.amber { background: linear-gradient(90deg, var(--amber), #fbbf24); }
+.ri2-res-row .sub { font-size: 10.5px; color: var(--text-4); margin-top: 4px; font-family: "Geist Mono", monospace; }
+
+.ri2-main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.ri2-sec-head { display: flex; align-items: baseline; gap: 10px; padding: 0 4px; margin-bottom: -6px; }
+.ri2-sec-head .h { font-size: 13px; color: var(--text-2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.ri2-sec-head .sub { font-size: 12px; color: var(--text-4); }
+
+.ri2-kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+@media (max-width: 1400px) { .ri2-kpi-row { grid-template-columns: repeat(3, 1fr); } }
+.ri2-kpi { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 18px; position: relative; cursor: pointer; transition: all 0.15s; min-width: 0; }
+.ri2-kpi:hover { border-color: var(--border-accent); transform: translateY(-1px); }
+.ri2-kpi.linked::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 14px 14px 0 0; }
+.ri2-kpi.pulse { animation: ri2-pulse 2s ease-out; }
+@keyframes ri2-pulse { 0% { box-shadow: 0 0 0 0 var(--accent-glow), 0 0 24px var(--accent-glow); border-color: var(--accent); } 100% { box-shadow: 0 0 0 12px transparent, 0 0 0 transparent; border-color: var(--border); } }
+.ri2-kpi .kc-lbl { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.ri2-kpi .kc-link { font-size: 9px; color: var(--accent); background: rgba(139,92,246,0.12); padding: 2px 6px; border-radius: 8px; font-family: "Geist Mono", monospace; letter-spacing: 0.05em; margin-left: auto; }
+.ri2-kpi .kc-val { font-family: "Geist Mono", monospace; font-size: 28px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin: 4px 0 6px; white-space: nowrap; }
+.ri2-kpi .kc-val.green { color: var(--green); }
+.ri2-kpi .kc-val.red { color: var(--red); }
+.ri2-kpi .kc-val.accent { color: var(--accent); }
+.ri2-kpi .kc-sub { font-size: 11.5px; color: var(--text-3); }
+
+.ri2-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 1100px) { .ri2-detail-grid { grid-template-columns: 1fr; } }
+.ri2-detail { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: border-color 0.3s; }
+.ri2-detail.pulse { animation: ri2-pulse 2s ease-out; }
+.ri2-detail .dc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ri2-detail .dc-title { font-size: 14px; color: var(--text-1); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.ri2-detail .dc-title .kc-link { font-size: 9px; color: var(--accent); background: rgba(139,92,246,0.12); padding: 2px 6px; border-radius: 8px; font-family: "Geist Mono", monospace; letter-spacing: 0.05em; }
+.ri2-detail .dc-sum { font-family: "Geist Mono", monospace; font-size: 14px; color: var(--accent); font-weight: 700; white-space: nowrap; }
+.ri2-detail .dc-sum.red { color: var(--red); }
+.ri2-detail .dc-sum.green { color: var(--green); }
+.ri2-cat-title { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin: 10px 0 4px; display: flex; justify-content: space-between; }
+.ri2-cat-title .ct-sum { font-family: "Geist Mono", monospace; color: var(--text-2); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 11.5px; }
+.ri2-item-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+.ri2-item-row .nm { color: var(--text-2); }
+.ri2-item-row .val { font-family: "Geist Mono", monospace; color: var(--text-1); font-weight: 600; }
+.ri2-item-row .val.green { color: var(--green); }
+.ri2-item-row .val.red { color: var(--red); }
+.ri2-add-btn { width: 100%; background: var(--bg-2); border: 1px dashed var(--border-accent); color: var(--accent); padding: 8px; border-radius: 8px; font-family: inherit; font-size: 12px; cursor: pointer; margin-top: 12px; transition: all 0.15s; }
+.ri2-add-btn:hover { background: var(--accent-soft); border-style: solid; }
+
+.ri2-inv-section { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+.ri2-inv-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
