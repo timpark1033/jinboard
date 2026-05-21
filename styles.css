@@ -4341,12 +4341,14 @@
   .qb-row .qb-dday.over { background: rgba(239,68,68,0.3); color: #fff; }
   .qb-row.done .qb-dday { opacity: 0.5; }
 
-  /* 모달 폼: 단계/퀘스트 행에 마감일 input 추가 → grid 컬럼 재정의 */
+  /* 모달 폼: 단계/퀘스트 행 — 이름은 넓게, 날짜는 컴팩트 */
   .qm-row.qm-with-date:not(.qm-quest) {
-    grid-template-columns: 22px 22px 1fr 120px 80px 60px 24px;
+    grid-template-columns: 20px 22px 1fr 110px 48px 44px 22px;
+    gap: 6px;
   }
   .qm-row.qm-quest.qm-with-date {
-    grid-template-columns: 22px 22px 1fr 120px 140px 80px 60px 24px;
+    grid-template-columns: 20px 22px 1fr 110px 120px 60px 44px 22px;
+    gap: 6px;
   }
   .qm-row .qm-date {
     background: var(--bg-3);
@@ -4359,8 +4361,29 @@
     outline: none;
     color-scheme: dark;
     min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+  .qm-row .qm-date::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    padding: 0;
+    margin-left: 2px;
+    cursor: pointer;
+    opacity: 0.8;
   }
   .qm-row .qm-date:focus { border-color: var(--accent); color: var(--text-1); }
+  .qm-row .qm-date:hover { border-color: var(--border-strong); }
+  .qm-row .state { font-size: 10px; }
+  .qm-row .xp-edit { font-size: 10.5px; }
+  .qm-row .name { font-size: 13px; }
+  .qm-row .del { font-size: 14px; }
+  /* 이름이 잘리지 않도록 input 명시 */
+  .qm-row .name { min-width: 0; width: 100%; }
+  .qm-row.qm-with-date input.name {
+    overflow: visible;
+    white-space: normal;
+  }
 
   /* ─────────────────────────────── */
   /* ── Stage 16: 목표 드래그 정렬 ── */
