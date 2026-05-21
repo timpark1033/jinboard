@@ -5101,3 +5101,16 @@
 /* 대시보드 집중모드 진입 버튼 */
 .focus-quick-btn { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(245,158,11,0.15)); border: 1px solid rgba(239,68,68,0.4); color: var(--text-1); padding: 6px 12px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; margin-right: 4px; }
 .focus-quick-btn:hover { background: linear-gradient(135deg, rgba(239,68,68,0.25), rgba(245,158,11,0.25)); border-color: var(--red); box-shadow: 0 0 10px rgba(239,68,68,0.3); }
+
+/* GoalEditModal — 2열 (좌: 메인+퀘스트 / 우: 기본정보) */
+.gem-body-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); grid-template-rows: auto auto; gap: 18px 24px; }
+.gem-body-grid .gem-section.main-stages { grid-column: 1; grid-row: 1; }
+.gem-body-grid .gem-section.quests { grid-column: 1; grid-row: 2; }
+.gem-body-grid .gem-section.basic-info { grid-column: 2; grid-row: 1 / 3; align-self: start; }
+
+@media (max-width: 1100px) {
+  .gem-body-grid { grid-template-columns: 1fr; grid-template-rows: auto auto auto; gap: 18px; }
+  .gem-body-grid .gem-section.basic-info { grid-column: 1; grid-row: 1; }
+  .gem-body-grid .gem-section.main-stages { grid-row: 2; }
+  .gem-body-grid .gem-section.quests { grid-row: 3; }
+}

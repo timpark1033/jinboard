@@ -3076,8 +3076,8 @@
                         <button className="gem-close" onClick={() => setEditingGoalId(null)} title="닫기 (변경사항은 자동 저장됨)">✕</button>
                       </div>
 
-                      <div className="gem-body">
-                        <div className="gem-section">
+                      <div className="gem-body gem-body-grid">
+                        <div className="gem-section basic-info">
                           <div className="gem-section-title">📝 기본 정보</div>
                           <div className="gem-field">
                             <label>목표 이름</label>
@@ -3139,7 +3139,7 @@
                         </div>
 
                         {/* 메인 단계 */}
-                        <div className="gem-section">
+                        <div className="gem-section main-stages">
                           <div className="quest-section-head" style={{ marginBottom: 8 }}>
                             <div>
                               <div className="quest-section-title main">📍 메인 단계 <span className="badge">🎯 {(g.milestones || []).filter(m => m.status === "done").length}/{(g.milestones || []).length}</span>
@@ -3187,7 +3187,7 @@
                         </div>
 
                         {/* 퀘스트 */}
-                        <div className="gem-section">
+                        <div className="gem-section quests">
                           <div className="quest-section-head" style={{ marginBottom: 8 }}>
                             <div>
                               <div className="quest-section-title side">💎 퀘스트 <span className="badge">{(g.quests || []).filter(q => q.done).length}/{(g.quests || []).length}</span></div>
