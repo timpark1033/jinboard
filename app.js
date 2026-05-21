@@ -199,6 +199,8 @@
 
     const INITIAL_SETTINGS = {
       geminiKey: "",
+      geminiTextModel: "gemini-2.5-flash",
+      geminiImageModel: "gemini-2.5-flash-image",
       weeklyTimePool: 72,
       weeklyEnergyPool: 100
     };
@@ -1778,23 +1780,79 @@
     }
 
     function SettingsModal({ open, onClose, settings, setSettings, onLogout }) {
+      const [testResult, setTestResult] = useState(null);
+      const [testing, setTesting] = useState(false);
+      const [imgTestResult, setImgTestResult] = useState(null);
+      const [imgTesting, setImgTesting] = useState(false);
       if (!open) return null;
       const update = (k, v) => setSettings((prev) => ({ ...prev, [k]: v }));
+
+      const runTextTest = async () => {
+        setTesting(true); setTestResult(null);
+        try {
+          const r = await geminiTest(settings.geminiKey, settings.geminiTextModel || "gemini-2.5-flash");
+          setTestResult({ ok: true, msg: "✓ 텍스트 모델 정상 (" + r.trim().slice(0, 40) + ")" });
+        } catch (e) {
+          setTestResult({ ok: false, msg: "✗ " + e.message });
+        } finally { setTesting(false); }
+      };
+
+      const runImageTest = async () => {
+        setImgTesting(true); setImgTestResult(null);
+        try {
+          const url = await geminiGenerateImage(settings.geminiKey, "blue square test image", settings.geminiImageModel);
+          setImgTestResult({ ok: true, msg: "✓ 이미지 모델 정상 (" + Math.round(url.length / 1024) + "KB 생성됨)" });
+        } catch (e) {
+          setImgTestResult({ ok: false, msg: "✗ " + e.message });
+        } finally { setImgTesting(false); }
+      };
+
       return (
         <div className="modal-overlay" onClick={onClose}>
-          <div className="modal-box" style={{ width: 500 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-box" style={{ width: 560 }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div className="modal-title">⚙️ 설정</div>
               <button className="modal-close" onClick={onClose}>×</button>
             </div>
             <div className="modal-body">
               <div className="settings-section">
-                <div className="settings-section-title">🤖 AI 연동</div>
+                <div className="settings-section-title">🤖 Gemini AI 연동</div>
                 <div className="settings-field">
-                  <label>Gemini API Key</label>
+                  <label>API Key</label>
                   <input type="password" value={settings.geminiKey || ""} onChange={(e) => update("geminiKey", e.target.value)} placeholder="AIza..." />
                 </div>
-                <div className="settings-hint">Gemini 2.5 Flash · Stage 3에서 자동 추천·이미지 생성 활성화</div>
+                <div className="settings-hint">
+                  <a href="https://aistudio.google.com/app/apikey" target="_blank" style={{ color: "var(--accent)" }}>aistudio.google.com</a>에서 발급
+                </div>
+
+                <div className="settings-field" style={{ marginTop: 12 }}>
+                  <label>텍스트 모델</label>
+                  <input type="text" value={settings.geminiTextModel || "gemini-2.5-flash"} onChange={(e) => update("geminiTextModel", e.target.value)} placeholder="gemini-2.5-flash" />
+                  <button onClick={runTextTest} disabled={testing || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
+                    {testing ? "..." : "테스트"}
+                  </button>
+                </div>
+                {testResult && (
+                  <div className="settings-hint" style={{ color: testResult.ok ? "var(--green)" : "var(--red)", padding: "4px 8px", background: testResult.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", borderRadius: 4, marginTop: 4, fontFamily: "Geist Mono, monospace", fontSize: 10.5 }}>
+                    {testResult.msg}
+                  </div>
+                )}
+
+                <div className="settings-field" style={{ marginTop: 12 }}>
+                  <label>이미지 모델</label>
+                  <input type="text" value={settings.geminiImageModel || "gemini-2.5-flash-image"} onChange={(e) => update("geminiImageModel", e.target.value)} placeholder="gemini-2.5-flash-image" />
+                  <button onClick={runImageTest} disabled={imgTesting || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
+                    {imgTesting ? "..." : "테스트"}
+                  </button>
+                </div>
+                {imgTestResult && (
+                  <div className="settings-hint" style={{ color: imgTestResult.ok ? "var(--green)" : "var(--red)", padding: "4px 8px", background: imgTestResult.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", borderRadius: 4, marginTop: 4, fontFamily: "Geist Mono, monospace", fontSize: 10.5, wordBreak: "break-word" }}>
+                    {imgTestResult.msg}
+                  </div>
+                )}
+                <div className="settings-hint" style={{ marginTop: 6 }}>
+                  추천: <code style={{ color: "var(--accent)" }}>gemini-2.5-flash-image</code>, <code style={{ color: "var(--accent)" }}>gemini-2.0-flash-preview-image-generation</code>, <code style={{ color: "var(--accent)" }}>imagen-3.0-generate-002</code>
+                </div>
               </div>
 
               <div className="settings-section">
@@ -2359,9 +2417,35 @@
     }
 
     /* ─── Gemini AI helpers ─── */
-    async function geminiSuggestTask(apiKey, taskText) {
+    function getGeminiSettings() {
+      const s = loadLS("dreamboard_settings", INITIAL_SETTINGS);
+      return {
+        key: s.geminiKey || "",
+        textModel: s.geminiTextModel || "gemini-2.5-flash",
+        imageModel: s.geminiImageModel || "gemini-2.5-flash-image"
+      };
+    }
+
+    async function geminiTest(apiKey, model) {
       if (!apiKey) throw new Error("API Key 미설정");
-      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] })
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error("HTTP " + res.status + ": " + t.slice(0, 200));
+      }
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "응답 OK";
+    }
+
+    async function geminiSuggestTask(apiKey, taskText, model) {
+      if (!apiKey) throw new Error("API Key 미설정");
+      const m = model || getGeminiSettings().textModel;
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent?key=" + apiKey;
       const prompt = "다음 할일에 대해 추정 XP(15~80), 에너지 소모(소=5/중=15/대=30), 예상 소요시간(분)을 JSON으로 답해. 예: {\"xp\":40,\"energy\":15,\"minutes\":60}\n할일: " + taskText;
       const res = await fetch(url, {
         method: "POST",
@@ -2377,21 +2461,23 @@
       return JSON.parse(text);
     }
 
-    async function geminiGenerateImage(apiKey, prompt) {
+    async function geminiGenerateImage(apiKey, prompt, model) {
       if (!apiKey) throw new Error("API Key 미설정");
-      // 2026.05 기준: Gemini 2.5 Flash Image / Imagen 4 fast
-      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=" + apiKey;
+      const m = model || getGeminiSettings().imageModel;
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent?key=" + apiKey;
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: "꿈을 상징하는 인스피레이션 이미지: " + prompt + ". 사실적이고 아름다운, 시네마틱한 스타일." }] }],
-          generationConfig: { responseModalities: ["IMAGE"] }
+          generationConfig: { responseModalities: ["IMAGE", "TEXT"] }
         })
       });
       if (!res.ok) {
         const errTxt = await res.text();
-        throw new Error("이미지 생성 실패 " + res.status + ": " + errTxt.slice(0, 100));
+        let msg = errTxt.slice(0, 200);
+        try { const j = JSON.parse(errTxt); msg = j.error?.message || msg; } catch (_) {}
+        throw new Error("[" + m + "] " + res.status + ": " + msg);
       }
       const data = await res.json();
       const parts = data.candidates?.[0]?.content?.parts || [];
@@ -2400,7 +2486,7 @@
           return "data:" + (p.inlineData.mimeType || "image/png") + ";base64," + p.inlineData.data;
         }
       }
-      throw new Error("이미지 데이터 없음");
+      throw new Error("응답에 이미지 없음 — 이 모델이 이미지 생성을 지원하지 않을 수 있습니다");
     }
 
     /* ─── 이미지 압축 (Canvas) ─── */
