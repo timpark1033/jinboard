@@ -582,13 +582,21 @@
                                 <span className="help-icon" onClick={(e) => { e.stopPropagation(); onOpenQuestGuide && onOpenQuestGuide(); }}>?</span>
                               </div>
                               {stages.length === 0 && <div className="db-empty-mini">단계 없음</div>}
-                              {visibleStages.map((m) => (
-                                <div key={m.id} className={"qb-row " + m.status + (m.status === "active" ? " current-stage" : "")} onClick={() => toggleStage && toggleStage(g.id, m.id)}>
-                                  <span className="qb-cb">{m.status === "done" ? "✓" : ""}</span>
-                                  <span className="qb-tag main">{m._absIdx + 1}</span>
-                                  <span className="qb-text">{m.name}</span>
-                                </div>
-                              ))}
+                              {(() => {
+                                // 현재 단계 = 첫 번째 active 1개만 (여러 active일 때도 첫 것만 강조)
+                                const firstActiveId = (stages.find(s => s.status === "active") || {}).id;
+                                return visibleStages.map((m) => {
+                                  const isCurrent = m.id === firstActiveId;
+                                  const dispStatus = m.status === "active" && !isCurrent ? "todo" : m.status;
+                                  return (
+                                    <div key={m.id} className={"qb-row " + dispStatus + (isCurrent ? " current-stage" : "")} onClick={() => toggleStage && toggleStage(g.id, m.id)}>
+                                      <span className="qb-cb">{m.status === "done" ? "✓" : ""}</span>
+                                      <span className="qb-tag main">{m._absIdx + 1}</span>
+                                      <span className="qb-text">{m.name}</span>
+                                    </div>
+                                  );
+                                });
+                              })()}
                               {stages.length > 3 && (
                                 <div className="db-quest-overflow">+{stages.length - 3}개 더 (편집에서 확인)</div>
                               )}
@@ -2253,7 +2261,10 @@
         const g = goals.find(x => x.id === gId);
         if (!g) return;
         if (kind === "main") {
-          editGoal(gId, { milestones: [...(g.milestones || []), { id: "m" + Date.now(), name: text, status: "active", xpReward: 150 }] });
+          // 첫 단계만 active, 이후는 todo (현재 진행단계는 1개만)
+          const hasActive = (g.milestones || []).some(m => m.status === "active");
+          const status = (g.milestones || []).length === 0 ? "active" : (hasActive ? "todo" : "active");
+          editGoal(gId, { milestones: [...(g.milestones || []), { id: "m" + Date.now(), name: text, status, xpReward: 150 }] });
         } else if (kind === "quest") {
           // 카운트 추측: 텍스트에 'N개/회/번/편' 패턴 있으면 target = N
           const m = text.match(/(\d+)\s*(개|회|번|편|장|분|시간|h)/);
