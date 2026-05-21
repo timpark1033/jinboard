@@ -4986,3 +4986,29 @@
 
 .ri2-inv-section { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
 .ri2-inv-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+
+/* ============================================================
+   FinanceDetailModal v2 — 2x2 grid + 리사이즈
+   ============================================================ */
+.fin2-modal { width: 95vw; max-width: 1400px; max-height: 92vh; display: flex; flex-direction: column; }
+.fin2-summary-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; padding: 12px 22px; background: var(--bg-2); border-bottom: 1px solid var(--border); }
+.fin2-sum-item { display: flex; flex-direction: column; gap: 4px; padding: 0 6px; }
+.fin2-sum-item .lbl { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.fin2-sum-item .val { font-family: "Geist Mono", monospace; font-size: 15px; font-weight: 700; color: var(--text-1); }
+.fin2-sum-item .val.green { color: var(--green); }
+
+.fin2-body { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding: 18px 22px; }
+.fin2-row { display: grid; gap: 0; min-height: 280px; }
+.fin2-section { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; overflow-y: auto; max-height: 60vh; transition: border-color 0.3s, box-shadow 0.3s; }
+.fin2-section.pulse { animation: fin2-pulse 2s ease-out; }
+@keyframes fin2-pulse {
+  0% { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow), 0 0 24px var(--accent-glow); }
+  100% { border-color: var(--border); box-shadow: 0 0 0 0 transparent; }
+}
+.fin2-sec-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+.fin2-sec-title { font-size: 14px; font-weight: 700; color: var(--text-1); }
+.fin2-sec-sum { font-family: "Geist Mono", monospace; font-size: 13px; font-weight: 700; color: var(--accent); }
+.fin2-sec-sum.green { color: var(--green); }
+.fin2-col-head { display: grid; gap: 8px; padding-bottom: 6px; border-bottom: 1px dashed var(--border); margin-bottom: 6px; font-size: 11px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.05em; }
+.fin2-resize-handle { background: var(--border); cursor: col-resize; transition: background 0.15s; }
+.fin2-resize-handle:hover, .fin2-resize-handle:active { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }

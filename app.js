@@ -237,7 +237,7 @@
       ]
     };
     const ASSET_CATS = { estate: "🏠 부동산", account: "💳 계좌", other: "📦 기타" };
-    const DEBT_CATS = { mortgage: "🏠 주담대", loan: "💳 대출", card: "💸 카드" };
+    const DEBT_CATS = { loan: "💳 대출", deposit: "🔒 보증금", card: "💸 카드" };
     const INCOME_CATS = { regular: "정기 수입", irregular: "비정기 수입" };
     const EXPENSE_CATS = { fixed: "고정 지출", variable: "변동 지출", oneoff: "1회성 지출" };
 
@@ -3934,27 +3934,27 @@
               {/* 💰 TOP KPI 5칸 */}
               <div className="ri2-sec-head"><span className="h">💰 재무 한눈에</span><span className="sub">대시보드 KPI와 연결</span></div>
               <div className="ri2-kpi-row">
-                <div ref={sectionRefs.assets} className={"ri2-kpi linked" + (pulseSection === "assets" ? " pulse" : "")} onClick={onOpenFinance}>
+                <div ref={sectionRefs.assets} className={"ri2-kpi linked" + (pulseSection === "assets" ? " pulse" : "")} onClick={() => onOpenFinance("assets")}>
                   <div className="kc-lbl">🏦 총 자산<span className="kc-link">DB ←</span></div>
                   <div className="kc-val green">{fmtKR(totalAssets)}</div>
                   <div className="kc-sub">{Object.entries(ASSET_CATS).filter(([c]) => sumAssets(fin, c) > 0).map(([c, l]) => l.replace(/^[^ ]+ /, "")).join(" + ") || "없음"}</div>
                 </div>
-                <div ref={sectionRefs.debts} className={"ri2-kpi" + (pulseSection === "debts" ? " pulse" : "")} onClick={onOpenFinance}>
+                <div ref={sectionRefs.debts} className={"ri2-kpi" + (pulseSection === "debts" ? " pulse" : "")} onClick={() => onOpenFinance("debts")}>
                   <div className="kc-lbl">🚨 총 부채</div>
                   <div className="kc-val red">{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "없음"}</div>
                   <div className="kc-sub">{totalDebts > 0 ? "주담대 + 카드 등" : "부채 없음"}</div>
                 </div>
-                <div ref={sectionRefs["net-worth"]} className={"ri2-kpi linked" + (pulseSection === "net-worth" ? " pulse" : "")} onClick={onOpenFinance}>
+                <div ref={sectionRefs["net-worth"]} className={"ri2-kpi linked" + (pulseSection === "net-worth" ? " pulse" : "")} onClick={() => onOpenFinance("assets")}>
                   <div className="kc-lbl">💎 순자산<span className="kc-link">DB ←</span></div>
                   <div className="kc-val accent">{fmtKR(netWorth)}</div>
                   <div className="kc-sub">자산 − 부채</div>
                 </div>
-                <div className="ri2-kpi linked" onClick={onOpenFinance}>
+                <div className="ri2-kpi linked" onClick={() => onOpenFinance("incomes")}>
                   <div className="kc-lbl">📈 월수입<span className="kc-link">DB ←</span></div>
                   <div className="kc-val green">+{Math.round(totalIncome/10000).toLocaleString()}만</div>
                   <div className="kc-sub">주 {Math.round(mainIncomeSum/10000).toLocaleString()} + 부 {Math.round(sideIncomeSum/10000).toLocaleString()}</div>
                 </div>
-                <div ref={sectionRefs.expenses} className={"ri2-kpi" + (pulseSection === "expenses" ? " pulse" : "")} onClick={onOpenFinance}>
+                <div ref={sectionRefs.expenses} className={"ri2-kpi" + (pulseSection === "expenses" ? " pulse" : "")} onClick={() => onOpenFinance("expenses")}>
                   <div className="kc-lbl">📉 월지출</div>
                   <div className="kc-val red">-{Math.round(totalExpense/10000).toLocaleString()}만</div>
                   <div className="kc-sub">고정 + 변동</div>
@@ -3983,7 +3983,7 @@
                     );
                   })}
                   {(fin.assets || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "8px 0", fontStyle: "italic", textAlign: "center" }}>자산 없음</div>}
-                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 자산 추가 / 수정</button>
+                  <button className="ri2-add-btn" onClick={() => onOpenFinance("assets")}>+ 자산 추가 / 수정</button>
                 </div>
 
                 {/* 주수익 + 부수익 */}
@@ -4008,7 +4008,7 @@
                       <div key={i.id} className="ri2-item-row"><span className="nm">{i.name}</span><span className="val green">+{Math.round((i.expected||0)/10000).toLocaleString()}만</span></div>
                     ))}
                   </div>
-                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 수익 추가 / 수정</button>
+                  <button className="ri2-add-btn" onClick={() => onOpenFinance("incomes")}>+ 수익 추가 / 수정</button>
                 </div>
 
                 {/* 부채 */}
@@ -4030,7 +4030,7 @@
                     );
                   })}
                   {(fin.debts || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "8px 0", fontStyle: "italic", textAlign: "center" }}>부채 없음</div>}
-                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 부채 추가 / 수정</button>
+                  <button className="ri2-add-btn" onClick={() => onOpenFinance("debts")}>+ 부채 추가 / 수정</button>
                 </div>
 
                 {/* 지출 */}
@@ -4053,7 +4053,7 @@
                     );
                   })}
                   {(fin.expenses || []).length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "8px 0", fontStyle: "italic", textAlign: "center" }}>지출 없음</div>}
-                  <button className="ri2-add-btn" onClick={onOpenFinance}>+ 지출 추가 / 수정</button>
+                  <button className="ri2-add-btn" onClick={() => onOpenFinance("expenses")}>+ 지출 추가 / 수정</button>
                 </div>
               </div>
 
@@ -4441,8 +4441,64 @@
       );
     }
 
-    function FinanceDetailModal({ open, onClose, finance, setFinance, items }) {
-      const [sub, setSub] = useState("assets");
+    function FinanceDetailModal({ open, onClose, finance, setFinance, items, settings, setSettings, initialSection }) {
+      // 2×2 grid layout — 자산/부채/수입/지출 동시 표시, 행별 가로 분할 사용자 조절
+      const savedSplit1 = (typeof settings?.financeSplit1 === "number" && settings.financeSplit1 >= 20 && settings.financeSplit1 <= 80) ? settings.financeSplit1 : 50;
+      const savedSplit2 = (typeof settings?.financeSplit2 === "number" && settings.financeSplit2 >= 20 && settings.financeSplit2 <= 80) ? settings.financeSplit2 : 50;
+      const [split1, setSplit1] = useState(savedSplit1); // 자산:부채
+      const [split2, setSplit2] = useState(savedSplit2); // 수입:지출
+      const dragRef = useRef(null);
+      const containerRef = useRef(null);
+      const sectionRefs = {
+        assets: useRef(null), debts: useRef(null),
+        incomes: useRef(null), expenses: useRef(null)
+      };
+      const [pulse, setPulse] = useState(null);
+
+      // 진입 시 initialSection으로 스크롤 + 펄스
+      useEffect(() => {
+        if (!open || !initialSection) return;
+        const ref = sectionRefs[initialSection];
+        if (ref?.current) {
+          setTimeout(() => {
+            ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+            setPulse(initialSection);
+            setTimeout(() => setPulse(null), 2000);
+          }, 100);
+        }
+      }, [open, initialSection]);
+
+      const startResize = (which) => (e) => {
+        e.preventDefault();
+        const wrapper = containerRef.current;
+        if (!wrapper) return;
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const startX = e.clientX;
+        const startSplit = which === 1 ? split1 : split2;
+        const onMove = (ev) => {
+          const deltaPct = ((ev.clientX - startX) / wrapperRect.width) * 100;
+          let next = Math.max(20, Math.min(80, startSplit + deltaPct));
+          if (which === 1) setSplit1(next);
+          else setSplit2(next);
+        };
+        const onUp = () => {
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+          if (setSettings) {
+            setSettings(prev => ({
+              ...prev,
+              [which === 1 ? "financeSplit1" : "financeSplit2"]: which === 1 ? split1Ref.current : split2Ref.current
+            }));
+          }
+        };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+      };
+      const split1Ref = useRef(split1);
+      const split2Ref = useRef(split2);
+      useEffect(() => { split1Ref.current = split1; }, [split1]);
+      useEffect(() => { split2Ref.current = split2; }, [split2]);
+
       if (!open) return null;
 
       const updateItem = (kind, id, updates) => {
@@ -4459,7 +4515,7 @@
         setFinance(prev => ({ ...prev, [kind]: (prev[kind] || []).filter(x => x.id !== id) }));
       };
 
-      // 자산/부채용 (name + value 만)
+      // 자산용 (카테고리별 그룹) — name + value
       const renderValueItems = (kind, cats) => {
         const list = (finance[kind] || []);
         return Object.entries(cats).map(([cat, label]) => {
@@ -4475,7 +4531,7 @@
                     style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 13, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
                   <input type="number" value={x.value} onChange={(e) => updateItem(kind, x.id, { value: Number(e.target.value) || 0 })}
                     placeholder="원 단위"
-                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: kind === "debts" ? "var(--red)" : "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
+                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
                   <button onClick={() => deleteItem(kind, x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
                 </div>
               ))}
@@ -4483,6 +4539,32 @@
             </div>
           );
         });
+      };
+
+      // 부채용 (평면 리스트 + 카테고리 select per row)
+      const renderDebtsFlat = () => {
+        const list = (finance.debts || []);
+        const validCat = (c) => DEBT_CATS[c] ? c : "loan"; // 옛 mortgage 등은 loan으로
+        return (
+          <>
+            {list.length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "8px 0", fontStyle: "italic", textAlign: "center" }}>부채 없음</div>}
+            {list.map(x => (
+              <div key={x.id} style={{ display: "grid", gridTemplateColumns: "1fr 100px 140px 28px", gap: 8, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+                <input value={x.name} onChange={(e) => updateItem("debts", x.id, { name: e.target.value })}
+                  style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 13, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
+                <select value={validCat(x.category)} onChange={(e) => updateItem("debts", x.id, { category: e.target.value })}
+                  style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-2)", padding: "4px 6px", fontSize: 12, fontFamily: "inherit", outline: "none" }}>
+                  {Object.entries(DEBT_CATS).map(([c, l]) => <option key={c} value={c}>{l}</option>)}
+                </select>
+                <input type="number" value={x.value} onChange={(e) => updateItem("debts", x.id, { value: Number(e.target.value) || 0 })}
+                  placeholder="원 단위"
+                  style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--red)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
+                <button onClick={() => deleteItem("debts", x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
+              </div>
+            ))}
+            <button onClick={() => addItem("debts", "loan")} style={{ width: "100%", background: "var(--bg-2)", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "6px 0", borderRadius: 5, fontSize: 12, cursor: "pointer", fontFamily: "Geist, sans-serif", marginTop: 6 }}>+ 부채 추가</button>
+          </>
+        );
       };
 
       const totalInExp = sumIncome(finance, items);
@@ -4526,64 +4608,67 @@
 
       return (
         <div className="modal-overlay" onClick={onClose}>
-          <div className="modal-box" style={{ width: 720 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-box fin2-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div className="modal-title">📋 재무 상세 관리</div>
               <button className="modal-close" onClick={onClose}>×</button>
             </div>
 
-            {/* 하위 탭 */}
-            <div style={{ padding: "10px 22px 0", display: "flex", gap: 4, borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
-              <button className={"inv-tab" + (sub === "assets" ? " active" : "")} onClick={() => setSub("assets")}>🏦 자산</button>
-              <button className={"inv-tab" + (sub === "debts" ? " active" : "")} onClick={() => setSub("debts")}>🚨 부채</button>
-              <button className={"inv-tab" + (sub === "income" ? " active" : "")} onClick={() => setSub("income")}>📈 수입</button>
-              <button className={"inv-tab" + (sub === "expense" ? " active" : "")} onClick={() => setSub("expense")}>📉 지출</button>
-              <button className={"inv-tab" + (sub === "summary" ? " active" : "")} onClick={() => setSub("summary")}>📊 요약</button>
+            {/* 상단 요약 스트립 */}
+            <div className="fin2-summary-strip">
+              <div className="fin2-sum-item"><span className="lbl">💎 순자산</span><span className="val" style={{ color: netWorth >= 0 ? "var(--text-1)" : "var(--red)" }}>{fmtKR(netWorth)}</span></div>
+              <div className="fin2-sum-item"><span className="lbl">🏦 자산</span><span className="val green">{fmtKR(totalAssets)}</span></div>
+              <div className="fin2-sum-item"><span className="lbl">🚨 부채</span><span className="val" style={{ color: "var(--red)" }}>-{fmtKR(totalDebts)}</span></div>
+              <div className="fin2-sum-item"><span className="lbl">📈 월수입 (실)</span><span className="val green">+{Math.round(totalInAct/10000).toLocaleString()}만</span></div>
+              <div className="fin2-sum-item"><span className="lbl">📉 월지출 (실)</span><span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExAct/10000).toLocaleString()}만</span></div>
+              <div className="fin2-sum-item"><span className="lbl">💵 순이익</span><span className="val" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>{profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만</span></div>
             </div>
 
-            <div className="modal-body">
-              {sub === "assets" && (
-                <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+            <div className="modal-body fin2-body" ref={containerRef}>
+              {/* ROW 1: 자산 | 부채 */}
+              <div className="fin2-row" style={{ gridTemplateColumns: `${split1}% 8px ${100-split1}%` }}>
+                <section ref={sectionRefs.assets} className={"fin2-section" + (pulse === "assets" ? " pulse" : "")}>
+                  <div className="fin2-sec-head">
+                    <div className="fin2-sec-title">🏦 자산</div>
+                    <div className="fin2-sec-sum green">{fmtKR(totalAssets)}</div>
+                  </div>
+                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 160px 28px" }}>
                     <span>항목</span><span style={{ textAlign: "right" }}>가치 (원)</span><span />
                   </div>
                   {renderValueItems("assets", ASSET_CATS)}
-                  <div className="fin-net" style={{ marginTop: 14 }}>
-                    <div><div className="lbl">🏦 총 자산</div></div>
-                    <span className="val green">{fmtKR(totalAssets)}</span>
+                </section>
+                <div className="fin2-resize-handle" onMouseDown={startResize(1)} title="드래그로 폭 조절" />
+                <section ref={sectionRefs.debts} className={"fin2-section" + (pulse === "debts" ? " pulse" : "")}>
+                  <div className="fin2-sec-head">
+                    <div className="fin2-sec-title">🚨 부채</div>
+                    <div className="fin2-sec-sum" style={{ color: "var(--red)" }}>{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "0"}</div>
                   </div>
-                </>
-              )}
+                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 100px 140px 28px" }}>
+                    <span>항목</span><span>카테고리</span><span style={{ textAlign: "right" }}>잔액 (원)</span><span />
+                  </div>
+                  {renderDebtsFlat()}
+                </section>
+              </div>
 
-              {sub === "debts" && (
-                <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
-                    <span>항목</span><span style={{ textAlign: "right" }}>잔액 (원)</span><span />
+              {/* ROW 2: 수입 | 지출 */}
+              <div className="fin2-row" style={{ gridTemplateColumns: `${split2}% 8px ${100-split2}%` }}>
+                <section ref={sectionRefs.incomes} className={"fin2-section" + (pulse === "incomes" ? " pulse" : "")}>
+                  <div className="fin2-sec-head">
+                    <div className="fin2-sec-title">📈 수입</div>
+                    <div className="fin2-sec-sum green">+{Math.round(totalInAct/10000).toLocaleString()}만 / +{Math.round(totalInExp/10000).toLocaleString()}만</div>
                   </div>
-                  {renderValueItems("debts", DEBT_CATS)}
-                  <div className="fin-net" style={{ marginTop: 14 }}>
-                    <div><div className="lbl">🚨 총 부채</div></div>
-                    <span className="val" style={{ color: "var(--red)" }}>-{fmtKR(totalDebts)}</span>
-                  </div>
-                </>
-              )}
-
-              {sub === "income" && (
-                <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 110px 110px 28px" }}>
                     <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
                   </div>
                   {renderItems("incomes", INCOME_CATS)}
-                  <div className="fin-net" style={{ marginTop: 14 }}>
-                    <div><div className="lbl">📈 수입 합계</div><div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 2 }}>예상 vs 실제</div></div>
-                    <span className="val green">+{Math.round(totalInExp/10000).toLocaleString()}만 / +{Math.round(totalInAct/10000).toLocaleString()}만</span>
+                </section>
+                <div className="fin2-resize-handle" onMouseDown={startResize(2)} title="드래그로 폭 조절" />
+                <section ref={sectionRefs.expenses} className={"fin2-section" + (pulse === "expenses" ? " pulse" : "")}>
+                  <div className="fin2-sec-head">
+                    <div className="fin2-sec-title">📉 지출</div>
+                    <div className="fin2-sec-sum" style={{ color: "var(--red)" }}>-{Math.round(totalExAct/10000).toLocaleString()}만 / -{Math.round(totalExExp/10000).toLocaleString()}만</div>
                   </div>
-                </>
-              )}
-
-              {sub === "expense" && (
-                <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 110px 110px 28px" }}>
                     <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
                   </div>
                   {renderItems("expenses", EXPENSE_CATS)}
@@ -4598,41 +4683,8 @@
                       ))}
                     </>
                   )}
-                  <div className="fin-net" style={{ marginTop: 14 }}>
-                    <div><div className="lbl">📉 지출 합계</div></div>
-                    <span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExExp/10000).toLocaleString()}만 / -{Math.round(totalExAct/10000).toLocaleString()}만</span>
-                  </div>
-                </>
-              )}
-
-              {sub === "summary" && (
-                <div>
-                  <div className="fin-summary-card">
-                    <div className="summary-net">
-                      <span className="lbl">💎 순자산 (자산 − 부채)</span>
-                      <span className="val" style={{ color: netWorth >= 0 ? "var(--green)" : "var(--red)" }}>{fmtKR(netWorth)}</span>
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "right" }}>자산 {fmtKR(totalAssets)} − 부채 {fmtKR(totalDebts)}</div>
-                  </div>
-                  <div className="fin-summary-card" style={{ marginTop: 10 }}>
-                    <div className="summary-net">
-                      <span className="lbl">💵 이번달 순이익</span>
-                      <span className="val" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>{profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만</span>
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "right" }}>예상 {profitExp >= 0 ? "+" : ""}{Math.round(profitExp/10000).toLocaleString()}만 대비 {profitAct - profitExp >= 0 ? "+" : ""}{Math.round((profitAct - profitExp)/10000).toLocaleString()}만</div>
-                  </div>
-                  <div className="fin-card">
-                    <div className="fin-card-head"><div className="fin-card-title">📈 수입</div><div className="fin-card-sum green">+{Math.round(totalInAct/10000).toLocaleString()}만</div></div>
-                    <div className="res-line"><span className="lbl">예상</span><span className="val">{Math.round(totalInExp/10000).toLocaleString()}만</span></div>
-                    <div className="res-line"><span className="lbl">실제</span><span className="val" style={{ color: "var(--green)" }}>{Math.round(totalInAct/10000).toLocaleString()}만</span></div>
-                  </div>
-                  <div className="fin-card">
-                    <div className="fin-card-head"><div className="fin-card-title">📉 지출</div><div className="fin-card-sum red">-{Math.round(totalExAct/10000).toLocaleString()}만</div></div>
-                    <div className="res-line"><span className="lbl">예상</span><span className="val">{Math.round(totalExExp/10000).toLocaleString()}만</span></div>
-                    <div className="res-line"><span className="lbl">실제</span><span className="val" style={{ color: "var(--red)" }}>{Math.round(totalExAct/10000).toLocaleString()}만</span></div>
-                  </div>
-                </div>
-              )}
+                </section>
+              </div>
             </div>
 
             <div className="modal-foot">
@@ -4667,6 +4719,7 @@
       const [finance, setFinance] = useState(INITIAL_FINANCE);
       const [summaryCards, setSummaryCards] = useState(INITIAL_SUMMARY_CARDS);
       const [financeModalOpen, setFinanceModalOpen] = useState(false);
+      const [financeInitialSection, setFinanceInitialSection] = useState(null);
       const [settings, setSettings] = useState(() => {
         const loaded = loadLS("dreamboard_settings", INITIAL_SETTINGS);
         // 셧다운된 모델명 자동 마이그레이션
@@ -5003,7 +5056,7 @@
             resources={resources} setResources={setResources}
             goals={goals} stats={stats} settings={settings} setSettings={setSettings}
             finance={finance} setFinance={setFinance}
-            onOpenFinance={() => setFinanceModalOpen(true)}
+            onOpenFinance={(section) => { setFinanceInitialSection(section || null); setFinanceModalOpen(true); }}
             onOpenStatModal={() => setStatModalOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
             uid={user?.uid}
@@ -5086,10 +5139,13 @@
           />
           <FinanceDetailModal
             open={financeModalOpen}
-            onClose={() => setFinanceModalOpen(false)}
+            onClose={() => { setFinanceModalOpen(false); setFinanceInitialSection(null); }}
             finance={finance}
             setFinance={setFinance}
             items={items}
+            settings={settings}
+            setSettings={setSettings}
+            initialSection={financeInitialSection}
           />
           <QuestGuideModal
             open={questGuideOpen}
