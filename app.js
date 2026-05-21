@@ -12,6 +12,34 @@
       if (dow === 0) return 0; // 일요일 = 종료/리셋
       return 7 - dow; // 월(1)=6, 화=5, ..., 토(6)=1
     }
+    // 인생 통계 (생년월일 기반)
+    function calcLifeStats(birthDate, lifespan, retireAge) {
+      if (!birthDate) return null;
+      const ls = Number(lifespan) || 83.6;
+      const ra = Number(retireAge) || 65;
+      const today = new Date();
+      const birth = new Date(birthDate);
+      const age = (today - birth) / (365.25 * 24 * 60 * 60 * 1000);
+      const remainingYears = Math.max(0, ls - age);
+      const remainingDays = Math.floor(remainingYears * 365.25);
+      const economicRemaining = Math.max(0, ra - age);
+      const goldStart = 30, goldEnd = 49;
+      const goldenProgress = age < goldStart ? 0 : age > goldEnd ? 100 : ((age - goldStart) / (goldEnd - goldStart)) * 100;
+      const goldenRemaining = Math.max(0, goldEnd - age);
+      return {
+        age: Math.floor(age),
+        ageDecimal: age,
+        lifespan: ls, retireAge: ra,
+        livedPercent: Math.round((age / ls) * 100),
+        remainingYears: Math.round(remainingYears),
+        remainingDays,
+        economicPercent: Math.round((Math.min(age, ra) / ra) * 100),
+        economicRemaining: Math.round(economicRemaining),
+        goldenProgress: Math.round(goldenProgress),
+        goldenRemaining: Math.round(goldenRemaining),
+        inGolden: age >= goldStart && age <= goldEnd
+      };
+    }
     function fmtDeadline(dateStr) {
       const d = new Date(dateStr);
       return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
@@ -179,6 +207,13 @@
       time: { weeklyPool: 72, used: 45.5 }
     };
 
+    /* ── 대시보드 상단 KPI 카드 (사용자 정의) ── */
+    const INITIAL_SUMMARY_CARDS = [
+      { id: "sc1", icon: "💎", name: "목표 자산", value: 218000000, unit: "원", target: 1000000000, type: "asset" },
+      { id: "sc2", icon: "🏠", name: "부동산", value: 1500000, unit: "원/월", type: "income", changePct: 5.6 },
+      { id: "sc3", icon: "📺", name: "유튜브", value: 320000, unit: "원/월", type: "income", changePct: 128 }
+    ];
+
     /* ── 재무관리 (자산/수입/지출) ── */
     const INITIAL_FINANCE = {
       assets: [
@@ -262,7 +297,11 @@
       geminiTextModel: "gemini-3.5-flash",
       geminiImageModel: "gemini-3.1-flash-image-preview",
       weeklyTimePool: 72,
-      weeklyEnergyPool: 100
+      weeklyEnergyPool: 100,
+      birthDate: "",
+      gender: "male",
+      expectedLifespan: 80.6,
+      retireAge: 65
     };
 
     const INITIAL_RETROS = [
@@ -409,331 +448,251 @@
       );
     }
 
-    /* ---------- TAB 1: Dashboard ---------- */
-    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak, topThree, setTopThree, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage, adjustQuestCount, onOpenQuestGuide, onEditGoal }) {
-      const [qbFilter, setQbFilter] = useState({}); // {goalId: 'all'|'main'|'side'|'chal'}
-      const [editingWeeklyId, setEditingWeeklyId] = useState(null);
-      const [editingWeeklyText, setEditingWeeklyText] = useState("");
-      const overall = useMemo(() => goals.length > 0 ? Math.round(goals.reduce((s, g) => s + g.progress, 0) / goals.length) : 0, [goals]);
-      const dayLabels = ['월','화','수','목','금','토','일'];
-      const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-      const streakCount = streak.filter((v, i) => i <= todayIdx && v).length;
-      const toggleStreakDay = (i) => { if (i > todayIdx) return; setStreak(prev => prev.map((v, idx) => idx === i ? !v : v)); };
-      const addNextWeek = (e) => { if (e.key === 'Enter' && e.target.value.trim()) { setNextWeekGoals(prev => [...prev, { id: 'nw' + Date.now(), text: e.target.value.trim(), done: false }]); e.target.value = ''; } };
 
-      // 히트맵: 최근 28일
-      const heatmapCells = useMemo(() => {
-        const cells = [];
-        for (let i = 27; i >= 0; i--) {
-          const d = new Date(); d.setDate(d.getDate() - i);
-          const key = d.toISOString().slice(0, 10);
-          const isToday = i === 0;
-          const entry = dailyLog[key];
-          const rate = entry ? entry.rate : -1;
-          const lv = rate < 0 ? '' : rate < 30 ? 'lv1' : rate < 60 ? 'lv2' : 'lv3';
-          cells.push({ key, lv, isToday });
-        }
-        return cells;
-      }, [dailyLog]);
+    /* ---------- TAB 1: Dashboard (B 컨셉 개편) ---------- */
+    function Dashboard({ goals, tasks, toggleTask, stats, dreams, streak, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage, adjustQuestCount, onOpenQuestGuide, onEditGoal, summaryCards, setSummaryCards, settings, onOpenGoalDetail }) {
+      const [ctxMenu, setCtxMenu] = useState(null); // { x, y, cardId }
+      const [editingCardId, setEditingCardId] = useState(null);
+      const [iconPickerId, setIconPickerId] = useState(null);
 
-      // 목표별 연결 태스크
-      const tasksByGoal = useMemo(() => {
-        const map = {};
-        goals.forEach(g => { map[g.id] = tasks.filter(t => t.goalId === g.id); });
-        return map;
-      }, [goals, tasks]);
+      // 인생 통계
+      const life = calcLifeStats(settings?.birthDate, settings?.expectedLifespan, settings?.retireAge);
+      const totalLv = stats.reduce((a, s) => a + statLevel(getStatTotalXp(s)), 0);
+      const totalXp = stats.reduce((a, s) => a + getStatTotalXp(s), 0);
+      const maxXp = STAT_LEVEL_REQ[9] * 6;
 
-      // TOP 3 업데이트
-      const updateTop3 = (slot, field, value) => {
-        setTopThree(prev => prev.map(t => t.slot === slot ? { ...t, [field]: value } : t));
+      // KPI 카드 작업
+      const moveCard = (idx, delta) => {
+        const next = [...summaryCards];
+        const newIdx = idx + delta;
+        if (newIdx < 0 || newIdx >= next.length) return;
+        [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+        setSummaryCards(next);
+      };
+      const updateCard = (id, updates) => setSummaryCards(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+      const deleteCard = (id) => { if (confirm("이 카드를 삭제하시겠어요?")) setSummaryCards(prev => prev.filter(c => c.id !== id)); };
+      const addCard = () => {
+        const id = "sc" + Date.now();
+        setSummaryCards(prev => [...prev, { id, icon: "📊", name: "새 항목", value: 0, unit: "원", type: "income", changePct: 0 }]);
+        setEditingCardId(id);
       };
 
-      return (
-        <div className="db-root">
-          {focusMode && <FocusMode tasks={tasks} topThree={topThree} toggleTask={toggleTask} onClose={() => setFocusMode(false)} />}
+      // 우클릭 컨텍스트 메뉴
+      const onCardContext = (cardId) => (e) => {
+        e.preventDefault();
+        setCtxMenu({ x: e.clientX, y: e.clientY, cardId });
+      };
+      useEffect(() => {
+        const close = () => setCtxMenu(null);
+        document.addEventListener("click", close);
+        return () => document.removeEventListener("click", close);
+      }, []);
 
-          {/* ZONE 1: 플레이어 스탯 (좌) + 드림 스트립 (우) + 자원 미니 (우상단) */}
-          <div className="zone1-wrap">
-            {/* 좌측 플레이어 스탯 */}
-            <div className="db-side">
-              <div className="stat-panel-head">
-                <span className="who"><span className="ic">⚔️</span>플레이어</span>
-                <span className="all-lv">종합 Lv.<strong>{stats.reduce((a, s) => a + statLevel(getStatTotalXp(s)), 0)}</strong></span>
+      const fmtVal = (n) => {
+        if (n >= 100000000) return (n / 100000000).toFixed(2);
+        if (n >= 10000) return Math.round(n / 10000).toLocaleString();
+        return n.toLocaleString();
+      };
+      const fmtUnit = (n, unit) => {
+        if (n >= 100000000) return "억";
+        if (n >= 10000 && /원/.test(unit)) return /월/.test(unit) ? "만/월" : "만";
+        return unit;
+      };
+
+      const ITEM_EMOJIS = ["💎","🏠","📺","💼","🚗","✈️","🎬","🤖","💻","📱","💰","💵","🏦","📈","📊","🎯","🌟","🔥","⚡","🏆","🥇","💪","🎨","📚","🎵","📸","🧠","🌏","🍕","☕"];
+
+      return (
+        <div className="db2-root">
+
+          {/* ZONE TOP: 듀얼 게이지 (1/3) + KPI 3개 (2/3) */}
+          <div className="db2-top">
+            <div className="life-card">
+              <div className="life-left">
+                <div className="card-title"><span className="dot-purple"/>⚔️ 캐릭터</div>
+                <div className="life-lv-circle">
+                  <svg viewBox="0 0 160 160">
+                    <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg-3)" strokeWidth="8"/>
+                    <circle cx="80" cy="80" r="68" fill="none" stroke="url(#ringGrad)" strokeWidth="8" strokeDasharray="427" strokeDashoffset={427 - (totalXp / maxXp) * 427} strokeLinecap="round" transform="rotate(-90 80 80)" style={{ filter: "drop-shadow(0 0 10px rgba(139,92,246,0.5))" }}/>
+                  </svg>
+                  <div className="life-lv-inner">
+                    <div className="life-lv-num">{totalLv}</div>
+                    <div className="life-lv-lbl">/ 60 Lv</div>
+                  </div>
+                </div>
+                <div className="life-xp-bar"><div style={{ width: Math.min(100, (totalXp / maxXp) * 100) + "%" }} /></div>
+                <div className="life-xp-text">{totalXp.toLocaleString()} XP <span style={{ color: "var(--text-4)" }}>· 만렙까지 {Math.round((totalXp / maxXp) * 100)}%</span></div>
               </div>
-              <div className="stat-2col">
-                {stats.map(s => {
-                  const tx = getStatTotalXp(s);
-                  const lv = statLevel(tx);
-                  return (
-                    <div key={s.id} className="stat-2col-item" onClick={() => onOpenStatModal && onOpenStatModal()}>
-                      <div className="stat-2col-top">
-                        <span className="stat-2col-name"><span className="ic">{s.icon}</span>{s.label}</span>
-                        <span className="stat-2col-lv">Lv.<strong>{lv}</strong></span>
-                      </div>
+
+              <div className="life-divider"></div>
+
+              <div className="life-right">
+                {life ? (
+                  <>
+                    <div className="card-title"><span className="dot-purple"/>🛤️ 인생 <span style={{ marginLeft: "auto", fontFamily: "Geist Mono, monospace", color: "var(--text-3)", fontSize: 11 }}>{life.age}세 / {life.lifespan}세</span></div>
+                    <div className="life-gauge-row">
+                      <div className="lgr-lbl"><span>⌛ 인생</span><span className="v">{life.livedPercent}% 살았음 · 남은 {life.remainingYears}년</span></div>
+                      <div className="lgr-bar"><div className="lgr-fill" style={{ width: life.livedPercent + "%", background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}></div></div>
                     </div>
-                  );
-                })}
+                    <div className="life-gauge-row">
+                      <div className="lgr-lbl"><span>💼 경제활동</span><span className="v">{life.economicPercent}% 사용 · 남은 {life.economicRemaining}년 ({life.retireAge}세 은퇴)</span></div>
+                      <div className="lgr-bar"><div className="lgr-fill" style={{ width: life.economicPercent + "%", background: "linear-gradient(90deg, var(--blue), var(--accent-2))" }}></div></div>
+                    </div>
+                    {life.inGolden && (
+                      <div className="life-gauge-row">
+                        <div className="lgr-lbl"><span>🌟 황금기 (30~49)</span><span className="v" style={{ color: "var(--accent)" }}>{life.goldenProgress}% 진행 · {life.goldenRemaining}년 남음</span></div>
+                        <div className="lgr-bar"><div className="lgr-fill" style={{ width: life.goldenProgress + "%", background: "linear-gradient(90deg, var(--accent), #fbbf24)", boxShadow: "0 0 12px rgba(245,158,11,0.4)" }}></div></div>
+                      </div>
+                    )}
+                    <div className="life-tip">💡 <strong>{life.inGolden ? "황금기 골든타임" : life.age < 30 ? "탐색기" : "원숙기"}</strong> — {life.inGolden ? "시간·체력·집중력 모두 최고치. 큰 그림 그릴 적기." : life.age < 30 ? "다양한 시도와 학습의 시기." : "전문성과 영향력으로 수확."}</div>
+                  </>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", textAlign: "center", color: "var(--text-3)", padding: 20 }}>
+                    <div style={{ fontSize: 32, marginBottom: 10 }}>📅</div>
+                    <div style={{ fontSize: 13, marginBottom: 6 }}>설정에서 생년월일 입력 시</div>
+                    <div style={{ fontSize: 12, color: "var(--text-4)" }}>인생 게이지가 표시됩니다</div>
+                    <button onClick={onOpenStatModal} style={{ background: "transparent", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "6px 16px", borderRadius: 6, marginTop: 10, cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 12 }}>⚙ 설정 열기</button>
+                  </div>
+                )}
               </div>
-              <button className="stat-detail-btn" onClick={() => onOpenStatModal && onOpenStatModal()}>상세 보기</button>
             </div>
 
-            {/* 우측 드림 스트립 */}
-            <div className="dream-strip">
-              {dreams.length === 0 && <div style={{ color: 'var(--text-4)', fontSize: 13, display: 'flex', alignItems: 'center' }}>비전·드림 탭에서 드림을 추가하세요</div>}
-              {dreams.map(d => {
-                const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
-                const blur = ((1 - pct / 100) * 14).toFixed(1);
-                const gray = Math.round((1 - pct / 100) * 85);
-                const tier = inferDreamTier(d);
+            <div className="db2-kpi-stack">
+              {summaryCards.map((c, idx) => {
+                const isEditing = editingCardId === c.id;
+                const isIconPicker = iconPickerId === c.id;
+                const isAsset = c.type === "asset";
+                const pct = isAsset && c.target > 0 ? Math.min(100, (c.value / c.target) * 100) : null;
                 return (
-                  <div key={d.id} className="dream-strip-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
-                    <span className={"dream-tier-badge " + tier}>{DREAM_TIERS[tier]?.label || tier.toUpperCase()}</span>
-                    {d.imgUrl
-                      ? <img src={d.imgUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div className="dsc-bg">{d.emoji || '⭐'}</div>
-                    }
-                    <div className="dsc-overlay">
-                      <div className="dsc-name">{d.name}</div>
-                      <div className="dsc-bar"><div className="dsc-bar-fill" style={{ width: `${pct}%` }} /></div>
-                      <div className="dsc-pct">{pct}%</div>
+                  <div key={c.id} className="kpi-big" onContextMenu={onCardContext(c.id)}>
+                    <span className="ic-bg">{c.icon}</span>
+                    <div className="kpi-lbl-row">
+                      {isIconPicker ? (
+                        <div className="kpi-icon-picker" onClick={(e) => e.stopPropagation()}>
+                          {ITEM_EMOJIS.map(e => (
+                            <button key={e} onClick={() => { updateCard(c.id, { icon: e }); setIconPickerId(null); }} className={c.icon === e ? "selected" : ""}>{e}</button>
+                          ))}
+                        </div>
+                      ) : isEditing ? (
+                        <input type="text" autoFocus value={c.name} onChange={(e) => updateCard(c.id, { name: e.target.value })}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") setEditingCardId(null); }}
+                          onBlur={() => setEditingCardId(null)}
+                          style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", color: "var(--text-1)", padding: "3px 7px", borderRadius: 4, fontSize: 12, fontFamily: "inherit", outline: "none", width: "100%" }} />
+                      ) : (
+                        <span className="kpi-lbl-text" onClick={() => setEditingCardId(c.id)} title="클릭으로 이름 수정 · 우클릭 메뉴">{c.name}</span>
+                      )}
+                    </div>
+                    <div className="kpi-val-huge">
+                      {fmtVal(c.value)}<span className="u">{fmtUnit(c.value, c.unit)}</span>
+                    </div>
+                    {isAsset ? (
+                      <div className="kpi-val-sub">/ {fmtVal(c.target)}{fmtUnit(c.target, c.unit)} 목표</div>
+                    ) : (
+                      <div className="kpi-val-sub">월 수익{c.changePct ? " · 전월 " + (c.changePct >= 0 ? "↑" : "↓") + " " + Math.abs(c.changePct) + "%" : ""}</div>
+                    )}
+                    <div className="kpi-prog-line">
+                      {isAsset ? (
+                        <>
+                          <div className="kpi-prog-bar"><div style={{ width: pct + "%" }} /></div>
+                          <span className="kpi-prog-pct">{pct.toFixed(1)}%</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="kpi-prog-bar"><div style={{ width: Math.min(100, Math.abs(c.changePct || 0)) + "%", background: "linear-gradient(90deg, var(--green), #34d399)" }} /></div>
+                          <span className="kpi-prog-pct" style={{ color: (c.changePct || 0) >= 0 ? "var(--green)" : "var(--red)" }}>{(c.changePct || 0) >= 0 ? "↑" : "↓"} {Math.abs(c.changePct || 0)}%</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
               })}
+              {summaryCards.length < 4 && (
+                <button onClick={addCard} className="kpi-add-card" title="새 카드 추가">+</button>
+              )}
             </div>
           </div>
 
-          {/* ZONE 2: 달성률 헤더 */}
-          <div className="db-header">
-            <div className="db-header-rate">
-              <span className="big-num">{overall}</span>
-              <span className="big-pct">% 전체 달성</span>
-            </div>
-            <div className="db-header-bar"><div className="db-header-bar-fill" style={{ width: `${overall}%` }} /></div>
-            <div className="db-header-divider" />
-            <span style={{ fontSize: 12, color: 'var(--text-4)', fontFamily: 'Geist Mono, monospace' }}>{`W${getWeekNumber()}`}</span>
-            <div className="db-streak-row">
-              {dayLabels.map((d, i) => (
-                <div key={i} className={"streak-dot" + (i > todayIdx ? " future" : streak[i] ? " done" : i === todayIdx ? " today" : " past")} onClick={() => toggleStreakDay(i)} style={{ width: 20, height: 20, fontSize: 10 }}>{d}</div>
-              ))}
-              <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'Geist Mono, monospace', marginLeft: 6 }}>🔥{streakCount}일</span>
-            </div>
-            <div className="db-header-divider" />
-            <div className="heatmap-row" title="최근 28일 달성 현황">
-              {heatmapCells.map(c => (
-                <div key={c.key} className={`heatmap-cell ${c.lv} ${c.isToday ? 'today' : ''}`} />
-              ))}
-            </div>
-            <div style={{ marginLeft: 'auto' }}>
-              <button onClick={() => setFocusMode(true)} style={{ background: 'var(--accent)', border: 'none', borderRadius: 7, color: '#fff', fontSize: 13, fontWeight: 600, padding: '6px 14px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>
-                ⚡ 집중 모드
-              </button>
-            </div>
-          </div>
-
-          {/* MAIN: Zone3 + Zone4 (전체 폭) */}
-          <div className="db-main">
-              {/* ZONE 3: 목표 카드들 */}
-              <div className="db-zone3">
-                {goals.length === 0 && (
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: 14 }}>
-                    목표 관리 탭에서 목표를 추가하세요
-                  </div>
-                )}
-                {goals.map(g => {
-                  const dday = calcDday(g.deadline);
-                  const gTasks = tasksByGoal[g.id] || [];
-                  const stages = g.milestones || [];
-                  const doneStages = stages.filter(m => m.status === 'done').length;
-                  const goalTier = g.tier || (g.progress >= 70 ? "epic" : g.progress >= 40 ? "rare" : "normal");
-                  const computedProgress = stages.length > 0 ? Math.round((doneStages / stages.length) * 100) : g.progress;
+          {/* ZONE DREAM: 가로 자동 롤링 */}
+          <div className="db2-section">
+            <div className="db2-section-head">🌟 드림 갤러리 <span className="hint">← 가로 자동 롤링 · 클릭 → 편집 →</span></div>
+            <div className="dc-wrap">
+              <div className="dc-track" style={{ animationDuration: Math.max(20, dreams.length * 8) + "s" }}>
+                {[...dreams, ...dreams].map((d, i) => {
+                  const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
+                  const tier = inferDreamTier(d);
                   return (
-                    <div key={g.id} className="db-goal-col">
-                      <div className="db-goal-col-head">
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="db-goal-cat">{g.category}</div>
-                          <div className="db-goal-name">{g.name}</div>
-                          <div className="db-goal-meta">
-                            <span style={{ color: dday <= 30 ? 'var(--red)' : dday <= 90 ? 'var(--amber)' : 'var(--accent)', fontWeight: 600 }}>D-{dday}</span>
-                            <span style={{ color: 'var(--text-4)' }}>·</span>
-                            <span style={{ color: 'var(--text-3)' }}>{fmtDeadline(g.deadline)}</span>
-                          </div>
-                        </div>
-                        <button className="db-goal-edit-btn" onClick={() => onEditGoal && onEditGoal(g.id)} title="목표·업무 탭에서 편집">✏️</button>
-                      </div>
-                      <div className="db-goal-prog-row">
-                        <span className={"db-goal-tier " + goalTier}>{goalTier.toUpperCase()}</span>
-                        <div className="pbar"><div style={{ width: computedProgress + "%" }} /></div>
-                        <span className="pct">{computedProgress}%</span>
-                      </div>
-
-                      {/* 2-column: 메인 | 퀘스트(통합) */}
-                      {(() => {
-                        const quests = g.quests || [];
-                        const allCount = stages.length + quests.length;
-                        if (allCount === 0) return null;
-                        const activeIdx = stages.findIndex(s => s.status === "active");
-                        let startIdx = 0;
-                        if (stages.length > 3) {
-                          if (activeIdx >= 0) startIdx = Math.max(0, Math.min(activeIdx - 1, stages.length - 3));
-                          else startIdx = Math.min(doneStages, stages.length - 3);
-                        }
-                        const visibleStages = stages.slice(startIdx, startIdx + 3).map((s, i) => ({ ...s, _absIdx: startIdx + i }));
-                        const doneQuests = quests.filter(q => q.done).length;
-                        return (
-                          <div className="db-quest-2col">
-                            <div className="db-quest-col">
-                              <div className="db-quest-col-head">
-                                🎯 메인 <span className="cnt">{doneStages}/{stages.length}</span>
-                                <span className="help-icon" onClick={(e) => { e.stopPropagation(); onOpenQuestGuide && onOpenQuestGuide(); }}>?</span>
-                              </div>
-                              {stages.length === 0 && <div className="db-empty-mini">단계 없음</div>}
-                              {(() => {
-                                const firstActiveId = (stages.find(s => s.status === "active") || {}).id;
-                                return visibleStages.map((m) => {
-                                  const isCurrent = m.id === firstActiveId;
-                                  const dispStatus = m.status === "active" && !isCurrent ? "todo" : m.status;
-                                  const dday = m.deadline ? calcDday(m.deadline) : null;
-                                  const ddayClass = dday !== null ? (dday < 0 ? "over" : dday <= 3 ? "urgent" : dday <= 7 ? "soon" : "") : "";
-                                  return (
-                                    <div key={m.id} className={"qb-row " + dispStatus + (isCurrent ? " current-stage" : "")} onClick={() => toggleStage && toggleStage(g.id, m.id)}>
-                                      <span className="qb-cb">{m.status === "done" ? "✓" : ""}</span>
-                                      <span className="qb-tag main">{m._absIdx + 1}</span>
-                                      <span className="qb-text">{m.name}</span>
-                                      {dday !== null && <span className={"qb-dday " + ddayClass}>{dday < 0 ? "D+" + Math.abs(dday) : "D-" + dday}</span>}
-                                    </div>
-                                  );
-                                });
-                              })()}
-                              {stages.length > 3 && (
-                                <div className="db-quest-overflow">+{stages.length - 3}개 더 (편집에서 확인)</div>
-                              )}
-                            </div>
-                            <div className="db-quest-col">
-                              <div className="db-quest-col-head">
-                                💎 퀘스트 <span className="cnt">{doneQuests}/{quests.length}</span>
-                              </div>
-                              {quests.length === 0 && <div className="db-empty-mini">없음</div>}
-                              {quests.map(q => {
-                                const isCounter = q.target > 1;
-                                const pct = q.target > 0 ? Math.round((q.current / q.target) * 100) : 0;
-                                const dday = q.deadline ? calcDday(q.deadline) : null;
-                                const ddayClass = dday !== null ? (dday < 0 ? "over" : dday <= 3 ? "urgent" : dday <= 7 ? "soon" : "") : "";
-                                return (
-                                  <div key={"q" + q.id} className={"qb-row qb-quest " + (q.done ? "done" : "")}>
-                                    <span className="qb-cb" onClick={() => adjustQuestCount && adjustQuestCount(g.id, q.id, q.done ? -1 : +1)}>{q.done ? "✓" : ""}</span>
-                                    <span className="qb-tag side">{q.repeat ? "🔁" : "💎"}</span>
-                                    <span className="qb-text">{q.name}</span>
-                                    {dday !== null && <span className={"qb-dday " + ddayClass}>{dday < 0 ? "D+" + Math.abs(dday) : "D-" + dday}</span>}
-                                    {isCounter && (
-                                      <span className="qb-quest-prog">
-                                        <span className="qbp-num">{q.current}/{q.target}</span>
-                                        <span className="qbp-bar"><span className="qbp-fill" style={{ width: pct + "%" }} /></span>
-                                        <button className="qbp-btn" title="−1" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, -1); }}>−</button>
-                                        <button className="qbp-btn" title="+1" onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, +1); }}>+</button>
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      <div className="db-stage-sec">
-                        <div className="db-stage-sec-title">
-                          ⚡ 연결 할일 <span className="cnt">{gTasks.length}</span>
-                        </div>
-                        {gTasks.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-4)' }}>없음</div>}
-                        {gTasks.map(t => {
-                          const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
-                          const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
-                          return (
-                            <div key={t.id} className={"check-item" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)} style={{ padding: '3px 0', gap: 6 }}>
-                              <div className="check-box" style={{ width: 13, height: 13 }} />
-                              <div className="check-text" style={{ fontSize: 12.5, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.text}</div>
-                              {t.dueDate && <span className={"task-due " + dueClass}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
-                            </div>
-                          );
-                        })}
+                    <div key={d.id + "-" + i} className="dc-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
+                      <div className="dc-img">{d.imgUrl ? <img src={d.imgUrl} alt="" /> : (d.emoji || "⭐")}</div>
+                      <span className={"dc-tier " + tier}>{tier.toUpperCase()}</span>
+                      <div className="dc-overlay">
+                        <div className="dc-name">{d.name}</div>
+                        <div className="dc-pct">{pct}%</div>
+                        <div className="dc-bar"><div style={{ width: pct + "%" }}></div></div>
                       </div>
                     </div>
                   );
                 })}
-                {/* 빈 슬롯 — 항상 3열 유지 */}
-                {goals.length > 0 && goals.length < 3 && Array.from({ length: 3 - goals.length }).map((_, i) => (
-                  <div key={"empty-" + i} className="db-goal-col db-goal-col-empty">
-                    {i === 0 ? "+ 목표 추가" : ""}
-                  </div>
-                ))}
+                {dreams.length === 0 && <div style={{ color: "var(--text-4)", padding: 30, fontSize: 13 }}>비전·드림 탭에서 드림 추가</div>}
               </div>
-
-              {/* ZONE 4: 하단 3열 */}
-              <div className="db-zone4">
-                {/* 이번주 목표 */}
-                <div className="db-zone4-col">
-                  <div className="db-zone4-title">
-                    {(() => {
-                      const dd = weekDday();
-                      return <>이번주 목표 <span style={{ color: dd <= 1 ? 'var(--red)' : dd <= 3 ? 'var(--amber)' : 'var(--accent)', fontWeight: 700, fontFamily: 'Geist Mono, monospace', marginLeft: 4 }}>{dd === 0 ? '종료' : 'D-' + dd}</span></>;
-                    })()}
-                    <span style={{ fontFamily: 'Geist Mono, monospace', fontWeight: 400 }}>{weeklyGoals.filter(w=>w.done).length}/{weeklyGoals.length} · W{getWeekNumber()}</span>
-                  </div>
-                  <input className="next-week-input" placeholder="+ Enter 눌러서 추가" onKeyDown={e => { if (e.key === "Enter" && e.target.value.trim()) { setWeeklyGoals(prev => [...prev, { id: "w" + Date.now(), text: e.target.value.trim(), done: false }]); e.target.value = ""; } }} />
-                  {weeklyGoals.map(w => (
-                    <div key={w.id} className={"check-item" + (w.done ? " done" : "")} onClick={() => { if (editingWeeklyId !== w.id) toggleWeeklyGoal(w.id); }}>
-                      <div className="check-box" />
-                      {editingWeeklyId === w.id ? (
-                        <input className="check-text" value={editingWeeklyText} onChange={e => setEditingWeeklyText(e.target.value)}
-                          onKeyDown={e => { if (e.key === "Enter") { editWeeklyGoal(w.id, editingWeeklyText); setEditingWeeklyId(null); } if (e.key === "Escape") setEditingWeeklyId(null); }}
-                          onBlur={() => { editWeeklyGoal(w.id, editingWeeklyText); setEditingWeeklyId(null); }}
-                          onClick={e => e.stopPropagation()} autoFocus
-                          style={{ background: 'var(--bg-3)', border: '1px solid var(--accent)', borderRadius: 4, color: 'var(--text-1)', padding: '2px 6px', fontFamily: 'Geist, sans-serif', fontSize: 13, flex: 1 }} />
-                      ) : (
-                        <div className="check-text" style={{ fontSize: 13 }} onDoubleClick={e => { e.stopPropagation(); setEditingWeeklyId(w.id); setEditingWeeklyText(w.text); }}>{w.text}</div>
-                      )}
-                      <button className="btn-del" onClick={e => { e.stopPropagation(); deleteWeeklyGoal(w.id); }} style={{ fontSize: 12 }}>×</button>
-                    </div>
-                  ))}
-                </div>
-
-                {/* TOP 3 */}
-                <div className="db-zone4-col">
-                  <div className="db-zone4-title">오늘의 TOP 3</div>
-                  {topThree.map(t => (
-                    <div key={t.slot} className="top3-item">
-                      <span className="top3-num">{t.slot}</span>
-                      <div className={"top3-check" + (t.done ? " checked" : "")} onClick={() => updateTop3(t.slot, 'done', !t.done)}>
-                        {t.done && <span style={{ fontSize: 10, color: '#fff' }}>✓</span>}
-                      </div>
-                      <input
-                        className={"top3-input" + (t.done ? " top3-done" : "")}
-                        value={t.text}
-                        placeholder={`${t.slot}번째 우선순위`}
-                        onChange={e => updateTop3(t.slot, 'text', e.target.value)}
-                      />
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-4)' }}>매일 자정 자동 초기화</div>
-                </div>
-
-                {/* 다음주 목표 */}
-                <div className="db-zone4-col">
-                  <div className="db-zone4-title">
-                    다음주 목표
-                    <span style={{ fontFamily: 'Geist Mono, monospace', fontWeight: 400 }}>W{getWeekNumber() + 1}</span>
-                  </div>
-                  {nextWeekGoals.map(w => (
-                    <div key={w.id} className={"check-item" + (w.done ? " done" : "")} onClick={() => setNextWeekGoals(prev => prev.map(g => g.id === w.id ? { ...g, done: !g.done } : g))}>
-                      <div className="check-box" />
-                      <div className="check-text" style={{ fontSize: 13 }}>{w.text}</div>
-                    </div>
-                  ))}
-                  <input className="next-week-input" placeholder="+ Enter 눌러서 추가" onKeyDown={addNextWeek} />
-                </div>
-              </div>
+            </div>
           </div>
+
+          {/* ZONE GOALS: 큰 원형 게이지들 (클릭 → 세부 모달) */}
+          <div className="db2-section">
+            <div className="db2-section-head">🎯 목표 진행도 <span className="hint">클릭 → 세부 대시보드</span></div>
+            <div className="db2-goals-grid">
+              {goals.map(g => {
+                const stages = g.milestones || [];
+                const done = stages.filter(m => m.status === "done").length;
+                const pct = stages.length > 0 ? Math.round((done / stages.length) * 100) : (g.progress || 0);
+                const tier = g.tier || "normal";
+                const dday = calcDday(g.deadline);
+                const offset = 427 - (pct / 100) * 427;
+                return (
+                  <div key={g.id} className="db2-goal-cell" onClick={() => onOpenGoalDetail && onOpenGoalDetail(g.id)}>
+                    <div className="big-ring">
+                      <span className={"br-tier " + tier}>{tier.toUpperCase()}</span>
+                      <svg viewBox="0 0 160 160">
+                        <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg-3)" strokeWidth="10"/>
+                        <circle cx="80" cy="80" r="68" fill="none" stroke="url(#ringGrad)" strokeWidth="10" strokeDasharray="427" strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 80 80)" style={{ filter: "drop-shadow(0 0 8px rgba(139,92,246,0.5))" }}/>
+                      </svg>
+                      <div className="br-label">
+                        <span className="br-pct">{pct}<span className="u">%</span></span>
+                        <span className="br-name">{g.name}</span>
+                      </div>
+                    </div>
+                    <div className="db2-goal-meta">
+                      <span style={{ color: dday <= 30 ? "var(--red)" : dday <= 90 ? "var(--amber)" : "var(--accent)", fontWeight: 700 }}>D-{dday}</span>
+                      <span style={{ color: "var(--text-4)" }}>·</span>
+                      <span style={{ color: "var(--text-3)" }}>단계 {done}/{stages.length}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {goals.length === 0 && <div style={{ gridColumn: "1/-1", textAlign: "center", color: "var(--text-4)", padding: 30 }}>목표·업무 탭에서 목표를 추가하세요</div>}
+            </div>
+          </div>
+
+          {/* 우클릭 컨텍스트 메뉴 */}
+          {ctxMenu && (() => {
+            const c = summaryCards.find(x => x.id === ctxMenu.cardId);
+            const idx = summaryCards.findIndex(x => x.id === ctxMenu.cardId);
+            return (
+              <div className="db2-ctxmenu" style={{ left: ctxMenu.x, top: ctxMenu.y }} onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => { setEditingCardId(c.id); setCtxMenu(null); }}>✏ 이름 변경</button>
+                <button onClick={() => { setIconPickerId(c.id); setCtxMenu(null); }}>🎨 아이콘 변경</button>
+                <div className="db2-ctx-sep"></div>
+                <button onClick={() => { const v = prompt("값 (숫자, 원 단위):", c.value); if (v !== null) { updateCard(c.id, { value: Number(v) || 0 }); } setCtxMenu(null); }}>💰 값 수정</button>
+                {c.type === "asset" && <button onClick={() => { const t = prompt("목표 (숫자, 원 단위):", c.target); if (t !== null) { updateCard(c.id, { target: Number(t) || 0 }); } setCtxMenu(null); }}>🎯 목표 수정</button>}
+                <button onClick={() => { updateCard(c.id, { type: c.type === "asset" ? "income" : "asset", target: c.target || 100000000 }); setCtxMenu(null); }}>🔄 타입 ({c.type === "asset" ? "자산→수입" : "수입→자산"})</button>
+                <div className="db2-ctx-sep"></div>
+                {idx > 0 && <button onClick={() => { moveCard(idx, -1); setCtxMenu(null); }}>⬅ 왼쪽으로</button>}
+                {idx < summaryCards.length - 1 && <button onClick={() => { moveCard(idx, +1); setCtxMenu(null); }}>➡ 오른쪽으로</button>}
+                <div className="db2-ctx-sep"></div>
+                <button onClick={() => { deleteCard(c.id); setCtxMenu(null); }} style={{ color: "var(--red)" }}>🗑 삭제</button>
+              </div>
+            );
+          })()}
+
         </div>
       );
     }
@@ -3835,6 +3794,7 @@
       const [resources, setResources] = useState(INITIAL_RESOURCES);
       const [items, setItems] = useState(INITIAL_ITEMS);
       const [finance, setFinance] = useState(INITIAL_FINANCE);
+      const [summaryCards, setSummaryCards] = useState(INITIAL_SUMMARY_CARDS);
       const [financeModalOpen, setFinanceModalOpen] = useState(false);
       const [settings, setSettings] = useState(() => {
         const loaded = loadLS("dreamboard_settings", INITIAL_SETTINGS);
@@ -3871,6 +3831,7 @@
             if (d.resources) setResources(d.resources);
             if (d.items) setItems(d.items);
             if (d.finance) setFinance(d.finance);
+            if (d.summaryCards) setSummaryCards(d.summaryCards);
           }
           setLoaded(true);
         });
@@ -3885,7 +3846,7 @@
         if (!loaded) return;
         clearTimeout(saveTimer.current);
         saveTimer.current = setTimeout(() => {
-          const payload = { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance };
+          const payload = { tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance, summaryCards };
           // 페이로드 크기 추정 (대략 JSON 길이 = 바이트)
           const size = JSON.stringify(payload).length;
           const sizeKB = Math.round(size / 1024);
@@ -3908,7 +3869,7 @@
               }
             });
         }, 1500);
-      }, [tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance, loaded]);
+      }, [tasks, weeklyGoals, goals, stats, retros, vision, dreams, nextWeekGoals, streak, topThree, dailyLog, resources, items, finance, summaryCards, loaded]);
 
       // dailyLog 자동 기록
       useEffect(() => {
@@ -4026,6 +3987,9 @@
         setTab("gtr");
       };
 
+      // 대시보드 목표 클릭 → 세부 모달
+      const [goalDetailId, setGoalDetailId] = useState(null);
+
       // 퀘스트 가이드 모달
       const [questGuideOpen, setQuestGuideOpen] = useState(false);
 
@@ -4137,21 +4101,21 @@
 
           {tab === "dashboard" && <Dashboard
             goals={goals} tasks={tasks} toggleTask={toggleTask}
-            weeklyGoals={weeklyGoals} toggleWeeklyGoal={toggleWeeklyGoal}
-            editWeeklyGoal={editWeeklyGoal} deleteWeeklyGoal={deleteWeeklyGoal}
-            setWeeklyGoals={setWeeklyGoals} stats={stats} dreams={dreams}
-            nextWeekGoals={nextWeekGoals} setNextWeekGoals={setNextWeekGoals}
-            streak={streak} setStreak={setStreak}
-            topThree={topThree} setTopThree={setTopThree}
-            dailyLog={dailyLog} focusMode={focusMode} setFocusMode={setFocusMode}
+            stats={stats} dreams={dreams}
+            streak={streak} dailyLog={dailyLog}
+            focusMode={focusMode} setFocusMode={setFocusMode}
             resources={computeResources(resources, items)}
-            onOpenStatModal={() => setStatModalOpen(true)}
+            onOpenStatModal={() => setSettingsOpen(true)}
             onOpenResources={() => setTab("resources")}
             onDreamClick={handleDreamClick}
             toggleStage={toggleStage}
             adjustQuestCount={adjustQuestCount}
             onOpenQuestGuide={() => setQuestGuideOpen(true)}
             onEditGoal={handleEditGoal}
+            summaryCards={summaryCards}
+            setSummaryCards={setSummaryCards}
+            settings={settings}
+            onOpenGoalDetail={(gId) => setGoalDetailId(gId)}
           />}
           {tab === "gtr" && <GoalsTasksRetroTab
             goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal}
