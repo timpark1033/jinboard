@@ -2295,7 +2295,7 @@
         return `hsl(${hue}, 70%, 62%)`;
       }, [goals]);
 
-      // 경로 컴퓨트
+      // 경로 컴퓨트 — 직교 라우팅 (텍스트 통과 회피)
       const recomputePaths = React.useCallback(() => {
         if (!gtrRef.current) return;
         const container = gtrRef.current;
@@ -2308,16 +2308,25 @@
           const gx = gRect.right - cRect.left;
           const gy = gRect.top + gRect.height / 2 - cRect.top;
           const linkedTasks = tasks.filter(t => t.goalId === g.id);
-          linkedTasks.forEach((t) => {
+          linkedTasks.forEach((t, idx) => {
             const tEl = container.querySelector(`[data-conn-task="${t.id}"]`);
             if (!tEl) return;
             const tRect = tEl.getBoundingClientRect();
             const tx = tRect.left - cRect.left;
             const ty = tRect.top + tRect.height / 2 - cRect.top;
-            // 부드러운 베지어 곡선
-            const dx = Math.max(40, (tx - gx) * 0.5);
-            const d = `M ${gx} ${gy} C ${gx + dx} ${gy}, ${tx - dx} ${ty}, ${tx} ${ty}`;
-            paths.push({ key: g.id + "-" + t.id, d, color: goalColor(g.id), goalId: g.id, taskId: t.id, done: t.done });
+            // 직교 라우팅: goal-right → 짧은 스텁 → 갭 영역 수직 → task-left 스텁
+            // elbow는 goal column 우측 바로 바깥(갭 영역)에 위치
+            const stub = 10;
+            const elbowX = gx + 14 + (idx % 3) * 4; // 동일 goal의 여러 task 간 약간 분산
+            const r = 6;
+            const sgnY = ty > gy ? 1 : (ty < gy ? -1 : 0);
+            let d;
+            if (sgnY === 0) {
+              d = `M ${gx} ${gy} L ${tx} ${ty}`;
+            } else {
+              d = `M ${gx} ${gy} L ${elbowX - r} ${gy} Q ${elbowX} ${gy} ${elbowX} ${gy + sgnY * r} L ${elbowX} ${ty - sgnY * r} Q ${elbowX} ${ty} ${elbowX + r} ${ty} L ${tx} ${ty}`;
+            }
+            paths.push({ key: g.id + "-" + t.id, d, color: goalColor(g.id), goalId: g.id, taskId: t.id, done: t.done, gx, gy, tx, ty });
           });
         });
         setConnPaths(paths);
@@ -2561,7 +2570,11 @@
           <div className="gtr-split" ref={gtrRef} style={{ position: "relative", gridTemplateColumns: `${colWidths[0]}% 6px ${colWidths[1]}% 6px ${colWidths[2]}%` }}>
             <svg className="gtr-connections" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1, overflow: "visible" }}>
               {connPaths.map((p) => (
-                <path key={p.key} d={p.d} fill="none" stroke={p.color} strokeWidth="2" strokeOpacity={p.done ? 0.35 : 0.85} strokeDasharray={p.done ? "4 4" : "none"} style={{ filter: `drop-shadow(0 0 4px ${p.color})` }} />
+                <g key={p.key}>
+                  <path d={p.d} fill="none" stroke={p.color} strokeWidth="1.4" strokeOpacity={p.done ? 0.25 : 0.55} strokeDasharray={p.done ? "3 3" : "none"} strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx={p.gx} cy={p.gy} r="2.5" fill={p.color} opacity={p.done ? 0.4 : 0.85} />
+                  <circle cx={p.tx} cy={p.ty} r="2.5" fill={p.color} opacity={p.done ? 0.4 : 0.85} />
+                </g>
               ))}
             </svg>
             {/* ── LEFT: GOALS ── */}
