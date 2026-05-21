@@ -449,6 +449,72 @@
     }
 
 
+    /* ---------- DreamGallery 2-up Slide ---------- */
+    function DreamGallery2Up({ dreams, onDreamClick }) {
+      const n = dreams.length;
+      // 페어 배열: [0,1], [2,3], ... 홀수면 wrap-around
+      const pairs = React.useMemo(() => {
+        if (n === 0) return [];
+        if (n === 1) return [[dreams[0], dreams[0]]];
+        const arr = [];
+        for (let i = 0; i < n; i += 2) {
+          arr.push([dreams[i], dreams[(i + 1) % n]]);
+        }
+        return arr;
+      }, [dreams]);
+
+      const [pairIdx, setPairIdx] = useState(0);
+      const [paused, setPaused] = useState(false);
+
+      useEffect(() => {
+        if (paused || pairs.length <= 1) return;
+        const t = setInterval(() => setPairIdx(i => (i + 1) % pairs.length), 5000);
+        return () => clearInterval(t);
+      }, [paused, pairs.length]);
+
+      // pairIdx 안전성: pairs 길이 변하면 reset
+      useEffect(() => {
+        if (pairIdx >= pairs.length) setPairIdx(0);
+      }, [pairs.length, pairIdx]);
+
+      if (n === 0) {
+        return <div style={{ color: "var(--text-4)", padding: 30, fontSize: 13, textAlign: "center" }}>비전·드림 탭에서 드림 추가</div>;
+      }
+
+      return (
+        <div className="dc2-viewport" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+          <div className="dc2-track" style={{ width: (pairs.length * 100) + "%", transform: "translateX(-" + (pairIdx * (100 / pairs.length)) + "%)" }}>
+            {pairs.map((pair, pi) => (
+              <div key={pi} className="dc2-pair" style={{ width: (100 / pairs.length) + "%" }}>
+                {pair.map((d, slot) => {
+                  const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
+                  const tier = inferDreamTier(d);
+                  return (
+                    <div key={pi + "-" + slot + "-" + d.id} className="dc2-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
+                      <div className="dc-img">{d.imgUrl ? <img src={d.imgUrl} alt="" /> : (d.emoji || "⭐")}</div>
+                      <span className={"dc-tier " + tier}>{tier.toUpperCase()}</span>
+                      <div className="dc-overlay">
+                        <div className="dc-name">{d.name}</div>
+                        <div className="dc-pct">{pct}%</div>
+                        <div className="dc-bar"><div style={{ width: pct + "%" }}></div></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          {pairs.length > 1 && (
+            <div className="dc2-dots">
+              {pairs.map((_, i) => (
+                <span key={i} className={"dc2-dot " + (i === pairIdx ? "active" : "")} onClick={() => setPairIdx(i)} />
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     /* ---------- TAB 1: Dashboard (B 컨셉 개편) ---------- */
     function Dashboard({ goals, tasks, toggleTask, stats, dreams, streak, dailyLog, focusMode, setFocusMode, resources, onOpenSettings, onOpenResources, onDreamClick, toggleStage, adjustQuestCount, onOpenQuestGuide, onEditGoal, summaryCards, setSummaryCards, settings, onOpenGoalDetail }) {
       const [ctxMenu, setCtxMenu] = useState(null); // { x, y, cardId }
@@ -606,29 +672,10 @@
             </div>
           </div>
 
-          {/* ZONE DREAM: 가로 자동 롤링 */}
+          {/* ZONE DREAM: 2-up 슬라이드 (5초마다 다음 페어로 밀어냄) */}
           <div className="db2-section">
-            <div className="db2-section-head">🌟 드림 갤러리 <span className="hint">← 가로 자동 롤링 · 클릭 → 편집 →</span></div>
-            <div className="dc-wrap">
-              <div className="dc-track" style={{ animationDuration: Math.max(20, dreams.length * 8) + "s" }}>
-                {[...dreams, ...dreams].map((d, i) => {
-                  const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
-                  const tier = inferDreamTier(d);
-                  return (
-                    <div key={d.id + "-" + i} className="dc-card" onClick={() => onDreamClick && onDreamClick(d.id)}>
-                      <div className="dc-img">{d.imgUrl ? <img src={d.imgUrl} alt="" /> : (d.emoji || "⭐")}</div>
-                      <span className={"dc-tier " + tier}>{tier.toUpperCase()}</span>
-                      <div className="dc-overlay">
-                        <div className="dc-name">{d.name}</div>
-                        <div className="dc-pct">{pct}%</div>
-                        <div className="dc-bar"><div style={{ width: pct + "%" }}></div></div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {dreams.length === 0 && <div style={{ color: "var(--text-4)", padding: 30, fontSize: 13 }}>비전·드림 탭에서 드림 추가</div>}
-              </div>
-            </div>
+            <div className="db2-section-head">🌟 드림 갤러리 <span className="hint">2개씩 · 5초마다 밀어내기 · 호버 시 정지</span></div>
+            <DreamGallery2Up dreams={dreams} onDreamClick={onDreamClick} />
           </div>
 
           {/* ZONE GOALS: 큰 원형 게이지들 (클릭 → 세부 모달) */}
@@ -4278,13 +4325,14 @@
             onEditGoal={editGoal}
             onDeleteGoal={deleteGoal}
             toggleStage={toggleStage}
+            onEditInGoalsTab={handleEditGoal}
           />
         </div>
       );
     }
 
     /* ---------- GoalDetailModal ---------- */
-    function GoalDetailModal({ open, onClose, goal, stats, tasks, onEditGoal, onDeleteGoal, toggleStage }) {
+    function GoalDetailModal({ open, onClose, goal, stats, tasks, onEditGoal, onDeleteGoal, toggleStage, onEditInGoalsTab }) {
       if (!open || !goal) return null;
       const stages = goal.milestones || [];
       const doneStages = stages.filter(m => m.status === "done").length;
@@ -4309,8 +4357,8 @@
       const stageXp = stages.filter(m => m.status === "done").reduce((s, m) => s + (m.xpReward || 150), 0);
       const accumulatedXp = stageXp + totalQuestXp + (allStagesDone ? 600 : 0);
 
-      // 큰 반원 게이지 — 280x160, path A 30,140 to 250,140
-      const arcLen = 345;
+      // 큰 반원 게이지 — 340x200, r=134 → πr ≈ 421
+      const arcLen = 421;
       const arcOffset = arcLen - (pct / 100) * arcLen;
 
       const handleDelete = () => {
@@ -4338,6 +4386,7 @@
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
+                <button className="gdm-action primary" onClick={() => { onEditInGoalsTab && onEditInGoalsTab(goal.id); onClose(); }}>✏ 수정</button>
                 <button className="gdm-action danger" onClick={handleDelete}>🗑 삭제</button>
               </div>
             </div>
@@ -4347,9 +4396,9 @@
               <div className="gdm-gauge-area">
                 <div className="gdm-gauge-title">📊 전체 진행률</div>
                 <div className="gdm-big-gauge">
-                  <svg viewBox="0 0 280 170">
-                    <path className="gdm-bg-bg" d="M 30 150 A 110 110 0 0 1 250 150" />
-                    <path className="gdm-bg-fg" d="M 30 150 A 110 110 0 0 1 250 150" strokeDasharray={arcLen} strokeDashoffset={arcOffset} />
+                  <svg viewBox="0 0 340 200" preserveAspectRatio="xMidYMid meet">
+                    <path className="gdm-bg-bg" d="M 36 178 A 134 134 0 0 1 304 178" />
+                    <path className="gdm-bg-fg" d="M 36 178 A 134 134 0 0 1 304 178" strokeDasharray={arcLen} strokeDashoffset={arcOffset} />
                   </svg>
                   <div className="gdm-bg-pct">{pct}<span className="u">%</span></div>
                 </div>
