@@ -5124,3 +5124,12 @@
 .big-timeline .bigt-item { font-size: calc(13px * var(--bigt-scale, 1)); }
 .big-timeline .bigt-year-label { font-size: calc(13px * var(--bigt-scale, 1)); }
 .big-timeline .bigt-items input { font-size: calc(12px * var(--bigt-scale, 1)); }
+
+/* 나의 사명 — 중앙 정렬 + 크기 슬라이더 */
+.vision-mission-box { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 28px; background: linear-gradient(135deg, rgba(139,92,246,0.06), var(--bg-1)); border: 1px solid var(--border-accent); border-radius: 14px; position: relative; }
+.vision-mission-input-center { background: transparent; border: none; color: var(--text-1); font-family: inherit; font-weight: 700; text-align: center; outline: none; width: 100%; max-width: 1200px; letter-spacing: -0.02em; line-height: 1.4; padding: 8px 4px; }
+.vision-mission-input-center:focus { background: var(--bg-2); border-radius: 8px; }
+.vision-mission-input-center::placeholder { color: var(--text-4); font-style: italic; font-weight: 500; }
+.mission-size-slider { position: absolute; bottom: 8px; right: 12px; display: inline-flex; align-items: center; gap: 6px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 7px; padding: 4px 10px; opacity: 0.6; transition: opacity 0.15s; }
+.vision-mission-box:hover .mission-size-slider { opacity: 1; }
+.mission-size-slider input[type="range"] { width: 100px; accent-color: var(--accent); cursor: pointer; }

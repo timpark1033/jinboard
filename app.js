@@ -1018,11 +1018,18 @@
               <div className="section-title">비전 & 성장</div>
               <div className="section-sub">나의 큰 그림과 현재 레벨을 한눈에</div>
             </div>
-            <div className="vision-mission-inline">
-              <span className="vision-mission-label-inline"><span className="dot-purple" />나의 사명</span>
-              <input className="vision-mission-input-inline" value={vision.mission}
+            <div className="vision-mission-box">
+              <input className="vision-mission-input-center" value={vision.mission}
                 onChange={e => setVision(v => ({ ...v, mission: e.target.value }))}
-                placeholder="내가 이 모든 것을 하는 이유는..." />
+                placeholder="내가 이 모든 것을 하는 이유는..."
+                style={{ fontSize: ((settings?.missionTextSize >= 14 && settings?.missionTextSize <= 50) ? settings.missionTextSize : 18) + "px" }} />
+              <div className="mission-size-slider">
+                <span style={{ fontSize: 11, color: "var(--text-3)" }}>🔍</span>
+                <input type="range" min="14" max="50" step="1"
+                  value={(settings?.missionTextSize >= 14 && settings?.missionTextSize <= 50) ? settings.missionTextSize : 18}
+                  onChange={(e) => setSettings(p => ({ ...p, missionTextSize: Number(e.target.value) }))} />
+                <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", minWidth: 36, textAlign: "right" }}>{(settings?.missionTextSize >= 14 && settings?.missionTextSize <= 50) ? settings.missionTextSize : 18}px</span>
+              </div>
             </div>
           </div>
 
