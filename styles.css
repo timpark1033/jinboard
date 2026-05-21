@@ -4964,8 +4964,9 @@
 .ri2-kpi .kc-val.accent { color: var(--accent); }
 .ri2-kpi .kc-sub { font-size: 11.5px; color: var(--text-3); }
 
-.ri2-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 1100px) { .ri2-detail-grid { grid-template-columns: 1fr; } }
+.ri2-detail-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1700px) { .ri2-detail-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) { .ri2-detail-grid { grid-template-columns: 1fr; } }
 .ri2-detail { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: border-color 0.3s; }
 .ri2-detail.pulse { animation: ri2-pulse 2s ease-out; }
 .ri2-detail .dc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }

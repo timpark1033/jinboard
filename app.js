@@ -4257,8 +4257,8 @@
                   <button className="ri2-add-btn" onClick={() => onOpenFinance("assets")}>+ 자산 추가 / 수정</button>
                 </div>
 
-                {/* 주수익 + 부수익 */}
-                <div className={"ri2-detail" + (pulseSection === "main-income" || pulseSection === "side-income" ? " pulse" : "")}>
+                {/* 주수익 + 부수익 (그리드 order 3 — 부채 다음) */}
+                <div className={"ri2-detail" + (pulseSection === "main-income" || pulseSection === "side-income" ? " pulse" : "")} style={{ order: 3 }}>
                   <div ref={sectionRefs["main-income"]}></div>
                   <div className="dc-head">
                     <div className="dc-title">💼 주수익 <span className="kc-link">DB ←</span></div>
@@ -4282,8 +4282,8 @@
                   <button className="ri2-add-btn" onClick={() => onOpenFinance("incomes")}>+ 수익 추가 / 수정</button>
                 </div>
 
-                {/* 부채 */}
-                <div ref={sectionRefs.debts} className={"ri2-detail" + (pulseSection === "debts" ? " pulse" : "")}>
+                {/* 부채 (그리드 order 2 — 자산 다음) */}
+                <div ref={sectionRefs.debts} className={"ri2-detail" + (pulseSection === "debts" ? " pulse" : "")} style={{ order: 2 }}>
                   <div className="dc-head">
                     <div className="dc-title">🚨 부채 상세</div>
                     <div className="dc-sum red">{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "없음"}</div>
