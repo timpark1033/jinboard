@@ -387,7 +387,7 @@
     }
 
     /* ---------- TAB 1: Dashboard ---------- */
-    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak, topThree, setTopThree, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage, toggleSideQuest, toggleChallenge, onOpenQuestGuide }) {
+    function Dashboard({ goals, tasks, toggleTask, weeklyGoals, toggleWeeklyGoal, editWeeklyGoal, deleteWeeklyGoal, setWeeklyGoals, stats, dreams, nextWeekGoals, setNextWeekGoals, streak, setStreak, topThree, setTopThree, dailyLog, focusMode, setFocusMode, resources, onOpenStatModal, onOpenResources, onDreamClick, toggleStage, toggleSideQuest, toggleChallenge, onOpenQuestGuide, onEditGoal }) {
       const [qbFilter, setQbFilter] = useState({}); // {goalId: 'all'|'main'|'side'|'chal'}
       const [editingWeeklyId, setEditingWeeklyId] = useState(null);
       const [editingWeeklyText, setEditingWeeklyText] = useState("");
@@ -527,7 +527,7 @@
                   return (
                     <div key={g.id} className="db-goal-col">
                       <div className="db-goal-col-head">
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div className="db-goal-cat">{g.category}</div>
                           <div className="db-goal-name">{g.name}</div>
                           <div className="db-goal-meta">
@@ -536,6 +536,7 @@
                             <span style={{ color: 'var(--text-3)' }}>{fmtDeadline(g.deadline)}</span>
                           </div>
                         </div>
+                        <button className="db-goal-edit-btn" onClick={() => onEditGoal && onEditGoal(g.id)} title="목표·업무 탭에서 편집">✏️</button>
                       </div>
                       <div className="db-goal-prog-row">
                         <span className={"db-goal-tier " + goalTier}>{goalTier.toUpperCase()}</span>
@@ -543,60 +544,59 @@
                         <span className="pct">{computedProgress}%</span>
                       </div>
 
-                      {/* C 퀘스트북 — 메인/사이드/도전 통합 필터 리스트 */}
+                      {/* 2-column: 메인 | 사이드+도전 */}
                       {(() => {
                         const sides = g.sideQuests || [];
                         const chals = g.challenges || [];
-                        const filter = qbFilter[g.id] || "all";
                         const allCount = stages.length + sides.length + chals.length;
                         if (allCount === 0) return null;
-                        const items = [];
-                        if (filter === "all" || filter === "main") stages.forEach((s, i) => items.push({ type: "main", num: i + 1, ...s, _isStage: true }));
-                        if (filter === "all" || filter === "side") sides.forEach(s => items.push({ type: "side", ...s, _isSide: true }));
-                        if (filter === "all" || filter === "chal") chals.forEach(c => items.push({ type: "chal", ...c, _isChal: true }));
+                        // 메인 단계 3개로 제한: 현재(active) 중심으로 윈도우
+                        const activeIdx = stages.findIndex(s => s.status === "active");
+                        let startIdx = 0;
+                        if (stages.length > 3) {
+                          if (activeIdx >= 0) startIdx = Math.max(0, Math.min(activeIdx - 1, stages.length - 3));
+                          else startIdx = Math.min(doneStages, stages.length - 3);
+                        }
+                        const visibleStages = stages.slice(startIdx, startIdx + 3).map((s, i) => ({ ...s, _absIdx: startIdx + i }));
                         return (
-                          <div className="db-stage-sec">
-                            <div className="db-stage-sec-title" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 4 }}>
-                              <span>📋 퀘스트 <span className="cnt">{allCount}</span>
+                          <div className="db-quest-2col">
+                            <div className="db-quest-col">
+                              <div className="db-quest-col-head">
+                                🎯 메인 <span className="cnt">{doneStages}/{stages.length}</span>
                                 <span className="help-icon" onClick={(e) => { e.stopPropagation(); onOpenQuestGuide && onOpenQuestGuide(); }}>?</span>
-                              </span>
-                            </div>
-                            <div className="qb-filters">
-                              <button className={"qb-tab" + (filter === "all" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "all" }))}>전체<span className="cnt">{allCount}</span></button>
-                              <button className={"qb-tab" + (filter === "main" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "main" }))}>🎯<span className="cnt">{stages.length}</span></button>
-                              <button className={"qb-tab" + (filter === "side" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "side" }))}>💎<span className="cnt">{sides.length}</span></button>
-                              <button className={"qb-tab" + (filter === "chal" ? " active" : "")} onClick={() => setQbFilter(p => ({ ...p, [g.id]: "chal" }))}>🏆<span className="cnt">{chals.length}</span></button>
-                            </div>
-                            {items.map(it => {
-                              if (it._isStage) {
-                                return (
-                                  <div key={"m" + it.id} className={"qb-row " + it.status} onClick={() => toggleStage && toggleStage(g.id, it.id)}>
-                                    <span className="qb-cb">{it.status === "done" ? "✓" : ""}</span>
-                                    <span className="qb-tag main">🎯{it.num}</span>
-                                    <span className="qb-text">{it.name}</span>
-                                    <span className="qb-xp">+150</span>
-                                  </div>
-                                );
-                              }
-                              if (it._isSide) {
-                                return (
-                                  <div key={"s" + it.id} className={"qb-row " + (it.done ? "done" : "")} onClick={() => toggleSideQuest && toggleSideQuest(g.id, it.id)}>
-                                    <span className="qb-cb">{it.done ? "✓" : ""}</span>
-                                    <span className="qb-tag side">💎</span>
-                                    <span className="qb-text">{it.name}</span>
-                                    <span className="qb-xp">+{it.xpReward || 80}</span>
-                                  </div>
-                                );
-                              }
-                              return (
-                                <div key={"c" + it.id} className={"qb-row " + (it.done ? "done" : "")} onClick={() => toggleChallenge && toggleChallenge(g.id, it.id)}>
-                                  <span className="qb-cb">{it.done ? "✓" : ""}</span>
-                                  <span className="qb-tag chal">{it.repeat ? "🔁" : "🏆"}</span>
-                                  <span className="qb-text">{it.name}</span>
-                                  <span className="qb-xp">+{it.xpReward || 500}</span>
+                              </div>
+                              {stages.length === 0 && <div className="db-empty-mini">단계 없음</div>}
+                              {visibleStages.map((m) => (
+                                <div key={m.id} className={"qb-row " + m.status + (m.status === "active" ? " current-stage" : "")} onClick={() => toggleStage && toggleStage(g.id, m.id)}>
+                                  <span className="qb-cb">{m.status === "done" ? "✓" : ""}</span>
+                                  <span className="qb-tag main">{m._absIdx + 1}</span>
+                                  <span className="qb-text">{m.name}</span>
                                 </div>
-                              );
-                            })}
+                              ))}
+                              {stages.length > 3 && (
+                                <div className="db-quest-overflow">+{stages.length - 3}개 더 (편집에서 확인)</div>
+                              )}
+                            </div>
+                            <div className="db-quest-col">
+                              <div className="db-quest-col-head">
+                                💎🏆 사이드 / 도전 <span className="cnt">{sides.filter(s=>s.done).length + chals.filter(c=>c.done).length}/{sides.length + chals.length}</span>
+                              </div>
+                              {sides.length + chals.length === 0 && <div className="db-empty-mini">없음</div>}
+                              {sides.map(s => (
+                                <div key={"s" + s.id} className={"qb-row " + (s.done ? "done" : "")} onClick={() => toggleSideQuest && toggleSideQuest(g.id, s.id)}>
+                                  <span className="qb-cb">{s.done ? "✓" : ""}</span>
+                                  <span className="qb-tag side">💎</span>
+                                  <span className="qb-text">{s.name}</span>
+                                </div>
+                              ))}
+                              {chals.map(c => (
+                                <div key={"c" + c.id} className={"qb-row " + (c.done ? "done" : "")} onClick={() => toggleChallenge && toggleChallenge(g.id, c.id)}>
+                                  <span className="qb-cb">{c.done ? "✓" : ""}</span>
+                                  <span className="qb-tag chal">{c.repeat ? "🔁" : "🏆"}</span>
+                                  <span className="qb-text">{c.name}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         );
                       })()}
@@ -2118,7 +2118,8 @@
     function GoalsTasksRetroTab({
       goals, setGoals, addGoal, editGoal, deleteGoal, toggleStage, toggleSideQuest, toggleChallenge,
       tasks, toggleTask, addTask, editTask, deleteTask,
-      retros, setRetros, dailyLog, stats, onOpenQuestGuide
+      retros, setRetros, dailyLog, stats, onOpenQuestGuide,
+      initialOpenGoalId, onGoalOpened
     }) {
       const toggleStageInForm = toggleStage || ((gId, mId) => {
         const g = goals.find(x => x.id === gId);
@@ -2128,6 +2129,25 @@
       });
       const [openGoalId, setOpenGoalId] = useState(null);
       const [editingGoalId, setEditingGoalId] = useState(null);
+      // 대시보드 ✏️ 버튼으로 진입한 경우 해당 목표 자동 열기 + 편집 모드
+      useEffect(() => {
+        if (initialOpenGoalId) {
+          setOpenGoalId(initialOpenGoalId);
+          setEditingGoalId(initialOpenGoalId);
+          const g = goals.find(x => x.id === initialOpenGoalId);
+          if (g) {
+            setEditGoalForm({
+              name: g.name, category: g.category, deadline: g.deadline,
+              progress: g.progress, statId: g.statId || "", tier: g.tier || ""
+            });
+          }
+          setTimeout(() => {
+            const el = document.querySelector("[data-goal-id=\"" + initialOpenGoalId + "\"]");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 100);
+          onGoalOpened && onGoalOpened();
+        }
+      }, [initialOpenGoalId]);
       const [editGoalForm, setEditGoalForm] = useState({});
       const [showAddGoal, setShowAddGoal] = useState(false);
       const [newGoal, setNewGoal] = useState({ name: "", category: "", deadline: "", statId: "" });
@@ -2328,7 +2348,7 @@
                 const isEditing = editingGoalId === g.id;
                 const linkedStat = g.statId ? stats.find((s) => s.id === g.statId) : null;
                 return (
-                  <div key={g.id} className={"gmini" + (isOpen ? " open" : "")} onClick={() => !isEditing && setOpenGoalId(isOpen ? null : g.id)}>
+                  <div key={g.id} data-goal-id={g.id} className={"gmini" + (isOpen ? " open" : "")} onClick={() => !isEditing && setOpenGoalId(isOpen ? null : g.id)}>
                     <div className="gmini-head">
                       <div className="gmini-meta">
                         <div className="gmini-cat">{g.category}</div>
@@ -3818,6 +3838,13 @@
         setTab("vision");
       };
 
+      // 목표 카드 수정 → 목표·업무 탭 이동
+      const [goalToOpen, setGoalToOpen] = useState(null);
+      const handleEditGoal = (goalId) => {
+        setGoalToOpen(goalId);
+        setTab("gtr");
+      };
+
       // 퀘스트 가이드 모달
       const [questGuideOpen, setQuestGuideOpen] = useState(false);
 
@@ -3942,6 +3969,7 @@
             toggleSideQuest={toggleSideQuest}
             toggleChallenge={toggleChallenge}
             onOpenQuestGuide={() => setQuestGuideOpen(true)}
+            onEditGoal={handleEditGoal}
           />}
           {tab === "gtr" && <GoalsTasksRetroTab
             goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal}
@@ -3949,6 +3977,7 @@
             tasks={tasks} toggleTask={toggleTask} addTask={addTask} editTask={editTask} deleteTask={deleteTask}
             retros={retros} setRetros={setRetros} dailyLog={dailyLog} stats={stats}
             onOpenQuestGuide={() => setQuestGuideOpen(true)}
+            initialOpenGoalId={goalToOpen} onGoalOpened={() => setGoalToOpen(null)}
           />}
           {tab === "resources" && <ResourcesItemsTab
             items={items} setItems={setItems}
