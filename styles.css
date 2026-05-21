@@ -4361,3 +4361,37 @@
     min-width: 0;
   }
   .qm-row .qm-date:focus { border-color: var(--accent); color: var(--text-1); }
+
+  /* ─────────────────────────────── */
+  /* ── Stage 16: 목표 드래그 정렬 ── */
+  /* ─────────────────────────────── */
+
+  .gmini { cursor: grab; }
+  .gmini.open { cursor: default; }
+  .gmini:active { cursor: grabbing; }
+  .gmini.dragging {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+  .gmini.drag-over {
+    border-color: var(--accent);
+    box-shadow: 0 -2px 0 0 var(--accent), 0 0 12px var(--accent-glow);
+    transform: translateY(2px);
+  }
+
+  /* 드래그 핸들 힌트 (왼쪽 점 6개) */
+  .gmini::before {
+    content: "⋮⋮";
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-4);
+    font-size: 12px;
+    letter-spacing: -2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+  .gmini:hover::before { opacity: 0.6; }
+  .gmini.open::before { opacity: 0; }

@@ -2267,6 +2267,33 @@
 
       // 메인/사이드/도전 인라인 추가 텍스트
       const [questDraft, setQuestDraft] = useState({}); // {goalId+kind: text}
+
+      // ── 목표 드래그앤드롭 순서 변경 ──
+      const [dragId, setDragId] = useState(null);
+      const [dragOverId, setDragOverId] = useState(null);
+      const handleDragStart = (id) => (e) => {
+        setDragId(id);
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", id); } catch (_) {}
+      };
+      const handleDragOver = (id) => (e) => {
+        e.preventDefault();
+        if (dragId && dragId !== id) setDragOverId(id);
+      };
+      const handleDrop = (targetId) => (e) => {
+        e.preventDefault();
+        if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return; }
+        const fromIdx = goals.findIndex(g => g.id === dragId);
+        const toIdx = goals.findIndex(g => g.id === targetId);
+        if (fromIdx < 0 || toIdx < 0) return;
+        const next = [...goals];
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved);
+        setGoals(next);
+        setDragId(null);
+        setDragOverId(null);
+      };
+      const handleDragEnd = () => { setDragId(null); setDragOverId(null); };
       const getDraft = (gId, kind) => questDraft[gId + ":" + kind] || "";
       const setDraft = (gId, kind, v) => setQuestDraft(p => ({ ...p, [gId + ":" + kind]: v }));
       const addQuestItem = (gId, kind, value) => {
@@ -2401,7 +2428,14 @@
                 const isEditing = editingGoalId === g.id;
                 const linkedStat = g.statId ? stats.find((s) => s.id === g.statId) : null;
                 return (
-                  <div key={g.id} data-goal-id={g.id} className={"gmini" + (isOpen ? " open" : "")} onClick={() => !isEditing && setOpenGoalId(isOpen ? null : g.id)}>
+                  <div key={g.id} data-goal-id={g.id}
+                    className={"gmini" + (isOpen ? " open" : "") + (dragId === g.id ? " dragging" : "") + (dragOverId === g.id ? " drag-over" : "")}
+                    draggable={!isEditing}
+                    onDragStart={handleDragStart(g.id)}
+                    onDragOver={handleDragOver(g.id)}
+                    onDrop={handleDrop(g.id)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => !isEditing && setOpenGoalId(isOpen ? null : g.id)}>
                     <div className="gmini-head">
                       <div className="gmini-meta">
                         <div className="gmini-cat">{g.category}</div>
