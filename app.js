@@ -2934,9 +2934,9 @@
                           const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
                           const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
                           return (
-                            <div key={t.id} data-conn-task={t.id} className={"eq-task-row" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
-                              <div className="cb" />
-                              <span className="eq-task-text">{t.text}</span>
+                            <div key={t.id} data-conn-task={t.id} className={"eq-task-row" + (t.done ? " done" : "")} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
+                              <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} title="완료 토글" />
+                              <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }} title="클릭으로 수정">{t.text}</span>
                               {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
                               {g && <span className="gtag" style={{ background: goalColor(g.id) + "22", color: goalColor(g.id), borderColor: goalColor(g.id) + "55" }}>{g.name.slice(0, 6)}</span>}
                               <button className="del-x" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} title="세부 편집">✏</button>
