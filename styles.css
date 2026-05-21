@@ -1309,7 +1309,7 @@
   .dream-strip-card { position: relative; min-width: 190px; flex: 1; max-width: 280px; height: 100px; border-radius: 12px; overflow: hidden; cursor: default; flex-shrink: 0; border: 1px solid var(--border); }
   .dream-strip-card .dsc-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; }
   .dream-strip-card .dsc-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 10px 12px; }
-  .dream-strip-card .dsc-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dream-strip-card .dsc-name { font-size: 13px; font-weight: 600; color: #fff; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
   .dream-strip-card .dsc-bar { height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 5px; }
   .dream-strip-card .dsc-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
   .dream-strip-card .dsc-pct { font-size: 12px; color: rgba(255,255,255,0.85); font-family: 'Geist Mono', monospace; margin-top: 3px; font-weight: 500; }
@@ -2741,7 +2741,7 @@
     border-color: var(--border-accent);
   }
   .dream-strip-card .dsc-bg { font-size: 81px; }
-  .dream-strip-card .dsc-name { font-size: 15px; }
+  .dream-strip-card .dsc-name { font-size: 13.5px; line-height: 1.25; }
   .dream-strip-card .dsc-pct { font-size: 12px; }
   .dream-strip-card .dsc-bar { height: 3px; }
   /* 하단만 70% 검은 음영 (inset 재정의: top 해제 → 컨텐츠 크기만큼만) */
