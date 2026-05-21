@@ -701,17 +701,18 @@
                 return (
                   <div key={g.id} className="db2-goal-cell" onClick={() => onOpenGoalDetail && onOpenGoalDetail(g.id)}>
                     <div className="big-ring">
-                      <span className={"br-tier " + tier}>{tier.toUpperCase()}</span>
                       <svg viewBox="0 0 160 160">
                         <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg-3)" strokeWidth="10"/>
                         <circle cx="80" cy="80" r="68" fill="none" stroke="url(#ringGrad)" strokeWidth="10" strokeDasharray="427" strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 80 80)" style={{ filter: "drop-shadow(0 0 8px rgba(139,92,246,0.5))" }}/>
                       </svg>
                       <div className="br-label">
                         <span className="br-pct">{pct}<span className="u">%</span></span>
-                        <span className="br-name">{g.name}</span>
                       </div>
                     </div>
+                    <div className="db2-goal-name">{g.name}</div>
                     <div className="db2-goal-meta">
+                      <span className={"br-tier " + tier}>{tier.toUpperCase()}</span>
+                      <span style={{ color: "var(--text-4)" }}>·</span>
                       <span style={{ color: dday <= 30 ? "var(--red)" : dday <= 90 ? "var(--amber)" : "var(--accent)", fontWeight: 700 }}>D-{dday}</span>
                       <span style={{ color: "var(--text-4)" }}>·</span>
                       <span style={{ color: "var(--text-3)" }}>단계 {done}/{stages.length}</span>
