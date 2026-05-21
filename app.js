@@ -4039,16 +4039,40 @@
           {saveStatus !== "idle" && (
             <div style={{
               position: "fixed", bottom: 20, left: 20, zIndex: 9999,
-              padding: "8px 14px", borderRadius: 8, fontSize: 12,
+              padding: "10px 14px", borderRadius: 8, fontSize: 12,
               fontFamily: "Geist Mono, monospace",
               background: saveStatus === "error" ? "rgba(239,68,68,0.95)" : saveStatus === "saving" ? "rgba(245,158,11,0.95)" : "rgba(16,185,129,0.95)",
               color: "#fff", fontWeight: 600,
               boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-              maxWidth: 400, lineHeight: 1.5
+              maxWidth: 460, lineHeight: 1.5
             }}>
               {saveStatus === "saving" && "💾 저장 중..."}
               {saveStatus === "saved" && "✓ 저장됨"}
-              {saveStatus === "error" && saveError}
+              {saveStatus === "error" && (
+                <div>
+                  <div>{saveError}</div>
+                  {/^⚠️ 데이터가 너무 큼/.test(saveError) && (
+                    <button onClick={async () => {
+                      // 모든 드림 이미지 강제 재압축 (640×400 q0.6 = 더 작게)
+                      const newDreams = await Promise.all((dreams || []).map(async d => {
+                        if (!d.imgUrl || !d.imgUrl.startsWith("data:")) return d;
+                        try {
+                          const url = await compressDataUrl(d.imgUrl, 640, 400, 0.6);
+                          return { ...d, imgUrl: url };
+                        } catch (e) { return d; }
+                      }));
+                      setDreams(newDreams);
+                    }} style={{
+                      marginTop: 8, background: "#fff", color: "var(--red)", border: "none",
+                      padding: "6px 14px", borderRadius: 5, cursor: "pointer",
+                      fontFamily: "Geist, sans-serif", fontSize: 12, fontWeight: 700,
+                      width: "100%"
+                    }}>
+                      🔧 모든 이미지 강제 재압축 (640×400 q0.6)
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
