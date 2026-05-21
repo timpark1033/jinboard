@@ -3909,3 +3909,154 @@
   .stat-compact-bar { height: 2.5px; }
 
   /* 레이더 차트는 SVG라 size prop으로 작아져야 하지만 컨테이너만 조정 */
+
+  /* ─────────────────────────────── */
+  /* ── Stage 11: 드림 카드 뷰/편집 분리 ── */
+  /* ─────────────────────────────── */
+
+  /* 뷰 모드 — 세련된 정보 카드 */
+  .dream-view {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .dream-view-name {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-1);
+    line-height: 1.2;
+  }
+  .dream-view-tier {
+    display: inline-block;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border-accent);
+    border-radius: 6px;
+    color: var(--accent);
+    width: fit-content;
+  }
+  .dream-view-amounts {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .dva-item {
+    flex: 1;
+    min-width: 0;
+  }
+  .dva-label {
+    font-size: 11px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .dva-val {
+    font-family: "Geist Mono", monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-1);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dva-val.accent { color: var(--accent); }
+  .dva-arrow {
+    font-size: 18px;
+    color: var(--text-4);
+    flex-shrink: 0;
+  }
+
+  .dream-view-prog {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dream-view-prog .dvp-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .dream-view-prog .dvp-bar > div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    border-radius: 4px;
+    transition: width 0.6s;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .dream-view-prog .dvp-pct {
+    font-family: "Geist Mono", monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 50px;
+    text-align: right;
+  }
+
+  /* 편집 모드 — 입력란 가로 확장 */
+  .dream-amount-input {
+    width: 160px !important;
+    text-align: right !important;
+    font-size: 14px !important;
+    font-family: "Geist Mono", monospace !important;
+    padding: 7px 10px !important;
+  }
+  .dream-fmt-hint {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-left: 6px;
+  }
+
+  /* 액션 버튼 (수정/저장/삭제) */
+  .dream-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    justify-content: flex-end;
+  }
+  .dream-act-btn {
+    padding: 8px 18px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: "Geist", sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid;
+  }
+  .dream-act-btn.save {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(139,92,246,0.3);
+  }
+  .dream-act-btn.save:hover {
+    background: #9d6dff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139,92,246,0.4);
+  }
+  .dream-act-btn.del {
+    background: transparent;
+    color: var(--red);
+    border-color: rgba(239,68,68,0.35);
+  }
+  .dream-act-btn.del:hover {
+    background: rgba(239,68,68,0.08);
+    border-color: var(--red);
+  }

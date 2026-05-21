@@ -205,6 +205,16 @@
       if (n >= 10000) return "₩" + Math.round(n / 10000).toLocaleString() + "만";
       return "₩" + (n || 0).toLocaleString();
     }
+    // 만원 단위 숫자 → "1억 1,000만원" 형식
+    function fmtManwon(num) {
+      const n = Number(num) || 0;
+      if (n <= 0) return "0원";
+      const eok = Math.floor(n / 10000);
+      const man = n % 10000;
+      if (eok > 0 && man > 0) return eok.toLocaleString() + "억 " + man.toLocaleString() + "만원";
+      if (eok > 0) return eok.toLocaleString() + "억원";
+      return man.toLocaleString() + "만원";
+    }
 
     /* 2026.05 기준 추천 모델 (Top 3) */
     const GEMINI_TEXT_MODELS = [
@@ -872,6 +882,8 @@
     function VisionTab({ vision, setVision, stats, setStats, dreams, setDreams, initialOpenDreamId, onDreamOpened }) {
       const [expandedStat, setExpandedStat] = useState(null);
       const [expandedDream, setExpandedDream] = useState(null);
+      const [editingDream, setEditingDream] = useState(null);
+      const [confirmDeleteId, setConfirmDeleteId] = useState(null);
       useEffect(() => {
         if (initialOpenDreamId) {
           setExpandedDream(initialOpenDreamId);
@@ -974,92 +986,165 @@
                     </div>
                   </div>
 
-                  {isOpen && (
-                    <div className="dream-expand">
-                      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
-                        <div className="dream-input-row">
-                          <label>이름</label>
-                          <input className="char-input" style={{ flex:1, textAlign:"left" }} value={d.name}
-                            onChange={e => updateDream(d.id, "name", e.target.value)} />
-                        </div>
-                        <div className="dream-input-row">
-                          <label>목표 금액</label>
-                          <input className="char-input dream-num-input" type="number" value={d.targetAmount}
-                            onChange={e => updateDream(d.id, "targetAmount", Number(e.target.value) || 0)} />
-                          <span className="dream-unit">{d.unit}</span>
-                        </div>
-                        <div className="dream-input-row">
-                          <label>현재 자산</label>
-                          <input className="char-input dream-num-input" type="number" value={d.currentAmount}
-                            onChange={e => updateDream(d.id, "currentAmount", Number(e.target.value) || 0)} />
-                          <span className="dream-unit">{d.unit}</span>
-                        </div>
-                        <div className="dream-input-row">
-                          <label>티어</label>
-                          <select className="char-input" style={{ flex: 1, textAlign: "left", fontSize: 12 }} value={d.tier || inferDreamTier(d)} onChange={e => updateDream(d.id, "tier", e.target.value)}>
-                            <option value="legend">👑 Legend · +5,000 XP</option>
-                            <option value="epic">💜 Epic · +2,500 XP</option>
-                            <option value="rare">💎 Rare · +1,000 XP</option>
-                            <option value="normal">⚪ Normal · +400 XP</option>
-                          </select>
-                        </div>
-                        <div className="dream-input-row">
-                          <label>이미지 URL</label>
-                          <input className="char-input" style={{ flex:1, textAlign:"left", fontSize: 12 }} value={d.imgUrl}
-                            onChange={e => updateDream(d.id, "imgUrl", e.target.value)} placeholder="https://... 또는 아래 버튼으로 업로드" />
-                        </div>
-                        <DreamImageActions dream={d} updateDream={updateDream} />
-                      </div>
+                  {isOpen && (() => {
+                    const isEdit = editingDream === d.id;
+                    const tier = d.tier || inferDreamTier(d);
+                    const tierLabel = { legend: "👑 LEGEND · +5,000 XP", epic: "💜 EPIC · +2,500 XP", rare: "💎 RARE · +1,000 XP", normal: "⚪ NORMAL · +400 XP" }[tier];
+                    return (
+                      <div className="dream-expand">
+                        {!isEdit ? (
+                          /* ── 뷰 모드 ── */
+                          <div className="dream-view">
+                            <div className="dream-view-name">{d.name}</div>
+                            <div className="dream-view-tier">{tierLabel}</div>
 
-                      <div className="dream-calc-grid">
-                        <div className="dream-calc-box">
-                          <div className="dream-calc-title">📊 이렇게 모으면</div>
-                          <div className="dream-slider-row">
-                            <span className="dream-slider-label">월 저축</span>
-                            <input type="range" className="dream-slider" min="10" max="5000" step="10" value={ms}
-                              onChange={e => updateCalc(d.id, "monthlySavings", e.target.value)} />
-                            <input className="char-input dream-num-input" type="number" value={ms}
-                              onChange={e => updateCalc(d.id, "monthlySavings", e.target.value)} />
-                            <span className="dream-unit">{d.unit}</span>
-                          </div>
-                          {needed <= 0 ? (
-                            <div className="dream-calc-result"><span className="dream-calc-big" style={{color:"var(--green)"}}>이미 달성! 🎉</span></div>
-                          ) : timeResult ? (
-                            <div className="dream-calc-result">
-                              <span className="dream-calc-big">{timeResult.y > 0 ? `${timeResult.y}년 ` : ""}{timeResult.m}개월 후</span>
-                              <span className="dream-calc-sub">{timeResult.gy}년 {timeResult.gm}월 달성 예상</span>
+                            <div className="dream-view-amounts">
+                              <div className="dva-item">
+                                <div className="dva-label">현재 자산</div>
+                                <div className="dva-val">{fmtManwon(d.currentAmount)}</div>
+                              </div>
+                              <div className="dva-arrow">→</div>
+                              <div className="dva-item">
+                                <div className="dva-label">목표 금액</div>
+                                <div className="dva-val accent">{fmtManwon(d.targetAmount)}</div>
+                              </div>
+                              <div className="dva-arrow"></div>
+                              <div className="dva-item">
+                                <div className="dva-label">남은 금액</div>
+                                <div className="dva-val">{fmtManwon(needed)}</div>
+                              </div>
                             </div>
-                          ) : (
-                            <div className="dream-calc-result"><span className="dream-calc-sub" style={{color:"var(--red)"}}>월 저축액을 입력하세요</span></div>
-                          )}
-                        </div>
 
-                        <div className="dream-calc-box">
-                          <div className="dream-calc-title">📅 기간으로 역산</div>
-                          <div className="dream-slider-row">
-                            <span className="dream-slider-label">목표 기간</span>
-                            <input type="range" className="dream-slider" min="1" max="30" step="1" value={ty}
-                              onChange={e => updateCalc(d.id, "targetYears", e.target.value)} />
-                            <input className="char-input dream-num-input" type="number" value={ty}
-                              onChange={e => updateCalc(d.id, "targetYears", e.target.value)} />
-                            <span className="dream-unit">년</span>
-                          </div>
-                          {needed <= 0 ? (
-                            <div className="dream-calc-result"><span className="dream-calc-big" style={{color:"var(--green)"}}>이미 달성! 🎉</span></div>
-                          ) : (
-                            <div className="dream-calc-result">
-                              <span className="dream-calc-big">월 {reqMonthly.toLocaleString()} {d.unit}</span>
-                              <span className="dream-calc-sub">필요 월 저축액</span>
+                            <div className="dream-view-prog">
+                              <div className="dvp-bar"><div style={{ width: pct + "%" }} /></div>
+                              <span className="dvp-pct">{pct}%</span>
                             </div>
-                          )}
-                        </div>
+
+                            <div className="dream-calc-grid">
+                              <div className="dream-calc-box">
+                                <div className="dream-calc-title">📊 월 저축 {ms.toLocaleString()}만원 → </div>
+                                {needed <= 0 ? (
+                                  <div className="dream-calc-result"><span className="dream-calc-big" style={{color:"var(--green)"}}>이미 달성! 🎉</span></div>
+                                ) : timeResult ? (
+                                  <div className="dream-calc-result">
+                                    <span className="dream-calc-big">{timeResult.y > 0 ? timeResult.y + "년 " : ""}{timeResult.m}개월 후</span>
+                                    <span className="dream-calc-sub">{timeResult.gy}년 {timeResult.gm}월 달성 예상</span>
+                                  </div>
+                                ) : (
+                                  <div className="dream-calc-result"><span className="dream-calc-sub" style={{color:"var(--red)"}}>월 저축액 미입력</span></div>
+                                )}
+                              </div>
+                              <div className="dream-calc-box">
+                                <div className="dream-calc-title">📅 {ty}년 안에 달성하려면</div>
+                                {needed <= 0 ? (
+                                  <div className="dream-calc-result"><span className="dream-calc-big" style={{color:"var(--green)"}}>이미 달성! 🎉</span></div>
+                                ) : (
+                                  <div className="dream-calc-result">
+                                    <span className="dream-calc-big">월 {reqMonthly.toLocaleString()}만원</span>
+                                    <span className="dream-calc-sub">필요 월 저축액</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="dream-actions">
+                              <button className="dream-act-btn save" onClick={() => setEditingDream(d.id)}>✏️ 수정</button>
+                              <button className="dream-act-btn del" onClick={() => setConfirmDeleteId(d.id)}>🗑 삭제</button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* ── 편집 모드 ── */
+                          <div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+                              <div className="dream-input-row">
+                                <label>이름</label>
+                                <input className="char-input" style={{ flex: 1, textAlign: "left" }} value={d.name}
+                                  onChange={e => updateDream(d.id, "name", e.target.value)} />
+                              </div>
+                              <div className="dream-input-row">
+                                <label>목표 금액</label>
+                                <input className="char-input dream-amount-input" type="number" value={d.targetAmount}
+                                  onChange={e => updateDream(d.id, "targetAmount", Number(e.target.value) || 0)} />
+                                <span className="dream-unit">만원</span>
+                                <span className="dream-fmt-hint">→ {fmtManwon(d.targetAmount)}</span>
+                              </div>
+                              <div className="dream-input-row">
+                                <label>현재 자산</label>
+                                <input className="char-input dream-amount-input" type="number" value={d.currentAmount}
+                                  onChange={e => updateDream(d.id, "currentAmount", Number(e.target.value) || 0)} />
+                                <span className="dream-unit">만원</span>
+                                <span className="dream-fmt-hint">→ {fmtManwon(d.currentAmount)}</span>
+                              </div>
+                              <div className="dream-input-row">
+                                <label>티어</label>
+                                <select className="char-input" style={{ flex: 1, textAlign: "left", fontSize: 13 }} value={tier} onChange={e => updateDream(d.id, "tier", e.target.value)}>
+                                  <option value="legend">👑 Legend · +5,000 XP</option>
+                                  <option value="epic">💜 Epic · +2,500 XP</option>
+                                  <option value="rare">💎 Rare · +1,000 XP</option>
+                                  <option value="normal">⚪ Normal · +400 XP</option>
+                                </select>
+                              </div>
+                              <div className="dream-input-row">
+                                <label>이미지 URL</label>
+                                <input className="char-input" style={{ flex: 1, textAlign: "left", fontSize: 12 }} value={d.imgUrl}
+                                  onChange={e => updateDream(d.id, "imgUrl", e.target.value)} placeholder="https://... 또는 아래 버튼" />
+                              </div>
+                              <DreamImageActions dream={d} updateDream={updateDream} />
+                            </div>
+
+                            <div className="dream-calc-grid">
+                              <div className="dream-calc-box">
+                                <div className="dream-calc-title">📊 이렇게 모으면</div>
+                                <div className="dream-slider-row">
+                                  <span className="dream-slider-label">월 저축</span>
+                                  <input type="range" className="dream-slider" min="10" max="5000" step="10" value={ms}
+                                    onChange={e => updateCalc(d.id, "monthlySavings", e.target.value)} />
+                                  <input className="char-input dream-num-input" type="number" value={ms}
+                                    onChange={e => updateCalc(d.id, "monthlySavings", e.target.value)} />
+                                  <span className="dream-unit">만원</span>
+                                </div>
+                                {needed <= 0 ? (
+                                  <div className="dream-calc-result"><span className="dream-calc-big" style={{color:"var(--green)"}}>이미 달성! 🎉</span></div>
+                                ) : timeResult ? (
+                                  <div className="dream-calc-result">
+                                    <span className="dream-calc-big">{timeResult.y > 0 ? timeResult.y + "년 " : ""}{timeResult.m}개월 후</span>
+                                    <span className="dream-calc-sub">{timeResult.gy}년 {timeResult.gm}월 달성 예상</span>
+                                  </div>
+                                ) : (
+                                  <div className="dream-calc-result"><span className="dream-calc-sub" style={{color:"var(--red)"}}>월 저축액을 입력하세요</span></div>
+                                )}
+                              </div>
+
+                              <div className="dream-calc-box">
+                                <div className="dream-calc-title">📅 기간으로 역산</div>
+                                <div className="dream-slider-row">
+                                  <span className="dream-slider-label">목표 기간</span>
+                                  <input type="range" className="dream-slider" min="1" max="30" step="1" value={ty}
+                                    onChange={e => updateCalc(d.id, "targetYears", e.target.value)} />
+                                  <input className="char-input dream-num-input" type="number" value={ty}
+                                    onChange={e => updateCalc(d.id, "targetYears", e.target.value)} />
+                                  <span className="dream-unit">년</span>
+                                </div>
+                                {needed <= 0 ? (
+                                  <div className="dream-calc-result"><span className="dream-calc-big" style={{color:"var(--green)"}}>이미 달성! 🎉</span></div>
+                                ) : (
+                                  <div className="dream-calc-result">
+                                    <span className="dream-calc-big">월 {reqMonthly.toLocaleString()}만원</span>
+                                    <span className="dream-calc-sub">필요 월 저축액</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="dream-actions">
+                              <button className="dream-act-btn save" onClick={() => setEditingDream(null)}>✓ 저장</button>
+                              <button className="dream-act-btn del" onClick={() => setConfirmDeleteId(d.id)}>🗑 삭제</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <button onClick={() => setDreams(prev => prev.filter(x => x.id !== d.id))}
-                        style={{ background: "transparent", border: "1px solid var(--red)", borderRadius: 6, color: "var(--red)", fontSize: 13, padding: "6px 14px", cursor: "pointer", fontFamily: "Geist, sans-serif", marginTop: 8 }}>
-                        드림 삭제
-                      </button>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -1067,6 +1152,35 @@
               <span className="plus">+</span>새 드림 추가하기
             </div>
           </div>
+
+          {/* 드림 삭제 확인 모달 */}
+          {confirmDeleteId && (() => {
+            const target = dreams.find(x => x.id === confirmDeleteId);
+            if (!target) return null;
+            return (
+              <div className="modal-overlay" onClick={() => setConfirmDeleteId(null)}>
+                <div className="modal-box" style={{ width: 420 }} onClick={(e) => e.stopPropagation()}>
+                  <div className="modal-head">
+                    <div className="modal-title">🗑 드림 삭제 확인</div>
+                    <button className="modal-close" onClick={() => setConfirmDeleteId(null)}>×</button>
+                  </div>
+                  <div className="modal-body">
+                    <div style={{ fontSize: 14, color: "var(--text-2)", lineHeight: 1.7 }}>
+                      <strong style={{ color: "var(--text-1)", fontSize: 15 }}>"{target.name}"</strong> 드림을 정말 삭제하시겠어요?<br />
+                      <span style={{ color: "var(--text-4)", fontSize: 12 }}>삭제 후 복구 불가합니다.</span>
+                    </div>
+                  </div>
+                  <div className="modal-foot">
+                    <button className="btn-cancel" onClick={() => setConfirmDeleteId(null)}>취소</button>
+                    <button onClick={() => { setDreams(prev => prev.filter(x => x.id !== confirmDeleteId)); setConfirmDeleteId(null); setExpandedDream(null); setEditingDream(null); }}
+                      style={{ background: "var(--red)", border: "none", color: "#fff", padding: "7px 18px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>
+                      🗑 삭제
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* 캐릭터 스탯 — 레이더 차트 + 컴팩트 리스트 */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
@@ -3158,6 +3272,8 @@
       const fileRef = useRef(null);
       const [busy, setBusy] = useState(false);
       const [error, setError] = useState("");
+      const [promptOpen, setPromptOpen] = useState(false);
+      const [aiPrompt, setAiPrompt] = useState("");
 
       const handleFile = async (e) => {
         const file = e.target.files?.[0];
@@ -3174,20 +3290,23 @@
         }
       };
 
-      const handleAi = async () => {
+      const runAi = async () => {
         const apiKey = loadLS("dreamboard_settings", {}).geminiKey || "";
         if (!apiKey) {
           setError("⚙️ 설정에서 Gemini API Key 먼저 입력하세요");
           setTimeout(() => setError(""), 3000);
           return;
         }
+        const promptText = aiPrompt.trim() || dream.name;
         try {
           setBusy(true); setError("");
-          const url = await geminiGenerateImage(apiKey, dream.name);
+          const url = await geminiGenerateImage(apiKey, promptText);
           updateDream(dream.id, "imgUrl", url);
+          setPromptOpen(false);
+          setAiPrompt("");
         } catch (err) {
           setError(err.message);
-          setTimeout(() => setError(""), 4000);
+          setTimeout(() => setError(""), 5000);
         } finally {
           setBusy(false);
         }
@@ -3200,11 +3319,32 @@
             <button className="dream-img-btn" disabled={busy} onClick={() => fileRef.current?.click()}>
               {busy ? "처리중..." : "📁 파일 업로드"}
             </button>
-            <button className="dream-img-btn ai" disabled={busy} onClick={handleAi}>
+            <button className="dream-img-btn ai" disabled={busy} onClick={() => { setPromptOpen(v => !v); if (!aiPrompt) setAiPrompt(dream.name); }}>
               ✨ AI 생성 (나노바나나2)
             </button>
           </div>
-          {error && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 6, padding: "4px 8px", background: "rgba(239,68,68,0.1)", borderRadius: 4 }}>{error}</div>}
+
+          {promptOpen && (
+            <div style={{ marginTop: 8, padding: 10, background: "var(--bg-2)", border: "1px solid var(--border-accent)", borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 6 }}>🎨 이미지 생성 프롬프트 (자유 입력)</div>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="예: 강남 한복판 고급 아파트, 일몰, 시네마틱"
+                rows="2"
+                style={{ width: "100%", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 5, color: "var(--text-1)", padding: 8, fontFamily: "Geist, sans-serif", fontSize: 12, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.5 }}
+              />
+              <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "flex-end" }}>
+                <button onClick={() => { setPromptOpen(false); setAiPrompt(""); }} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text-3)", fontSize: 11, padding: "5px 12px", borderRadius: 5, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>취소</button>
+                <button onClick={runAi} disabled={busy} style={{ background: "var(--accent)", border: "none", color: "#fff", fontSize: 11, padding: "5px 14px", borderRadius: 5, cursor: "pointer", fontFamily: "Geist, sans-serif", fontWeight: 600 }}>
+                  {busy ? "생성 중..." : "✨ 생성"}
+                </button>
+              </div>
+              <div style={{ fontSize: 10, color: "var(--text-4)", marginTop: 6 }}>비워두면 드림 이름 "{dream.name}" 사용</div>
+            </div>
+          )}
+
+          {error && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 6, padding: "6px 10px", background: "rgba(239,68,68,0.1)", borderRadius: 4, whiteSpace: "pre-line", lineHeight: 1.5 }}>{error}</div>}
         </>
       );
     }
