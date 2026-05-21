@@ -302,7 +302,9 @@
       gender: "male",
       expectedLifespan: 80.6,
       retireAge: 65,
-      dreamGalleryNameSize: 19
+      dreamGalleryNameSize: 19,
+      characterAvatarUrl: "",
+      characterName: ""
     };
 
     const INITIAL_RETROS = [
@@ -575,7 +577,7 @@
 
           {/* ZONE TOP: 듀얼 게이지 (1/3) + KPI 3개 (2/3) */}
           <div className="db2-top">
-            <div className="life-card">
+            <div className="life-card clickable" onClick={() => onOpenResources && onOpenResources()} title="클릭 → 자원·아이템 탭 (캐릭터 상세)">
               <div className="life-left">
                 <div className="card-title"><span className="dot-purple"/>⚔️ 캐릭터</div>
                 <div className="life-lv-circle">
@@ -619,7 +621,7 @@
                     <div style={{ fontSize: 32, marginBottom: 10 }}>📅</div>
                     <div style={{ fontSize: 13, marginBottom: 6 }}>설정에서 생년월일 입력 시</div>
                     <div style={{ fontSize: 12, color: "var(--text-4)" }}>인생 게이지가 표시됩니다</div>
-                    <button onClick={onOpenSettings} style={{ background: "transparent", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "6px 16px", borderRadius: 6, marginTop: 10, cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 12 }}>⚙ 설정 열기</button>
+                    <button onClick={(e) => { e.stopPropagation(); onOpenSettings && onOpenSettings(); }} style={{ background: "transparent", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "6px 16px", borderRadius: 6, marginTop: 10, cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 12 }}>⚙ 설정 열기</button>
                   </div>
                 )}
               </div>
@@ -3172,7 +3174,199 @@
     }
 
     /* ─── Stage 3: ResourcesItemsTab (실제 구현) ─── */
-    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings, finance, setFinance, onOpenFinance }) {
+    /* ─── CharacterHero (Concept B): 큰 아바타 + 6각형 레이더 ─── */
+    function CharacterHero({ stats, settings, setSettings, uid, onOpenStatModal, onOpenSettings }) {
+      const fileRef = useRef(null);
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState("");
+      const [promptOpen, setPromptOpen] = useState(false);
+      const [aiPrompt, setAiPrompt] = useState("");
+      const [editingName, setEditingName] = useState(false);
+
+      const totalLv = stats.reduce((a, s) => a + statLevel(getStatTotalXp(s)), 0);
+      const totalXp = stats.reduce((a, s) => a + getStatTotalXp(s), 0);
+      const maxXp = STAT_LEVEL_REQ[9] * 6;
+      const xpPct = Math.min(100, Math.round((totalXp / maxXp) * 100));
+
+      const life = calcLifeStats(settings?.birthDate, settings?.expectedLifespan, settings?.retireAge);
+      const avatarUrl = settings?.characterAvatarUrl || "";
+      const charName = settings?.characterName || "";
+
+      const setSetting = (key, value) => setSettings(prev => ({ ...prev, [key]: value }));
+
+      const handleFile = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          setBusy(true); setMsg("");
+          const dataUrl = await compressImage(file, 1200, 1200, 0.92);
+          const storageUrl = await uploadDreamImageToStorage(dataUrl, "char_" + (uid || "u"), uid);
+          setSetting("characterAvatarUrl", storageUrl || dataUrl);
+          setMsg(storageUrl ? "✓ Storage 업로드 완료" : "⚠ Storage 미활성 — base64 폴백");
+          setTimeout(() => setMsg(""), 3000);
+        } catch (err) {
+          setMsg("업로드 실패: " + err.message);
+        } finally {
+          setBusy(false);
+          if (fileRef.current) fileRef.current.value = "";
+        }
+      };
+
+      const runAi = async () => {
+        const apiKey = loadLS("dreamboard_settings", {}).geminiKey || settings?.geminiKey || "";
+        if (!apiKey) {
+          setMsg("⚙️ 설정에서 Gemini API Key 먼저 입력하세요");
+          setTimeout(() => setMsg(""), 3000);
+          return;
+        }
+        const promptText = aiPrompt.trim() || (charName ? charName + " RPG 캐릭터 초상화" : "RPG 게임 캐릭터 초상화, 판타지 스타일");
+        try {
+          setBusy(true); setMsg("");
+          const rawUrl = await geminiGenerateImage(apiKey, promptText, settings?.geminiImageModel);
+          const compressed = await compressDataUrl(rawUrl, 1024, 1024, 0.88);
+          const storageUrl = await uploadDreamImageToStorage(compressed, "char_" + (uid || "u"), uid);
+          setSetting("characterAvatarUrl", storageUrl || compressed);
+          setPromptOpen(false);
+          setAiPrompt("");
+          setMsg(storageUrl ? "✓ AI 생성 + Storage 업로드 완료" : "⚠ Storage 미활성 — base64 폴백");
+          setTimeout(() => setMsg(""), 3000);
+        } catch (err) {
+          setMsg(err.message);
+          setTimeout(() => setMsg(""), 5000);
+        } finally {
+          setBusy(false);
+        }
+      };
+
+      // 6각형 레이더 — 6 스탯
+      const orderedStats = ["youtube", "estate", "dev", "english", "health", "finance"]
+        .map(sid => stats.find(s => s.id === sid))
+        .filter(Boolean);
+      const r = 130; // 외곽 반지름
+      const pts = (factor) => orderedStats.map((s, i) => {
+        const angle = -Math.PI / 2 + (i * Math.PI * 2 / 6); // 위에서 시작
+        const lv = statLevel(getStatTotalXp(s));
+        const v = factor === 1 ? r : (factor === 0 ? 0 : (lv / 10) * r);
+        return [Math.cos(angle) * v, Math.sin(angle) * v];
+      });
+      const labelPos = (extra) => orderedStats.map((s, i) => {
+        const angle = -Math.PI / 2 + (i * Math.PI * 2 / 6);
+        return [Math.cos(angle) * (r + extra), Math.sin(angle) * (r + extra)];
+      });
+      const gridPolygon = (factor) => orderedStats.map((_, i) => {
+        const angle = -Math.PI / 2 + (i * Math.PI * 2 / 6);
+        return Math.cos(angle) * r * factor + "," + Math.sin(angle) * r * factor;
+      }).join(" ");
+      const dataPoints = pts("data");
+      const labels = labelPos(30);
+
+      return (
+        <div className="char-hero">
+          <div className="ch-avatar-block">
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+            <div className="ch-avatar" onClick={() => !busy && fileRef.current?.click()} title="클릭으로 파일 업로드">
+              {avatarUrl ? <img src={avatarUrl} alt="" /> : <span className="ch-avatar-placeholder">🦸</span>}
+              {busy && <div className="ch-busy">처리중...</div>}
+            </div>
+            <div className="ch-name-row">
+              {editingName ? (
+                <input
+                  autoFocus
+                  value={charName}
+                  onChange={(e) => setSetting("characterName", e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") setEditingName(false); }}
+                  onBlur={() => setEditingName(false)}
+                  placeholder="캐릭터 이름"
+                  className="ch-name-input"
+                />
+              ) : (
+                <div className="ch-name" onClick={() => setEditingName(true)}>{charName || "이름 없음"} <span className="ch-name-edit">✎</span></div>
+              )}
+            </div>
+            <div className="ch-lv">Lv.{totalLv}<span className="ch-lv-sub"> / 60</span></div>
+            <div className="ch-xp-bar"><div style={{ width: xpPct + "%" }} /></div>
+            <div className="ch-xp-txt">{totalXp.toLocaleString()} XP · 만렙까지 {xpPct}%</div>
+
+            <div className="ch-actions">
+              <button className="ch-btn" disabled={busy} onClick={() => fileRef.current?.click()}>📁 업로드</button>
+              <button className="ch-btn ai" disabled={busy} onClick={() => { setPromptOpen(v => !v); if (!aiPrompt) setAiPrompt(charName ? charName + " RPG 캐릭터 초상화" : ""); }}>✨ AI 생성</button>
+            </div>
+            {promptOpen && (
+              <div className="ch-prompt">
+                <input
+                  type="text"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="예: 슈트 입은 30대 남성, 사이버펑크 스타일"
+                  onKeyDown={(e) => { if (e.key === "Enter") runAi(); }}
+                />
+                <button className="ch-btn ai" disabled={busy} onClick={runAi}>{busy ? "생성중..." : "생성"}</button>
+              </div>
+            )}
+            {msg && <div className="ch-msg">{msg}</div>}
+
+            <div className="ch-edit-row">
+              <button className="ch-btn-link" onClick={onOpenStatModal}>✏ 스탯 수정</button>
+              <button className="ch-btn-link" onClick={onOpenSettings}>🕯️ 인생 설정</button>
+            </div>
+          </div>
+
+          <div className="ch-radar-block">
+            <div className="ch-radar-title">⚔️ 능력치 레이더</div>
+            <svg viewBox="-200 -180 400 360" className="ch-radar-svg">
+              <defs>
+                <linearGradient id="radarGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4"/>
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.4"/>
+                </linearGradient>
+              </defs>
+              {/* 6각형 가이드 (4단계) */}
+              {[0.25, 0.5, 0.75, 1].map(f => (
+                <polygon key={f} points={gridPolygon(f)} fill="none" stroke="var(--bg-3)" strokeWidth="1"/>
+              ))}
+              {/* 축선 */}
+              {orderedStats.map((s, i) => {
+                const [x, y] = pts(1)[i];
+                return <line key={i} x1="0" y1="0" x2={x} y2={y} stroke="var(--bg-3)" strokeWidth="1"/>;
+              })}
+              {/* 실제 데이터 다각형 */}
+              <polygon
+                points={dataPoints.map(p => p[0] + "," + p[1]).join(" ")}
+                fill="url(#radarGrad)"
+                stroke="var(--accent)"
+                strokeWidth="2"
+                style={{ filter: "drop-shadow(0 0 8px var(--accent-glow))" }}
+              />
+              {/* 꼭지점 표시 */}
+              {dataPoints.map((p, i) => (
+                <circle key={i} cx={p[0]} cy={p[1]} r="4" fill="var(--accent)" />
+              ))}
+              {/* 라벨 */}
+              {orderedStats.map((s, i) => {
+                const [lx, ly] = labels[i];
+                const anchor = Math.abs(lx) < 5 ? "middle" : (lx > 0 ? "start" : "end");
+                const lv = statLevel(getStatTotalXp(s));
+                return (
+                  <g key={s.id}>
+                    <text x={lx} y={ly - 4} textAnchor={anchor} fill="var(--text-2)" fontSize="13" fontWeight="600">{s.icon} {s.label}</text>
+                    <text x={lx} y={ly + 12} textAnchor={anchor} fill="var(--accent)" fontSize="12" fontWeight="700" fontFamily="Geist Mono, monospace">Lv.{lv}</text>
+                  </g>
+                );
+              })}
+            </svg>
+            {life && (
+              <div className="ch-life-strip">
+                <span>🕯️ <strong>{life.age}세</strong> / {settings.expectedLifespan}세</span>
+                <span style={{ color: "var(--text-3)" }}>· {Math.round(life.lifeProgress * 100)}% 살았음</span>
+                {life.inGolden && <span style={{ color: "var(--amber)", fontWeight: 700 }}>· ✨ 황금기 진행중</span>}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings, setSettings, finance, setFinance, onOpenFinance, onOpenStatModal, onOpenSettings, uid }) {
       const [selectedItem, setSelectedItem] = useState(null);
       const [filter, setFilter] = useState("all");
       const [editingAssetId, setEditingAssetId] = useState(null);
@@ -3254,6 +3448,7 @@
 
       return (
         <div className="panel-enter">
+          <CharacterHero stats={stats} settings={settings} setSettings={setSettings} uid={uid} onOpenStatModal={onOpenStatModal} onOpenSettings={onOpenSettings} />
           <div className="ri-split" style={{ gridTemplateColumns: "38% 20% 42%" }}>
             {/* LEFT: 재무관리 간소화 */}
             <div className="ri-col">
@@ -4285,9 +4480,12 @@
           {tab === "resources" && <ResourcesItemsTab
             items={items} setItems={setItems}
             resources={resources} setResources={setResources}
-            goals={goals} stats={stats} settings={settings}
+            goals={goals} stats={stats} settings={settings} setSettings={setSettings}
             finance={finance} setFinance={setFinance}
             onOpenFinance={() => setFinanceModalOpen(true)}
+            onOpenStatModal={() => setStatModalOpen(true)}
+            onOpenSettings={() => setSettingsOpen(true)}
+            uid={user?.uid}
           />}
           {tab === "vision" && <VisionTab vision={vision} setVision={setVision} stats={stats} setStats={setStats} dreams={dreams} setDreams={setDreams} initialOpenDreamId={dreamToOpen} onDreamOpened={() => setDreamToOpen(null)} uid={user?.uid} />}
 

@@ -4733,3 +4733,58 @@
 .gem-btn-cancel:hover { background: var(--bg-3); color: var(--text-1); }
 .gem-btn-save { background: var(--accent); color: #fff; border-color: var(--accent); }
 .gem-btn-save:hover { background: var(--accent-2); box-shadow: 0 0 16px var(--accent-glow); }
+
+/* ============================================================
+   CharacterHero (.char-hero) — 자원·아이템 탭 상단 캐릭터 시트
+   ============================================================ */
+.char-hero { display: grid; grid-template-columns: 280px 1fr; gap: 24px; background: linear-gradient(135deg, rgba(139,92,246,0.06), var(--bg-1)); border: 1px solid var(--border-accent); border-radius: 16px; padding: 24px; margin-bottom: 18px; }
+.ch-avatar-block { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ch-avatar { position: relative; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--accent-2), var(--accent)); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; box-shadow: 0 0 32px var(--accent-glow); border: 3px solid var(--accent); transition: transform 0.2s; }
+.ch-avatar:hover { transform: scale(1.02); }
+.ch-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ch-avatar-placeholder { font-size: 90px; }
+.ch-busy { position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+
+.ch-name-row { margin-top: 6px; min-height: 22px; }
+.ch-name { font-size: 16px; font-weight: 700; color: var(--text-1); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.ch-name:hover { color: var(--accent); }
+.ch-name-edit { font-size: 11px; color: var(--text-4); }
+.ch-name-input { background: var(--bg-2); border: 1px solid var(--accent); color: var(--text-1); border-radius: 6px; padding: 4px 8px; font-family: inherit; font-size: 14px; outline: none; text-align: center; max-width: 200px; }
+
+.ch-lv { font-family: "Geist Mono", monospace; font-size: 38px; font-weight: 800; color: var(--accent); letter-spacing: -0.04em; line-height: 1; margin-top: 4px; text-shadow: 0 0 16px var(--accent-glow); }
+.ch-lv-sub { font-size: 16px; color: var(--text-3); margin-left: 2px; }
+.ch-xp-bar { width: 100%; max-width: 220px; height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.ch-xp-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); box-shadow: 0 0 8px var(--accent-glow); border-radius: 3px; }
+.ch-xp-txt { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+.ch-actions { display: flex; gap: 8px; margin-top: 14px; width: 100%; max-width: 220px; }
+.ch-btn { flex: 1; background: var(--bg-2); border: 1px solid var(--border); color: var(--text-2); padding: 8px 12px; border-radius: 8px; font-family: inherit; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.ch-btn:hover:not(:disabled) { background: var(--bg-3); color: var(--text-1); border-color: var(--border-accent); }
+.ch-btn.ai { background: var(--accent-soft); color: var(--accent); border-color: var(--border-accent); }
+.ch-btn.ai:hover:not(:disabled) { background: rgba(139,92,246,0.18); }
+.ch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ch-prompt { display: flex; gap: 6px; margin-top: 8px; width: 100%; max-width: 220px; }
+.ch-prompt input { flex: 1; background: var(--bg-2); border: 1px solid var(--border); color: var(--text-1); border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 11px; outline: none; }
+.ch-prompt input:focus { border-color: var(--accent); }
+.ch-prompt .ch-btn { flex: 0 0 auto; padding: 6px 10px; font-size: 11px; }
+.ch-msg { margin-top: 8px; font-size: 11px; color: var(--text-3); font-family: "Geist Mono", monospace; text-align: center; }
+
+.ch-edit-row { display: flex; gap: 12px; margin-top: 14px; }
+.ch-btn-link { background: none; border: none; color: var(--text-3); font-family: inherit; font-size: 11.5px; cursor: pointer; padding: 4px 0; border-bottom: 1px solid var(--border); transition: color 0.15s; }
+.ch-btn-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+.ch-radar-block { display: flex; flex-direction: column; padding: 8px 0; }
+.ch-radar-title { font-size: 13px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 4px; }
+.ch-radar-svg { width: 100%; max-width: 520px; height: auto; margin: 0 auto; display: block; }
+.ch-life-strip { display: flex; gap: 10px; align-items: center; justify-content: center; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-2); margin-top: 6px; flex-wrap: wrap; }
+.ch-life-strip strong { color: var(--text-1); font-weight: 700; }
+
+@media (max-width: 1100px) {
+  .char-hero { grid-template-columns: 1fr; }
+  .ch-radar-svg { max-width: 400px; }
+}
+
+/* 대시보드 캐릭터 카드 클릭 가능 표시 */
+.life-card.clickable { cursor: pointer; transition: border-color 0.2s, transform 0.15s; }
+.life-card.clickable:hover { border-color: var(--accent); transform: translateY(-1px); }
