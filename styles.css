@@ -2745,8 +2745,19 @@
   .dream-strip-card .dsc-pct { font-size: 12px; }
   .dream-strip-card .dsc-bar { height: 3px; }
   .dream-strip-card .dsc-overlay {
-    padding: 12px 14px;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 35%);
+    padding: 10px 14px 12px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.7) 75px, transparent 100%);
+    backdrop-filter: blur(2px);
+  }
+  .dream-strip-card .dsc-name {
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  }
+  .dream-strip-card .dsc-pct {
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  }
+  .dream-strip-card .dsc-bar {
+    background: rgba(255,255,255,0.25);
   }
 
   /* 드림 티어 뱃지 */
