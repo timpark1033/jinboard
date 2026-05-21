@@ -505,21 +505,63 @@
                         <span className="pct">{computedProgress}%</span>
                       </div>
 
-                      {stages.length > 0 && (
-                        <div className="db-stage-sec">
-                          <div className="db-stage-sec-title">
-                            📍 단계 <span className="cnt">{doneStages}/{stages.length}</span>
-                          </div>
-                          {stages.map((m, i) => (
-                            <div key={m.id} className={"db-stage " + m.status} onClick={() => toggleStage && toggleStage(g.id, m.id)}>
-                              <span className="db-stage-num">{i + 1}</span>
-                              <span className="db-stage-icon">{m.status === 'done' ? '✓' : ''}</span>
-                              <span className="db-stage-name">{m.name}</span>
-                              <span className="db-stage-xp">+150</span>
+                      {stages.length > 0 && (() => {
+                        const allDone = stages.every(s => s.status === "done");
+                        const activeStage = stages.find(s => s.status === "active") || (!allDone ? stages.find(s => s.status === "todo") : null);
+                        const activeIdx = activeStage ? stages.indexOf(activeStage) : -1;
+                        return (
+                          <div className="db-stage-sec">
+                            {/* 가로 타임라인 */}
+                            <div className="stage-timeline-meta">
+                              <span>📍 단계 진행 <span className="pct">{doneStages}/{stages.length}</span></span>
+                              <span>{Math.round((doneStages / stages.length) * 100)}%</span>
                             </div>
-                          ))}
-                        </div>
-                      )}
+                            <div className="stage-timeline">
+                              {stages.map((m, i) => (
+                                <React.Fragment key={m.id}>
+                                  <div className={"stage-timeline-node " + m.status} onClick={() => toggleStage && toggleStage(g.id, m.id)} title={m.name}>
+                                    <div className="stage-timeline-dot">{m.status === "done" ? "✓" : ""}</div>
+                                    <div className="stage-timeline-label">{i + 1}. {m.name.length > 6 ? m.name.slice(0, 6) + "…" : m.name}</div>
+                                  </div>
+                                  {i < stages.length - 1 && (
+                                    <div className={"stage-timeline-connector" + (m.status === "done" ? " done" : "")} />
+                                  )}
+                                </React.Fragment>
+                              ))}
+                            </div>
+
+                            {/* 현재 단계 카드 */}
+                            <div className={"current-stage-card " + (allDone ? "all-done" : activeStage ? "" : "no-active")}>
+                              {allDone ? (
+                                <>
+                                  <div className="current-stage-head">🎉 모든 단계 완료</div>
+                                  <div className="current-stage-name">목표 달성! 보너스 +600 XP 수령</div>
+                                </>
+                              ) : activeStage ? (
+                                <>
+                                  <div className="current-stage-head">
+                                    <span>📍 STAGE {activeIdx + 1} · 진행중</span>
+                                    <span className="current-stage-meta">+150 XP</span>
+                                  </div>
+                                  <div className="current-stage-name">{activeStage.name}</div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="current-stage-head">대기중</div>
+                                  <div className="current-stage-name">단계를 시작하세요</div>
+                                </>
+                              )}
+                            </div>
+
+                            {!allDone && (
+                              <div className="stage-bonus-mini">
+                                <span>🎁 전체 완료 보너스</span>
+                                <span className="xp">+600 XP</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       <div className="db-stage-sec">
                         <div className="db-stage-sec-title">

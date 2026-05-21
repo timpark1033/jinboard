@@ -3083,3 +3083,171 @@
   }
 
   /* zone1-wrap 안에서 ResourceMini가 우측 상단 절대 위치 (변동 없음) */
+
+  /* ─────────────────────────────── */
+  /* ── Stage 6: 목표 단계 시각화 (A 조합) ── */
+  /* ─────────────────────────────── */
+
+  /* 가로 타임라인 */
+  .stage-timeline {
+    display: flex;
+    align-items: center;
+    padding: 10px 4px 4px;
+    margin-bottom: 8px;
+  }
+  .stage-timeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .stage-timeline-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-2);
+    border: 1.5px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    transition: all 0.2s;
+    position: relative;
+    z-index: 2;
+  }
+  .stage-timeline-node:hover .stage-timeline-dot {
+    transform: scale(1.15);
+    border-color: var(--accent);
+  }
+  .stage-timeline-node.done .stage-timeline-dot {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .stage-timeline-node.active .stage-timeline-dot {
+    background: rgba(245,158,11,0.25);
+    border-color: var(--amber);
+    box-shadow: 0 0 0 4px rgba(245,158,11,0.15);
+    animation: stagePulse 2s ease-in-out infinite;
+  }
+  @keyframes stagePulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(245,158,11,0.12); }
+    50% { box-shadow: 0 0 0 6px rgba(245,158,11,0.22); }
+  }
+  .stage-timeline-node.active .stage-timeline-dot::after {
+    content: "";
+    width: 7px; height: 7px;
+    background: var(--amber);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--amber);
+  }
+  .stage-timeline-label {
+    font-size: 9px;
+    color: var(--text-4);
+    margin-top: 5px;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stage-timeline-node.active .stage-timeline-label { color: var(--amber); font-weight: 600; }
+  .stage-timeline-node.done .stage-timeline-label { color: var(--text-3); }
+  .stage-timeline-connector {
+    flex: 1;
+    height: 2px;
+    background: var(--bg-3);
+    border-radius: 1px;
+    margin: 0 -2px;
+    margin-top: -14px;
+    z-index: 1;
+    position: relative;
+  }
+  .stage-timeline-connector.done {
+    background: var(--green);
+  }
+  .stage-timeline-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10.5px;
+    color: var(--text-3);
+    font-family: "Geist Mono", monospace;
+    padding: 0 4px 6px;
+  }
+  .stage-timeline-meta .pct { color: var(--accent); font-weight: 700; }
+
+  /* 현재 단계 카드 */
+  .current-stage-card {
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), var(--bg-2));
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 6px;
+  }
+  .current-stage-card.no-active {
+    background: var(--bg-2);
+    border-color: var(--border);
+  }
+  .current-stage-card.all-done {
+    background: linear-gradient(135deg, rgba(16,185,129,0.08), var(--bg-2));
+    border-color: rgba(16,185,129,0.3);
+  }
+  .current-stage-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .current-stage-card.all-done .current-stage-head { color: var(--green); }
+  .current-stage-card.no-active .current-stage-head { color: var(--text-4); }
+  .current-stage-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-1);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .current-stage-meta {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--accent);
+  }
+  .current-stage-tasks {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.06);
+  }
+  .current-stage-tasks-head {
+    font-size: 10px;
+    color: var(--text-4);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .stage-bonus-mini {
+    margin-top: 6px;
+    padding: 5px 10px;
+    background: rgba(139,92,246,0.06);
+    border: 1px dashed rgba(139,92,246,0.25);
+    border-radius: 5px;
+    font-size: 10.5px;
+    color: var(--text-3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stage-bonus-mini .xp {
+    font-family: "Geist Mono", monospace;
+    color: var(--accent);
+    font-weight: 700;
+  }
