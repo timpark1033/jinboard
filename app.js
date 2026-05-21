@@ -3076,15 +3076,21 @@
 
     /* Firebase Storage 업로드 — Storage 미활성화 시 null 반환(호출부에서 base64 폴백) */
     async function uploadDreamImageToStorage(dataUrl, dreamId, uid) {
-      if (!_storage || !uid) return null;
+      if (!_storage) { console.warn("[DreamImg] _storage 없음 — base64 폴백"); return null; }
+      if (!uid) { console.warn("[DreamImg] uid 없음 — base64 폴백"); return null; }
       try {
         const blob = await (await fetch(dataUrl)).blob();
         const safeId = (dreamId || "dream") + "_" + Date.now();
-        const ref = _storage.ref("dreams/" + uid + "/" + safeId + ".jpg");
+        const path = "dreams/" + uid + "/" + safeId + ".jpg";
+        console.log("[DreamImg] Storage 업로드 시도:", path, "(" + Math.round(blob.size / 1024) + "KB)");
+        const ref = _storage.ref(path);
         await ref.put(blob, { contentType: "image/jpeg" });
-        return await ref.getDownloadURL();
+        const url = await ref.getDownloadURL();
+        console.log("[DreamImg] ✓ Storage 업로드 성공 →", url.slice(0, 80) + "...");
+        return url;
       } catch (err) {
-        console.warn("Storage 업로드 실패 — base64 폴백:", err.message);
+        console.warn("[DreamImg] ✗ Storage 업로드 실패 — base64 폴백. 원인:", err.code || err.name, err.message);
+        console.warn("[DreamImg] → 해결: Firebase Console → Storage 활성화 + 규칙 설정 필요");
         return null;
       }
     }
@@ -3582,13 +3588,13 @@
         try {
           setBusy(true); setError("");
           const dataUrl = await compressImage(file, 1600, 1000, 0.92);
+          const dataKB = Math.round(dataUrl.length / 1024);
+          console.log("[DreamImg] 파일 압축 완료:", dataKB + "KB");
           // Storage 우선 → 실패 시 base64 폴백
           const storageUrl = await uploadDreamImageToStorage(dataUrl, dream.id, uid);
           updateDream(dream.id, "imgUrl", storageUrl || dataUrl);
-          if (storageUrl) {
-            setError("✓ Storage 업로드 완료");
-            setTimeout(() => setError(""), 2500);
-          }
+          setError(storageUrl ? "✓ Storage 업로드 완료" : "⚠ Storage 미활성 — base64 (" + dataKB + "KB) 폴백. Firestore 1MB 한계 주의");
+          setTimeout(() => setError(""), 5000);
         } catch (err) {
           setError("업로드 실패: " + err.message);
         } finally {
@@ -3612,12 +3618,13 @@
           const compressed = await compressDataUrl(rawUrl, 1280, 800, 0.88);
           const origKB = Math.round(rawUrl.length / 1024);
           const newKB = Math.round(compressed.length / 1024);
+          console.log("[DreamImg] AI 이미지 생성 완료:", origKB + "KB →", newKB + "KB");
           // Storage 우선 → 실패 시 base64 폴백
           const storageUrl = await uploadDreamImageToStorage(compressed, dream.id, uid);
           updateDream(dream.id, "imgUrl", storageUrl || compressed);
           setPromptOpen(false);
           setAiPrompt("");
-          setError(storageUrl ? "✓ Storage 업로드 완료" : ("✓ 저장 완료 (" + origKB + "KB → " + newKB + "KB 압축)"));
+          setError(storageUrl ? "✓ Storage 업로드 완료" : ("⚠ Storage 미활성 — base64 (" + newKB + "KB) 폴백"));
           setTimeout(() => setError(""), 3000);
         } catch (err) {
           setError(err.message);
