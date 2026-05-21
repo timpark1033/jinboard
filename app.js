@@ -2226,6 +2226,304 @@
     }
 
     /* ─── Stage 2: GoalsTasksRetroTab ─── */
+    /* ─── 분야별 업무 뷰 (6 스탯 × 컬럼) ─── */
+    function FieldTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, deleteTask, goalColor }) {
+      const STAT_ORDER = ["youtube", "estate", "dev", "english", "health", "finance"];
+      const grouped = STAT_ORDER.map(sid => {
+        const stat = stats.find(s => s.id === sid);
+        if (!stat) return null;
+        const matched = tasks.filter(t => resolveStatId(t, goals) === sid);
+        return { stat, tasks: matched };
+      }).filter(Boolean);
+      const unlinked = tasks.filter(t => !resolveStatId(t, goals));
+
+      return (
+        <div className="field-task-grid">
+          {grouped.map(({ stat, tasks: list }) => (
+            <div key={stat.id} className="field-task-col">
+              <div className="field-col-head">
+                <span className="field-col-name"><span className="ic">{stat.icon}</span>{stat.label}</span>
+                <span className="field-col-count">{list.filter(t => t.done).length}/{list.length}</span>
+              </div>
+              {list.length === 0 && <div className="field-col-empty">없음</div>}
+              {list.map(t => {
+                const g = t.goalId ? goals.find(x => x.id === t.goalId) : null;
+                return (
+                  <div key={t.id} className={"eq-task-row" + (t.done ? " done" : "")} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
+                    <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} />
+                    <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }}>{t.text}</span>
+                    <span className="qtag" style={{ background: "var(--bg-3)", color: "var(--text-3)" }}>Q{t.quadrant}</span>
+                    <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+          {unlinked.length > 0 && (
+            <div className="field-task-col" style={{ gridColumn: "1 / -1" }}>
+              <div className="field-col-head">
+                <span className="field-col-name">⚡ 미분류</span>
+                <span className="field-col-count">{unlinked.length}</span>
+              </div>
+              {unlinked.map(t => (
+                <div key={t.id} className={"eq-task-row" + (t.done ? " done" : "")}>
+                  <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} />
+                  <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }}>{t.text}</span>
+                  <span className="qtag">Q{t.quadrant}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ─── 주간 업무 뷰 (요일 그리드 + 일정/업무 + Google 연결 stub) ─── */
+    function WeeklyTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, goalColor, settings, setSettings }) {
+      const today = new Date();
+      const day = today.getDay() === 0 ? 6 : today.getDay() - 1; // 월=0
+      const monday = new Date(today); monday.setDate(today.getDate() - day);
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(monday); d.setDate(monday.getDate() + i);
+        return d;
+      });
+      const fmt = (d) => d.toISOString().slice(0, 10);
+      const dayLabels = ["월", "화", "수", "목", "금", "토", "일"];
+
+      const tasksByDate = (dateStr) => tasks.filter(t => t.dueDate === dateStr);
+      const schedules = settings?.schedules || [];
+      const schedulesByDate = (dateStr) => schedules.filter(s => s.date === dateStr);
+
+      const addSchedule = (dateStr) => {
+        const title = prompt("일정 제목 (시간 포함 가능, 예: 10:00 미팅):");
+        if (!title) return;
+        const id = "sch" + Date.now();
+        setSettings(p => ({ ...p, schedules: [...(p.schedules || []), { id, date: dateStr, title }] }));
+      };
+      const deleteSchedule = (id) => {
+        if (!confirm("일정을 삭제할까요?")) return;
+        setSettings(p => ({ ...p, schedules: (p.schedules || []).filter(s => s.id !== id) }));
+      };
+
+      return (
+        <div>
+          <div className="weekly-head">
+            <div style={{ fontSize: 13, color: "var(--text-3)", fontFamily: "Geist Mono, monospace" }}>📅 {fmt(monday).slice(5)} ~ {fmt(days[6]).slice(5)}</div>
+            <button className="gcal-connect-btn" onClick={() => alert("Google Calendar 연동 안내\n\n1. Google Cloud Console에서 OAuth 2.0 클라이언트 ID 생성\n2. Calendar API 활성화\n3. 클라이언트 ID를 설정에 입력\n4. '연결' 버튼 → 권한 허용\n\n(설정 후 양방향 동기 활성화. 현재는 자체 캘린더만 동작)")} title="Google Calendar 연동">🔗 Google 연동</button>
+          </div>
+          <div className="weekly-grid">
+            {days.map((d, idx) => {
+              const ds = fmt(d);
+              const isToday = ds === fmt(today);
+              const dayTasks = tasksByDate(ds);
+              const daySchedules = schedulesByDate(ds);
+              return (
+                <div key={ds} className={"weekly-day" + (isToday ? " today" : "")}>
+                  <div className="weekly-day-head">
+                    <span className="dlbl">{dayLabels[idx]}</span>
+                    <span className="dnum">{d.getDate()}</span>
+                  </div>
+                  <div className="weekly-day-body">
+                    {daySchedules.map(s => (
+                      <div key={s.id} className="weekly-sch" onClick={(e) => { e.stopPropagation(); if (confirm("'" + s.title + "' 삭제할까요?")) deleteSchedule(s.id); }}>
+                        📌 {s.title}
+                      </div>
+                    ))}
+                    {dayTasks.map(t => {
+                      const g = t.goalId ? goals.find(x => x.id === t.goalId) : null;
+                      return (
+                        <div key={t.id} className={"weekly-task" + (t.done ? " done" : "")} style={g ? { borderLeftColor: goalColor(g.id) } : null} onClick={() => setEditingTaskId(t.id)}>
+                          <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} />
+                          <span className="t">{t.text}</span>
+                          {g && <span className="meta">{g.name.slice(0, 4)}</span>}
+                        </div>
+                      );
+                    })}
+                    {daySchedules.length === 0 && dayTasks.length === 0 && (
+                      <div className="weekly-empty">비어있음</div>
+                    )}
+                    <button className="weekly-add" onClick={() => addSchedule(ds)}>+ 일정</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    /* ─── 집중모드 뷰 (포모도로 + 드래그 큐) ─── */
+    function FocusModeView({ tasks, goals, stats, toggleTask, settings, setSettings }) {
+      const POMO_WORK = 25 * 60;
+      const POMO_REST = 5 * 60;
+      const [seconds, setSeconds] = useState(POMO_WORK);
+      const [running, setRunning] = useState(false);
+      const [phase, setPhase] = useState("work"); // work | rest
+      const [completedPomos, setCompletedPomos] = useState(0);
+      const [currentTaskId, setCurrentTaskId] = useState(null);
+
+      const savedQueue = Array.isArray(settings?.focusQueue) ? settings.focusQueue : null;
+      // 큐: tasks 중 미완료 항목들. 사용자 저장 순서 우선, 그 외는 Q1>Q2>Q3>Q4 순
+      const queueIds = React.useMemo(() => {
+        const pending = tasks.filter(t => !t.done).map(t => t.id);
+        if (savedQueue && savedQueue.length > 0) {
+          const inSaved = savedQueue.filter(id => pending.includes(id));
+          const newones = pending.filter(id => !savedQueue.includes(id));
+          return [...inSaved, ...newones];
+        }
+        return [...pending].sort((a, b) => {
+          const ta = tasks.find(x => x.id === a);
+          const tb = tasks.find(x => x.id === b);
+          return (ta?.quadrant || 5) - (tb?.quadrant || 5);
+        });
+      }, [tasks, savedQueue]);
+
+      const queue = queueIds.map(id => tasks.find(t => t.id === id)).filter(Boolean);
+      const currentTask = currentTaskId ? tasks.find(t => t.id === currentTaskId) : queue[0];
+
+      const persistQueue = (newIds) => {
+        if (setSettings) setSettings(p => ({ ...p, focusQueue: newIds }));
+      };
+
+      // 타이머
+      React.useEffect(() => {
+        if (!running) return;
+        const t = setInterval(() => {
+          setSeconds(s => {
+            if (s <= 1) {
+              if (phase === "work") {
+                setCompletedPomos(c => c + 1);
+                setPhase("rest");
+                return POMO_REST;
+              } else {
+                setPhase("work");
+                return POMO_WORK;
+              }
+            }
+            return s - 1;
+          });
+        }, 1000);
+        return () => clearInterval(t);
+      }, [running, phase]);
+
+      const totalSec = phase === "work" ? POMO_WORK : POMO_REST;
+      const pct = ((totalSec - seconds) / totalSec) * 100;
+      const dash = 565;
+      const offset = dash * (1 - pct / 100);
+      const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const ss = String(seconds % 60).padStart(2, "0");
+
+      const reset = () => { setSeconds(phase === "work" ? POMO_WORK : POMO_REST); setRunning(false); };
+      const skipToNext = () => {
+        if (!currentTask) return;
+        const idx = queueIds.indexOf(currentTask.id);
+        if (idx >= 0 && idx < queueIds.length - 1) setCurrentTaskId(queueIds[idx + 1]);
+      };
+      const skipToPrev = () => {
+        if (!currentTask) return;
+        const idx = queueIds.indexOf(currentTask.id);
+        if (idx > 0) setCurrentTaskId(queueIds[idx - 1]);
+      };
+      const completeCurrent = () => {
+        if (currentTask) {
+          toggleTask(currentTask.id);
+          const idx = queueIds.indexOf(currentTask.id);
+          const next = queueIds[idx + 1];
+          if (next) setCurrentTaskId(next);
+        }
+      };
+
+      // 드래그 정렬
+      const [dragIdx, setDragIdx] = useState(null);
+      const [dragOverIdx, setDragOverIdx] = useState(null);
+      const onDragStart = (i) => () => setDragIdx(i);
+      const onDragOver = (i) => (e) => { e.preventDefault(); setDragOverIdx(i); };
+      const onDrop = (i) => (e) => {
+        e.preventDefault();
+        if (dragIdx === null || dragIdx === i) { setDragIdx(null); setDragOverIdx(null); return; }
+        const next = [...queueIds];
+        const [moved] = next.splice(dragIdx, 1);
+        next.splice(i, 0, moved);
+        persistQueue(next);
+        setDragIdx(null); setDragOverIdx(null);
+      };
+      const onDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
+
+      return (
+        <div className="focus-mode-view">
+          <div className="focus-current-box">
+            <div className="lbl">📍 현재 집중</div>
+            <div className="task">{currentTask ? currentTask.text : "큐가 비어있습니다"}</div>
+            {currentTask && currentTask.goalId && goals.find(g => g.id === currentTask.goalId) && (
+              <div className="goal-sub">📎 {goals.find(g => g.id === currentTask.goalId).name}</div>
+            )}
+          </div>
+
+          <div className="pomo-circle">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="pomoGradFM" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+              </defs>
+              <circle className="pomo-bg" cx="100" cy="100" r="90" />
+              <circle className={"pomo-fg" + (phase === "rest" ? " rest" : "")} cx="100" cy="100" r="90" strokeDasharray={dash} strokeDashoffset={offset} />
+            </svg>
+            <div className="pomo-time">
+              <div className="big">{mm}:{ss}</div>
+              <div className={"lbl " + phase}>{phase === "work" ? "WORK" : "REST"}</div>
+            </div>
+          </div>
+
+          <div className="pomo-controls">
+            <button className="pomo-btn" onClick={skipToPrev} title="이전 업무">⏮</button>
+            {!running
+              ? <button className="pomo-btn primary" onClick={() => setRunning(true)}>▶ 시작</button>
+              : <button className="pomo-btn primary" onClick={() => setRunning(false)}>⏸ 일시정지</button>}
+            <button className="pomo-btn" onClick={completeCurrent} disabled={!currentTask}>✓ 완료</button>
+            <button className="pomo-btn" onClick={skipToNext} title="다음 업무">⏭</button>
+            <button className="pomo-btn" onClick={reset}>↻ 초기화</button>
+          </div>
+
+          <div className="pomo-stats">
+            <span className="lbl">오늘 {completedPomos} 포모도로</span>
+            <div className="dots">
+              {Array.from({ length: 8 }, (_, i) => (
+                <div key={i} className={"pomo-dot" + (i < completedPomos ? " done" : "")} />
+              ))}
+            </div>
+          </div>
+
+          <div className="focus-queue-title">⚡ 업무 큐 ({queue.length}) — 드래그로 순서 변경</div>
+          <div className="focus-queue">
+            {queue.length === 0 && <div style={{ color: "var(--text-4)", padding: 14, textAlign: "center", fontStyle: "italic", fontSize: 12 }}>완료 안 된 업무가 없습니다</div>}
+            {queue.map((t, i) => {
+              const g = t.goalId ? goals.find(x => x.id === t.goalId) : null;
+              const isCurrent = currentTask?.id === t.id;
+              return (
+                <div
+                  key={t.id}
+                  draggable
+                  onDragStart={onDragStart(i)}
+                  onDragOver={onDragOver(i)}
+                  onDrop={onDrop(i)}
+                  onDragEnd={onDragEnd}
+                  onClick={() => setCurrentTaskId(t.id)}
+                  className={"focus-queue-task" + (isCurrent ? " current" : "") + (dragOverIdx === i ? " drag-over" : "") + (dragIdx === i ? " dragging" : "")}
+                >
+                  <span className="drag-grip">⋮⋮</span>
+                  <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} />
+                  <span className="t">{t.text}</span>
+                  <span className="meta">Q{t.quadrant}{g ? " · " + g.name.slice(0, 4) : ""}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
     function GoalsTasksRetroTab({
       goals, setGoals, addGoal, editGoal, deleteGoal, toggleStage, adjustQuestCount,
       tasks, toggleTask, addTask, editTask, deleteTask,
@@ -2241,6 +2539,9 @@
       });
       const [openGoalId, setOpenGoalId] = useState(null);
       const [editingGoalId, setEditingGoalId] = useState(null);
+      const savedTaskTab = (settings?.taskTab && ["eisen","weekly","field","focus"].includes(settings.taskTab)) ? settings.taskTab : "eisen";
+      const [taskTab, setTaskTab] = useState(savedTaskTab);
+      const persistTaskTab = (v) => { setTaskTab(v); if (setSettings) setSettings(p => ({ ...p, taskTab: v })); };
 
       /* ─── SVG 연결선 + 줌 ─── */
       const gtrRef = useRef(null);
@@ -2976,13 +3277,16 @@
 
             <div className="gtr-resize-handle" onMouseDown={startResize(0)} title="드래그로 폭 조절" />
 
-            {/* ── MIDDLE: TASKS 4분면 ── */}
+            {/* ── MIDDLE: TASKS (4탭) ── */}
             <div className="gtr-col tasks" style={{ zoom: gtrZoom }}>
-              <div className="gtr-col-head">
-                <div className="gtr-col-title">
-                  📋 업무 4분면 <span className="gtr-col-count">{tasks.length}</span>
+              <div className="gtr-col-head" style={{ flexWrap: "wrap" }}>
+                <div className="task-tabs-bar">
+                  <button className={"task-tab-btn" + (taskTab === "eisen" ? " active" : "")} onClick={() => persistTaskTab("eisen")}>📋 4분면<span className="cnt">{tasks.length}</span></button>
+                  <button className={"task-tab-btn" + (taskTab === "weekly" ? " active" : "")} onClick={() => persistTaskTab("weekly")}>📅 주간</button>
+                  <button className={"task-tab-btn" + (taskTab === "field" ? " active" : "")} onClick={() => persistTaskTab("field")}>⚔️ 분야별</button>
+                  <button className={"task-tab-btn" + (taskTab === "focus" ? " active" : "")} onClick={() => persistTaskTab("focus")}>🍅 집중</button>
                 </div>
-                <button className="gtr-btn-add" onClick={() => setShowAddTask((v) => !v)}>
+                <button className="gtr-btn-add" onClick={() => setShowAddTask((v) => !v)} style={{ marginLeft: "auto" }}>
                   {showAddTask ? "✕" : "+ 추가"}
                 </button>
               </div>
@@ -3028,7 +3332,7 @@
                 </div>
               )}
 
-              <div className="eisen-4">
+              {taskTab === "eisen" && <div className="eisen-4">
                 {QUADRANTS.map((q) => {
                   const qt = tasks.filter((t) => t.quadrant === q.id);
                   return (
@@ -3072,7 +3376,13 @@
                     </div>
                   );
                 })}
-              </div>
+              </div>}
+
+              {taskTab === "field" && <FieldTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} deleteTask={deleteTask} goalColor={goalColor} />}
+
+              {taskTab === "weekly" && <WeeklyTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} goalColor={goalColor} settings={settings} setSettings={setSettings} />}
+
+              {taskTab === "focus" && <FocusModeView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} settings={settings} setSettings={setSettings} />}
             </div>
 
             <div className="gtr-resize-handle" onMouseDown={startResize(1)} title="드래그로 폭 조절" />
@@ -5007,6 +5317,7 @@
                 </div>
                 <Tabs active={tab} onChange={setTab} />
                 <div className="topbar-right">
+                  <button className="focus-quick-btn" onClick={() => { setSettings(p => ({ ...p, taskTab: "focus" })); setTab("gtr"); }} title="집중모드 (포모도로) 바로 진입">🍅 집중</button>
                   <div className="player-bar">
                     <span className="pb-lv">Lv.{totalLv}</span>
                     <div className="pb-bar"><div className="pb-bar-fill" style={{ width: `${Math.min(100, (totalXp / maxXpAtLv60) * 100)}%` }} /></div>
