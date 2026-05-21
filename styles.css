@@ -2708,8 +2708,8 @@
   /* ── Stage 4: 1700px + 단계 시스템 ── */
   /* ─────────────────────────────── */
 
-  /* 1. 풀폭 (1920px 모니터 기준) */
-  .app { max-width: 1920px; }
+  /* 1. 풀폭 (1920~3840px 대응) */
+  .app { max-width: 3520px; }
 
   /* 2. 플레이어 스탯 게이지바 제거 */
   .db-side { width: 220px; }
@@ -4668,3 +4668,38 @@
 .kpi-big { position: relative; }
 .kpi-add-mini { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; background: var(--bg-3); border: 1px dashed var(--border-accent); color: var(--accent); font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; padding: 0; z-index: 3; transition: all 0.2s; }
 .kpi-add-mini:hover { background: var(--accent-soft); border-color: var(--accent); transform: scale(1.1); }
+
+/* ============================================================
+   4K (3840×2160) / Ultrawide 최적화
+   - >=2400px: 중간 단계 (큰 21:9 / 27" 4K @ 150% scale)
+   - >=3200px: 4K 네이티브 (>3200 = 실효 폭이 매우 넓음)
+   ============================================================ */
+@media (min-width: 2400px) {
+  .db2-kpi-stack { grid-template-columns: repeat(4, 1fr); }
+  .db2-goals-grid { grid-template-columns: repeat(5, 1fr); }
+  .db2-top { grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr); }
+  .kpi-val-huge { font-size: 54px; }
+  .big-ring { width: 190px; height: 190px; }
+  .big-ring .br-pct { font-size: 44px; }
+  .db2-goal-name { font-size: 20px; }
+  .dc2-card { min-height: 240px; }
+}
+
+@media (min-width: 3200px) {
+  .db2-kpi-stack { grid-template-columns: repeat(5, 1fr); }
+  .db2-goals-grid { grid-template-columns: repeat(6, 1fr); gap: 28px; }
+  .db2-top { grid-template-columns: minmax(0, 1fr) minmax(0, 3.2fr); gap: 18px; }
+  .kpi-val-huge { font-size: 62px; }
+  .kpi-big { min-height: 170px; padding: 18px 22px; }
+  .big-ring { width: 210px; height: 210px; }
+  .big-ring .br-pct { font-size: 48px; }
+  .db2-goal-name { font-size: 22px; margin-top: 18px; }
+  .db2-goal-meta { font-size: 13px; }
+  .dc2-card { min-height: 280px; }
+  .dc2-card .dc-name { font-size: calc(22px * var(--dc2-scale, 1)); }
+  .dc2-card .dc-pct { font-size: calc(16px * var(--dc2-scale, 1)); }
+  .life-card { padding: 16px 20px; }
+  .life-lv-circle { width: 96px; height: 96px; }
+  .life-lv-num { font-size: 32px; }
+  .db2-section-head { font-size: 16px; }
+}
