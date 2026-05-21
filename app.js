@@ -623,8 +623,12 @@
                 const isIconPicker = iconPickerId === c.id;
                 const isAsset = c.type === "asset";
                 const pct = isAsset && c.target > 0 ? Math.min(100, (c.value / c.target) * 100) : null;
+                const isLast = idx === summaryCards.length - 1;
                 return (
                   <div key={c.id} className="kpi-big" onContextMenu={onCardContext(c.id)}>
+                    {isLast && summaryCards.length < 4 && (
+                      <button onClick={(e) => { e.stopPropagation(); addCard(); }} className="kpi-add-mini" title="새 KPI 카드 추가">+</button>
+                    )}
                     <span className="ic-bg">{c.icon}</span>
                     <div className="kpi-lbl-row">
                       {isIconPicker ? (
@@ -666,9 +670,6 @@
                   </div>
                 );
               })}
-              {summaryCards.length < 4 && (
-                <button onClick={addCard} className="kpi-add-card" title="새 카드 추가">+</button>
-              )}
             </div>
           </div>
 
