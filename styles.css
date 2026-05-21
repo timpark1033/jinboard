@@ -33,7 +33,7 @@
     color: var(--text-1);
     font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-feature-settings: "cv11", "ss01", "ss03";
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -86,10 +86,10 @@
     border-right-color: transparent;
     border-bottom-color: transparent;
   }
-  .brand-name { font-size: 15px; }
+  .brand-name { font-size: 16px; }
   .date-pill {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-2);
     padding: 6px 10px;
     border: 1px solid var(--border);
@@ -124,7 +124,7 @@
     padding: 8px 16px;
     border-radius: 7px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: -0.005em;
     transition: color 0.18s ease;
@@ -141,7 +141,7 @@
   }
   .tab .tab-num {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-4);
     padding: 1px 5px;
     border: 1px solid var(--border);
@@ -184,7 +184,7 @@
     margin-bottom: 14px;
   }
   .card-title {
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 500;
     color: var(--text-3);
     letter-spacing: 0.02em;
@@ -223,7 +223,7 @@
     pointer-events: none;
   }
   .hero-eyebrow {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-3);
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -232,7 +232,7 @@
   }
   .hero-eyebrow .week-chip {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 10.5px;
+    font-size: 11.5px;
     padding: 2px 7px;
     border: 1px solid var(--border-accent);
     color: var(--accent);
@@ -242,7 +242,7 @@
     letter-spacing: 0;
   }
   .hero-number {
-    font-size: 72px;
+    font-size: 73px;
     font-weight: 600;
     letter-spacing: -0.04em;
     line-height: 1;
@@ -250,9 +250,9 @@
     display: flex; align-items: baseline; gap: 14px;
     font-feature-settings: "tnum";
   }
-  .hero-number .pct { font-size: 28px; color: var(--text-3); font-weight: 500; }
+  .hero-number .pct { font-size: 29px; color: var(--text-3); font-weight: 500; }
   .hero-number .delta {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--green);
     font-weight: 500;
     padding: 4px 9px;
@@ -263,7 +263,7 @@
   }
   .hero-sub {
     margin-top: 14px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-3);
   }
   .hero-bar {
@@ -286,7 +286,7 @@
   .hero-labels {
     margin-top: 10px;
     display: flex; justify-content: space-between;
-    font-size: 11px; color: var(--text-4);
+    font-size: 12px; color: var(--text-4);
     font-family: "Geist Mono", ui-monospace, monospace;
   }
 
@@ -308,15 +308,15 @@
     overflow: hidden;
   }
   .stat-label {
-    font-size: 12px; color: var(--text-3);
+    font-size: 13px; color: var(--text-3);
     letter-spacing: 0.02em; text-transform: uppercase;
   }
   .stat-value {
-    font-size: 28px; font-weight: 600;
+    font-size: 29px; font-weight: 600;
     letter-spacing: -0.02em;
     font-feature-settings: "tnum";
   }
-  .stat-value .unit { font-size: 14px; color: var(--text-3); margin-left: 4px; font-weight: 500; }
+  .stat-value .unit { font-size: 15px; color: var(--text-3); margin-left: 4px; font-weight: 500; }
   .stat-spark {
     height: 24px;
     display: flex; align-items: flex-end; gap: 3px;
@@ -363,7 +363,7 @@
   }
   .goal-meta { flex: 1; min-width: 0; }
   .goal-cat {
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-family: "Geist Mono", ui-monospace, monospace;
     color: var(--text-3);
     text-transform: uppercase;
@@ -371,7 +371,7 @@
     margin-bottom: 6px;
   }
   .goal-name {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     letter-spacing: -0.015em;
     color: var(--text-1);
@@ -397,11 +397,11 @@
   .ring-label {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 600;
+    font-size: 17px; font-weight: 600;
     letter-spacing: -0.02em;
     font-feature-settings: "tnum";
   }
-  .ring-label .pct { font-size: 9.5px; color: var(--text-3); margin-left: 1px; }
+  .ring-label .pct { font-size: 10.5px; color: var(--text-3); margin-left: 1px; }
 
   .milestone-current {
     margin-top: 16px;
@@ -409,7 +409,7 @@
     border-top: 1px dashed var(--border);
   }
   .milestone-label {
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-4);
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -427,7 +427,7 @@
     50% { opacity: 0.4; }
   }
   .milestone-name {
-    font-size: 13.5px;
+    font-size: 14.5px;
     font-weight: 500;
     color: var(--text-1);
     margin-bottom: 8px;
@@ -435,7 +435,7 @@
   }
   .milestone-name .kpi {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-2);
   }
   .mini-bar {
@@ -496,7 +496,7 @@
   }
   .check-text {
     flex: 1;
-    font-size: 13.5px;
+    font-size: 14.5px;
     color: var(--text-1);
     transition: color 0.18s ease, text-decoration-color 0.18s ease;
   }
@@ -506,7 +506,7 @@
     text-decoration-color: var(--text-4);
   }
   .check-tag {
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-family: "Geist Mono", ui-monospace, monospace;
     color: var(--text-3);
     padding: 2px 7px;
@@ -540,7 +540,7 @@
     margin-bottom: 8px;
   }
   .quad-label {
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -553,14 +553,14 @@
   .qdot.q4 { background: var(--text-4); }
   .quad-count {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-3);
   }
   .quad-tags {
     display: flex; flex-wrap: wrap; gap: 4px;
   }
   .qtag {
-    font-size: 11px;
+    font-size: 12px;
     padding: 2px 6px;
     border-radius: 4px;
     background: var(--bg-3);
@@ -575,11 +575,11 @@
     margin-bottom: 18px;
   }
   .section-title {
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 600;
     letter-spacing: -0.02em;
   }
-  .section-sub { color: var(--text-3); font-size: 13px; margin-top: 2px; }
+  .section-sub { color: var(--text-3); font-size: 14px; margin-top: 2px; }
   .btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 14px;
@@ -587,7 +587,7 @@
     color: white;
     border: 0;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: transform 0.1s ease, box-shadow 0.18s ease, background 0.18s ease;
@@ -635,14 +635,14 @@
   .goal-expand.open .chevron { transform: rotate(90deg); color: var(--accent); }
   .goal-expand-meta { min-width: 0; }
   .goal-expand-cat {
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-family: "Geist Mono", ui-monospace, monospace;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .goal-expand-name {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     letter-spacing: -0.01em;
     margin-top: 2px;
@@ -665,7 +665,7 @@
   }
   .goal-expand-progress .pct-num {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-1);
     min-width: 38px;
@@ -673,7 +673,7 @@
   }
   .goal-expand-counter {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--text-3);
     padding: 4px 9px;
     border: 1px solid var(--border);
@@ -752,13 +752,13 @@
     margin-bottom: 6px;
   }
   .ts-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--text-1);
   }
   .ts-item.done .ts-title { color: var(--text-3); }
   .ts-badge {
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-family: "Geist Mono", ui-monospace, monospace;
     padding: 2px 7px;
     border-radius: 4px;
@@ -792,14 +792,14 @@
     margin-bottom: 8px;
   }
   .kpi-label {
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
   .kpi-value {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 13.5px;
+    font-size: 14.5px;
     font-weight: 500;
     color: var(--text-1);
   }
@@ -831,7 +831,7 @@
     margin-bottom: 14px;
   }
   .cal-month {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     letter-spacing: -0.01em;
   }
@@ -856,7 +856,7 @@
   }
   .cal-head-cell {
     text-align: center;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-4);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -866,7 +866,7 @@
   .cal-cell {
     aspect-ratio: 1;
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-2);
     border-radius: 6px;
     cursor: pointer;
@@ -919,7 +919,7 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .eq-title {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-1);
     font-weight: 500;
     letter-spacing: -0.005em;
@@ -932,13 +932,13 @@
   .qd.q2 { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
   .qd.q3 { background: var(--amber); }
   .qd.q4 { background: var(--text-4); }
-  .eq-sub { font-size: 10.5px; color: var(--text-4); margin-top: 1px; }
+  .eq-sub { font-size: 11.5px; color: var(--text-4); margin-top: 1px; }
   .eq-tasks {
     display: flex; flex-direction: column; gap: 6px;
     flex: 1;
   }
   .eq-task {
-    font-size: 12.5px;
+    font-size: 13.5px;
     padding: 7px 10px;
     background: var(--bg-1);
     border: 1px solid var(--border);
@@ -960,12 +960,12 @@
   .eq-task .dot-gray { background: var(--text-4); }
   .eq-tag-mini {
     margin-left: auto;
-    font-size: 10px;
+    font-size: 11px;
     font-family: "Geist Mono", ui-monospace, monospace;
     color: var(--text-4);
   }
   .eq-empty {
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--text-4);
     font-style: italic;
     padding: 8px 0;
@@ -1005,7 +1005,7 @@
     transform: rotate(45deg);
   }
   .today-text {
-    font-size: 13.5px;
+    font-size: 14.5px;
     color: var(--text-1);
   }
   .today-row.done .today-text {
@@ -1013,7 +1013,7 @@
     text-decoration: line-through;
   }
   .today-quad-tag {
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-family: "Geist Mono", ui-monospace, monospace;
     color: var(--text-3);
     padding: 2px 7px;
@@ -1026,7 +1026,7 @@
   .today-quad-tag .qd { width: 5px; height: 5px; border-radius: 999px; }
   .today-time {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--text-3);
   }
 
@@ -1036,12 +1036,12 @@
     margin-top: 28px;
     padding: 12px 16px;
     color: var(--text-4);
-    font-size: 11.5px;
+    font-size: 12.5px;
     border-top: 1px solid var(--border);
   }
   .kbd {
     font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 10.5px;
+    font-size: 11.5px;
     padding: 2px 6px;
     background: var(--bg-2);
     border: 1px solid var(--border);
@@ -1059,11 +1059,11 @@
     transition: border-color 0.18s ease;
   }
   .smp:hover { border-color: var(--border-strong); }
-  .smp-icon { font-size: 18px; line-height: 1; }
+  .smp-icon { font-size: 19px; line-height: 1; }
   .smp-body { flex: 1; min-width: 0; }
   .smp-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
-  .smp-label { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
-  .smp-lv { font-family: "Geist Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; color: var(--accent); }
+  .smp-label { font-size: 11.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+  .smp-lv { font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px; font-weight: 600; color: var(--accent); }
   .smp-bar { height: 3px; background: var(--bg-3); border-radius: 999px; overflow: hidden; }
   .smp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 999px; transition: width 1s cubic-bezier(0.2,0.7,0.2,1); }
 
@@ -1075,14 +1075,14 @@
   .retro-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
   .retro-field { display: flex; flex-direction: column; gap: 8px; }
   .retro-field-label {
-    font-size: 11px; color: var(--text-3);
+    font-size: 12px; color: var(--text-3);
     text-transform: uppercase; letter-spacing: 0.05em;
     display: flex; align-items: center; gap: 6px;
   }
   .retro-textarea {
     background: var(--bg-2); border: 1px solid var(--border);
     border-radius: 8px; color: var(--text-1);
-    font-family: inherit; font-size: 13px; line-height: 1.6;
+    font-family: inherit; font-size: 14px; line-height: 1.6;
     padding: 12px; resize: vertical; min-height: 100px;
     transition: border-color 0.18s ease;
   }
@@ -1096,10 +1096,10 @@
   }
   .retro-card:hover { border-color: var(--border-strong); }
   .retro-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .retro-week-label { font-family: "Geist Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; color: var(--accent); }
+  .retro-week-label { font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px; font-weight: 600; color: var(--accent); }
   .retro-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  .retro-col-title { font-size: 10px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-  .retro-col-text { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+  .retro-col-title { font-size: 11px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .retro-col-text { font-size: 13.5px; color: var(--text-2); line-height: 1.5; }
 
   /* Vision tab */
   .vision-mission {
@@ -1109,12 +1109,12 @@
     margin-bottom: 20px; position: relative; overflow: hidden;
   }
   .vision-mission-label {
-    font-size: 11px; color: var(--text-3); text-transform: uppercase;
+    font-size: 12px; color: var(--text-3); text-transform: uppercase;
     letter-spacing: 0.06em; margin-bottom: 10px;
     display: flex; align-items: center; gap: 8px;
   }
   .vision-mission-input {
-    font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.4;
+    font-size: 21px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.4;
     color: var(--text-1); background: transparent; border: none;
     border-bottom: 1px dashed var(--border-accent);
     width: 100%; font-family: inherit; padding: 0 0 4px; outline: none;
@@ -1132,18 +1132,18 @@
     content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.5;
   }
-  .char-icon { font-size: 22px; margin-bottom: 8px; }
-  .char-label { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
-  .char-level { font-size: 38px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--text-1); font-feature-settings: "tnum"; }
-  .char-level-lbl { font-size: 9.5px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin: 4px 0 12px; font-family: "Geist Mono", ui-monospace, monospace; }
+  .char-icon { font-size: 23px; margin-bottom: 8px; }
+  .char-label { font-size: 11.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
+  .char-level { font-size: 39px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--text-1); font-feature-settings: "tnum"; }
+  .char-level-lbl { font-size: 10.5px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin: 4px 0 12px; font-family: "Geist Mono", ui-monospace, monospace; }
   .char-xp-bar { height: 4px; background: var(--bg-3); border-radius: 999px; overflow: hidden; margin-bottom: 5px; }
   .char-xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 999px; transition: width 1.2s cubic-bezier(0.2,0.7,0.2,1); }
-  .char-xp-text { font-family: "Geist Mono", ui-monospace, monospace; font-size: 10px; color: var(--text-4); }
-  .char-input-lbl { font-size: 10px; color: var(--text-4); margin: 10px 0 4px; }
+  .char-xp-text { font-family: "Geist Mono", ui-monospace, monospace; font-size: 11px; color: var(--text-4); }
+  .char-input-lbl { font-size: 11px; color: var(--text-4); margin: 10px 0 4px; }
   .char-input {
     width: 100%; text-align: center; background: var(--bg-2);
     border: 1px solid var(--border); border-radius: 6px; color: var(--text-1);
-    font-family: "Geist Mono", ui-monospace, monospace; font-size: 12px;
+    font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px;
     padding: 5px 8px; outline: none; transition: border-color 0.18s ease;
   }
   .char-input:focus { border-color: var(--border-accent); }
@@ -1153,14 +1153,14 @@
   .bigt-year::after { content: ""; position: absolute; right: 10px; top: 18px; bottom: 0; width: 1px; background: var(--border); }
   .bigt-year:last-child::after { display: none; }
   .bigt-year-label {
-    font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px; font-weight: 600;
+    font-family: "Geist Mono", ui-monospace, monospace; font-size: 14px; font-weight: 600;
     color: var(--text-3); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
   }
   .bigt-year.current .bigt-year-label { color: var(--accent); }
   .bigt-ydot { width: 8px; height: 8px; border-radius: 999px; background: var(--border); flex-shrink: 0; }
   .bigt-year.current .bigt-ydot { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
   .bigt-items { display: flex; flex-direction: column; gap: 6px; }
-  .bigt-item { font-size: 11.5px; padding: 5px 9px; border-radius: 5px; color: var(--text-2); border: 1px solid var(--border); background: var(--bg-2); }
+  .bigt-item { font-size: 12.5px; padding: 5px 9px; border-radius: 5px; color: var(--text-2); border: 1px solid var(--border); background: var(--bg-2); }
   .bigt-item.done { color: var(--text-4); text-decoration: line-through; }
   .bigt-item.active { color: var(--accent); border-color: var(--border-accent); background: var(--accent-soft); }
   .bigt-item.future { color: var(--text-3); border-style: dashed; background: transparent; }
@@ -1175,7 +1175,7 @@
     justify-content: center;
     cursor: pointer;
     color: var(--text-3);
-    font-size: 13.5px;
+    font-size: 14.5px;
     font-weight: 500;
     transition: all 0.2s ease;
   }
@@ -1189,7 +1189,7 @@
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: 999px;
     border: 1px solid currentColor;
-    font-size: 14px; line-height: 1;
+    font-size: 15px; line-height: 1;
   }
 
   /* Radar + stat panel */
@@ -1197,10 +1197,10 @@
   .stat-list { display: flex; flex-direction: column; gap: 3px; }
   .stat-compact-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; cursor: pointer; transition: background 0.15s; }
   .stat-compact-row:hover { background: var(--bg-hover); }
-  .stat-compact-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
-  .stat-compact-name { font-size: 13px; font-weight: 500; color: var(--text-1); min-width: 48px; }
-  .stat-compact-lv { font-family: "Geist Mono", ui-monospace, monospace; font-size: 12px; color: var(--text-3); white-space: nowrap; }
-  .stat-compact-lv strong { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .stat-compact-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+  .stat-compact-name { font-size: 14px; font-weight: 500; color: var(--text-1); min-width: 48px; }
+  .stat-compact-lv { font-family: "Geist Mono", ui-monospace, monospace; font-size: 13px; color: var(--text-3); white-space: nowrap; }
+  .stat-compact-lv strong { font-size: 16px; font-weight: 700; color: var(--accent); }
   .stat-compact-bar { flex: 1; height: 3px; background: var(--bg-3); border-radius: 999px; overflow: hidden; }
   .stat-compact-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 999px; transition: width 0.9s cubic-bezier(0.2,0.7,0.2,1); }
   .stat-expand-inline { margin: 0 10px 6px; padding: 12px 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; animation: bodyIn 0.22s ease; }
@@ -1210,14 +1210,14 @@
   .diablo-row { display: flex; align-items: center; gap: 14px; padding: 12px 18px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--border); }
   .diablo-row:last-of-type { border-bottom: none; }
   .diablo-row:hover { background: var(--bg-2); }
-  .diablo-icon { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
-  .diablo-name { font-size: 13.5px; font-weight: 500; color: var(--text-1); min-width: 60px; }
-  .diablo-desc { font-size: 11.5px; color: var(--text-4); flex: 1; }
+  .diablo-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+  .diablo-name { font-size: 14.5px; font-weight: 500; color: var(--text-1); min-width: 60px; }
+  .diablo-desc { font-size: 12.5px; color: var(--text-4); flex: 1; }
   .diablo-xp-mini { width: 80px; height: 3px; background: var(--bg-3); border-radius: 999px; overflow: hidden; }
   .diablo-xp-mini-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 999px; }
   .diablo-lv-wrap { display: flex; align-items: baseline; gap: 3px; }
-  .diablo-lv { font-family: "Geist Mono", ui-monospace, monospace; font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
-  .diablo-lv-lbl { font-family: "Geist Mono", ui-monospace, monospace; font-size: 9.5px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.06em; }
+  .diablo-lv { font-family: "Geist Mono", ui-monospace, monospace; font-size: 23px; font-weight: 700; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
+  .diablo-lv-lbl { font-family: "Geist Mono", ui-monospace, monospace; font-size: 10.5px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.06em; }
   .diablo-expand { padding: 16px 18px 18px; background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); animation: bodyIn 0.25s ease; }
 
   /* Dashboard stat + radar panel */
@@ -1225,7 +1225,7 @@
   .db-stat-list { display: flex; flex-direction: column; gap: 2px; }
 
   /* Streak dots */
-  .streak-dot { width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; cursor: pointer; transition: all 0.18s ease; user-select: none; flex-shrink: 0; }
+  .streak-dot { width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; cursor: pointer; transition: all 0.18s ease; user-select: none; flex-shrink: 0; }
   .streak-dot.done { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; box-shadow: 0 0 10px var(--accent-glow); }
   .streak-dot.today { border: 2px solid var(--accent); color: var(--accent); background: var(--accent-soft); }
   .streak-dot.past { background: var(--bg-2); color: var(--text-4); border: 1px solid var(--border); }
@@ -1236,16 +1236,16 @@
   .dream-mini-card { flex: 1; position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); min-height: 90px; transition: border-color 0.2s, transform 0.15s; }
   .dream-mini-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
   .dream-mini-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 10px 12px; pointer-events: none; }
-  .dream-mini-name { font-size: 12px; font-weight: 600; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.8); margin-bottom: 2px; }
-  .dream-mini-pct { font-family: "Geist Mono", ui-monospace, monospace; font-size: 11px; color: rgba(255,255,255,0.75); }
+  .dream-mini-name { font-size: 13px; font-weight: 600; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.8); margin-bottom: 2px; }
+  .dream-mini-pct { font-family: "Geist Mono", ui-monospace, monospace; font-size: 12px; color: rgba(255,255,255,0.75); }
 
   /* Today impact */
   .impact-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(139,92,246,0.06); border: 1px solid var(--border-accent); border-radius: var(--radius); margin-bottom: 20px; }
-  .impact-icon { font-size: 16px; flex-shrink: 0; }
+  .impact-icon { font-size: 17px; flex-shrink: 0; }
 
   /* Bottom 3 col */
   .bottom-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  .next-week-input { width: 100%; background: transparent; border: none; border-top: 1px dashed var(--border); color: var(--text-2); font-family: inherit; font-size: 13px; padding: 10px 14px; outline: none; margin-top: 6px; }
+  .next-week-input { width: 100%; background: transparent; border: none; border-top: 1px dashed var(--border); color: var(--text-2); font-family: inherit; font-size: 14px; padding: 10px 14px; outline: none; margin-top: 6px; }
   .next-week-input::placeholder { color: var(--text-4); }
   .next-week-input:focus { border-top-color: var(--border-accent); }
 
@@ -1257,39 +1257,39 @@
   .dream-img-wrap { position: relative; aspect-ratio: 16/9; overflow: hidden; background: var(--bg-2); cursor: pointer; }
   .dream-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: filter 1.5s ease; }
   .dream-img-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.22); pointer-events: none; }
-  .dream-pct-badge { font-family: "Geist Mono", ui-monospace, monospace; font-size: 26px; font-weight: 700; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.8); letter-spacing: -0.02em; }
+  .dream-pct-badge { font-family: "Geist Mono", ui-monospace, monospace; font-size: 27px; font-weight: 700; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.8); letter-spacing: -0.02em; }
   .dream-card-body { padding: 14px 16px; cursor: pointer; }
-  .dream-card-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
-  .dream-card-meta { display: flex; justify-content: space-between; font-family: "Geist Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--text-3); }
+  .dream-card-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .dream-card-meta { display: flex; justify-content: space-between; font-family: "Geist Mono", ui-monospace, monospace; font-size: 12.5px; color: var(--text-3); }
   .dream-expand { padding: 16px; border-top: 1px solid var(--border); background: linear-gradient(180deg, rgba(139,92,246,0.03), transparent), var(--bg-1); }
   .dream-input-row { display: flex; align-items: center; gap: 8px; }
-  .dream-input-row label { font-size: 11.5px; color: var(--text-3); min-width: 72px; }
-  .dream-unit { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+  .dream-input-row label { font-size: 12.5px; color: var(--text-3); min-width: 72px; }
+  .dream-unit { font-size: 12.5px; color: var(--text-3); white-space: nowrap; }
   .dream-calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
   .dream-calc-box { background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-  .dream-calc-title { font-size: 11.5px; color: var(--text-2); font-weight: 500; margin-bottom: 12px; }
+  .dream-calc-title { font-size: 12.5px; color: var(--text-2); font-weight: 500; margin-bottom: 12px; }
   .dream-slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-  .dream-slider-label { font-size: 11px; color: var(--text-3); white-space: nowrap; min-width: 50px; }
+  .dream-slider-label { font-size: 12px; color: var(--text-3); white-space: nowrap; min-width: 50px; }
   .dream-slider { -webkit-appearance: none; flex: 1; height: 4px; background: var(--bg-3); border-radius: 999px; outline: none; cursor: pointer; }
   .dream-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); cursor: pointer; }
   .dream-num-input { width: 68px !important; text-align: right !important; }
   .dream-calc-result { text-align: center; padding: 10px 0 2px; }
-  .dream-calc-big { display: block; font-family: "Geist Mono", ui-monospace, monospace; font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; margin-bottom: 4px; }
-  .dream-calc-sub { display: block; font-size: 11px; color: var(--text-4); }
+  .dream-calc-big { display: block; font-family: "Geist Mono", ui-monospace, monospace; font-size: 19px; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; margin-bottom: 4px; }
+  .dream-calc-sub { display: block; font-size: 12px; color: var(--text-4); }
 
   /* Edit form */
   .edit-form { background: var(--bg-2); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; animation: bodyIn 0.2s ease; }
-  .edit-form input, .edit-form select { background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; color: var(--text-1); font-family: Geist, sans-serif; font-size: 13px; padding: 7px 10px; width: 100%; box-sizing: border-box; outline: none; }
+  .edit-form input, .edit-form select { background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; color: var(--text-1); font-family: Geist, sans-serif; font-size: 14px; padding: 7px 10px; width: 100%; box-sizing: border-box; outline: none; }
   .edit-form input:focus, .edit-form select:focus { border-color: var(--accent); }
-  .edit-form label { font-size: 11px; color: var(--text-4); margin-bottom: 2px; display: block; }
+  .edit-form label { font-size: 12px; color: var(--text-4); margin-bottom: 2px; display: block; }
   .edit-form-row { display: flex; gap: 8px; }
   .edit-form-row > * { flex: 1; }
   .edit-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
-  .btn-save { background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 12px; font-weight: 600; padding: 7px 16px; cursor: pointer; font-family: Geist, sans-serif; }
-  .btn-cancel { background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; color: var(--text-3); font-size: 12px; padding: 7px 14px; cursor: pointer; font-family: Geist, sans-serif; }
-  .btn-del { background: transparent; border: none; color: var(--text-4); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; }
+  .btn-save { background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; font-weight: 600; padding: 7px 16px; cursor: pointer; font-family: Geist, sans-serif; }
+  .btn-cancel { background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; color: var(--text-3); font-size: 13px; padding: 7px 14px; cursor: pointer; font-family: Geist, sans-serif; }
+  .btn-del { background: transparent; border: none; color: var(--text-4); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
   .btn-del:hover { color: var(--red); background: rgba(239,68,68,0.08); }
-  .icon-edit { opacity: 0; transition: opacity 0.15s; cursor: pointer; color: var(--text-4); font-size: 12px; padding: 2px 6px; border-radius: 4px; background: transparent; border: none; }
+  .icon-edit { opacity: 0; transition: opacity 0.15s; cursor: pointer; color: var(--text-4); font-size: 13px; padding: 2px 6px; border-radius: 4px; background: transparent; border: none; }
   .icon-edit:hover { color: var(--accent); background: rgba(139,92,246,0.1); }
   .goal-expand:hover .icon-edit, .check-item:hover .icon-edit, .eq-task:hover .icon-edit { opacity: 1; }
 
@@ -1302,16 +1302,16 @@
   .dream-strip-card { position: relative; min-width: 190px; flex: 1; max-width: 280px; height: 100px; border-radius: 12px; overflow: hidden; cursor: default; flex-shrink: 0; border: 1px solid var(--border); }
   .dream-strip-card .dsc-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; }
   .dream-strip-card .dsc-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 10px 12px; }
-  .dream-strip-card .dsc-name { font-size: 12px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dream-strip-card .dsc-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dream-strip-card .dsc-bar { height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 5px; }
   .dream-strip-card .dsc-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
-  .dream-strip-card .dsc-pct { font-size: 11px; color: rgba(255,255,255,0.85); font-family: 'Geist Mono', monospace; margin-top: 3px; font-weight: 500; }
+  .dream-strip-card .dsc-pct { font-size: 12px; color: rgba(255,255,255,0.85); font-family: 'Geist Mono', monospace; margin-top: 3px; font-weight: 500; }
 
   /* ZONE 2: 달성률 헤더 */
   .db-header { display: flex; align-items: center; gap: 16px; padding: 8px 24px; background: var(--bg-0); border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .db-header-rate { display: flex; align-items: baseline; gap: 6px; }
-  .db-header-rate .big-num { font-size: 28px; font-weight: 700; color: var(--text-1); line-height: 1; font-family: 'Geist Mono', monospace; }
-  .db-header-rate .big-pct { font-size: 14px; color: var(--text-3); }
+  .db-header-rate .big-num { font-size: 29px; font-weight: 700; color: var(--text-1); line-height: 1; font-family: 'Geist Mono', monospace; }
+  .db-header-rate .big-pct { font-size: 15px; color: var(--text-3); }
   .db-header-bar { flex: 1; max-width: 200px; height: 4px; background: var(--bg-3); border-radius: 2px; }
   .db-header-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
   .db-header-divider { width: 1px; height: 20px; background: var(--border); }
@@ -1333,23 +1333,23 @@
   .db-zone3 { flex: 1; display: flex; gap: 1px; overflow: hidden; background: var(--border); }
   .db-goal-col { flex: 1; background: var(--bg-0); padding: 14px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; display: flex; flex-direction: column; gap: 8px; }
   .db-goal-col-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-  .db-goal-name { font-size: 13px; font-weight: 600; color: var(--text-1); line-height: 1.3; }
-  .db-goal-cat { font-size: 10px; color: var(--accent); font-weight: 500; margin-bottom: 2px; }
-  .db-goal-meta { display: flex; align-items: center; gap: 6px; font-size: 10.5px; font-family: 'Geist Mono', monospace; margin-top: 4px; }
+  .db-goal-name { font-size: 14px; font-weight: 600; color: var(--text-1); line-height: 1.3; }
+  .db-goal-cat { font-size: 11px; color: var(--accent); font-weight: 500; margin-bottom: 2px; }
+  .db-goal-meta { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-family: 'Geist Mono', monospace; margin-top: 4px; }
   .db-goal-stage { background: var(--bg-2); border-radius: 6px; padding: 6px 8px; }
-  .db-goal-stage-label { font-size: 10px; color: var(--text-4); margin-bottom: 3px; }
-  .db-goal-stage-name { font-size: 11.5px; color: var(--text-2); font-weight: 500; }
+  .db-goal-stage-label { font-size: 11px; color: var(--text-4); margin-bottom: 3px; }
+  .db-goal-stage-name { font-size: 12.5px; color: var(--text-2); font-weight: 500; }
   .db-goal-tasks { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
-  .db-goal-tasks-label { font-size: 10px; color: var(--text-4); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .db-goal-tasks-label { font-size: 11px; color: var(--text-4); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
   .db-zone4 { height: 200px; flex-shrink: 0; display: flex; border-top: 1px solid var(--border); }
   .db-zone4-col { flex: 1; padding: 10px 14px; border-right: 1px solid var(--border); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
   .db-zone4-col:last-child { border-right: none; }
-  .db-zone4-title { font-size: 11px; font-weight: 600; color: var(--text-3); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .db-zone4-title { font-size: 12px; font-weight: 600; color: var(--text-3); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 
   /* TOP 3 */
   .top3-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
-  .top3-num { font-size: 11px; font-weight: 700; color: var(--accent); font-family: 'Geist Mono', monospace; width: 14px; flex-shrink: 0; }
-  .top3-input { background: transparent; border: none; color: var(--text-1); font-family: Geist, sans-serif; font-size: 12px; flex: 1; outline: none; }
+  .top3-num { font-size: 12px; font-weight: 700; color: var(--accent); font-family: 'Geist Mono', monospace; width: 14px; flex-shrink: 0; }
+  .top3-input { background: transparent; border: none; color: var(--text-1); font-family: Geist, sans-serif; font-size: 13px; flex: 1; outline: none; }
   .top3-input::placeholder { color: var(--text-4); }
   .top3-done { text-decoration: line-through; color: var(--text-4); }
   .top3-check { width: 14px; height: 14px; border: 1px solid var(--border-strong); border-radius: 3px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -1357,28 +1357,28 @@
 
   /* 집중 모드 */
   .focus-overlay { position: fixed; inset: 0; background: var(--bg-0); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; font-family: Geist, sans-serif; }
-  .focus-context { font-size: 13px; color: var(--text-4); text-align: center; line-height: 2; }
+  .focus-context { font-size: 14px; color: var(--text-4); text-align: center; line-height: 2; }
   .focus-task-box { background: var(--bg-2); border: 1px solid var(--border-accent); border-radius: 16px; padding: 32px 48px; text-align: center; min-width: 400px; }
-  .focus-task-text { font-size: 22px; font-weight: 600; color: var(--text-1); line-height: 1.4; }
-  .focus-timer { font-size: 52px; font-weight: 700; color: var(--accent); font-family: 'Geist Mono', monospace; letter-spacing: -2px; }
-  .focus-timer-label { font-size: 12px; color: var(--text-4); margin-top: 4px; }
+  .focus-task-text { font-size: 23px; font-weight: 600; color: var(--text-1); line-height: 1.4; }
+  .focus-timer { font-size: 53px; font-weight: 700; color: var(--accent); font-family: 'Geist Mono', monospace; letter-spacing: -2px; }
+  .focus-timer-label { font-size: 13px; color: var(--text-4); margin-top: 4px; }
   .focus-btns { display: flex; gap: 12px; }
-  .focus-btn { background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text-2); font-size: 13px; padding: 10px 20px; cursor: pointer; font-family: Geist, sans-serif; }
+  .focus-btn { background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text-2); font-size: 14px; padding: 10px 20px; cursor: pointer; font-family: Geist, sans-serif; }
   .focus-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
   .focus-progress { display: flex; gap: 6px; align-items: center; }
   .focus-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-3); }
   .focus-dot.done { background: var(--accent); }
   .focus-dot.active { background: var(--text-1); }
-  .focus-exit { position: absolute; top: 24px; right: 24px; background: transparent; border: none; color: var(--text-4); font-size: 20px; cursor: pointer; }
+  .focus-exit { position: absolute; top: 24px; right: 24px; background: transparent; border: none; color: var(--text-4); font-size: 21px; cursor: pointer; }
 
   /* 회고 자동 요약 */
   .retro-summary { background: var(--bg-2); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 20px; }
-  .retro-summary-title { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .retro-summary-title { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
   .retro-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .retro-summary-item { background: var(--bg-3); border-radius: 6px; padding: 8px 10px; }
-  .retro-summary-item-label { font-size: 10px; color: var(--text-4); margin-bottom: 2px; }
-  .retro-summary-item-value { font-size: 14px; font-weight: 600; color: var(--text-1); font-family: 'Geist Mono', monospace; }
-  .retro-summary-item-sub { font-size: 10px; color: var(--text-3); margin-top: 1px; }
+  .retro-summary-item-label { font-size: 11px; color: var(--text-4); margin-bottom: 2px; }
+  .retro-summary-item-value { font-size: 15px; font-weight: 600; color: var(--text-1); font-family: 'Geist Mono', monospace; }
+  .retro-summary-item-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
 
   /* ─────────────────────────────── */
   /* ── Stage 1 additions ──         */
@@ -1393,11 +1393,11 @@
     border-radius: 999px;
     font-family: "Geist Mono", monospace;
   }
-  .player-bar .pb-lv { color: var(--accent); font-weight: 700; font-size: 13px; }
+  .player-bar .pb-lv { color: var(--accent); font-weight: 700; font-size: 14px; }
   .player-bar .pb-bar { width: 120px; height: 5px; background: var(--bg-3); border-radius: 3px; overflow: hidden; }
   .player-bar .pb-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 3px; transition: width 0.8s; box-shadow: 0 0 8px var(--accent-glow); }
-  .player-bar .pb-xp { color: var(--text-3); font-size: 10.5px; }
-  .player-bar .pb-streak { color: var(--amber); font-size: 11px; margin-left: 4px; }
+  .player-bar .pb-xp { color: var(--text-3); font-size: 11.5px; }
+  .player-bar .pb-streak { color: var(--amber); font-size: 12px; margin-left: 4px; }
 
   /* Settings gear */
   .gear-btn {
@@ -1408,7 +1408,7 @@
     display: flex; align-items: center; justify-content: center;
     color: var(--text-3);
     cursor: pointer;
-    font-size: 15px;
+    font-size: 16px;
     transition: all 0.25s;
   }
   .gear-btn:hover { background: var(--bg-3); color: var(--accent); border-color: var(--border-accent); transform: rotate(45deg); }
@@ -1426,7 +1426,7 @@
     border-radius: 8px;
     padding: 5px 12px;
     font-family: "Geist Mono", monospace;
-    font-size: 11px;
+    font-size: 12px;
     cursor: pointer;
     z-index: 10;
     backdrop-filter: blur(8px);
@@ -1434,7 +1434,7 @@
   }
   .resource-mini:hover { border-color: var(--border-accent); }
   .resource-mini-item { display: flex; align-items: center; gap: 4px; color: var(--text-1); }
-  .resource-mini-item .ic { font-size: 12px; opacity: 0.85; }
+  .resource-mini-item .ic { font-size: 13px; opacity: 0.85; }
   .resource-mini-item .val { font-weight: 600; }
   .resource-mini-item.positive .val { color: var(--green); }
   .resource-mini-item.negative .val { color: var(--red); }
@@ -1448,7 +1448,7 @@
     padding: 12px 14px;
     min-width: 240px;
     font-family: "Geist", sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-1);
     box-shadow: 0 12px 28px rgba(0,0,0,0.6);
     z-index: 100;
@@ -1459,7 +1459,7 @@
   .rmt-value.green { color: var(--green); }
   .rmt-value.red { color: var(--red); }
   .rmt-divider { height: 1px; background: var(--border); margin: 6px 0; }
-  .rmt-hint { font-size: 10px; color: var(--text-4); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); text-align: center; }
+  .rmt-hint { font-size: 11px; color: var(--text-4); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); text-align: center; }
 
   /* Stat panel head */
   .stat-panel-head {
@@ -1469,15 +1469,15 @@
     margin-bottom: 6px;
   }
   .stat-panel-head .who {
-    font-size: 11px; color: var(--text-1); font-weight: 600;
+    font-size: 12px; color: var(--text-1); font-weight: 600;
     display: flex; align-items: center; gap: 5px;
   }
-  .stat-panel-head .who .ic { font-size: 12px; }
+  .stat-panel-head .who .ic { font-size: 13px; }
   .stat-panel-head .all-lv {
     font-family: "Geist Mono", monospace;
-    font-size: 10.5px; color: var(--text-3);
+    font-size: 11.5px; color: var(--text-3);
   }
-  .stat-panel-head .all-lv strong { color: var(--accent); font-size: 13px; font-weight: 700; }
+  .stat-panel-head .all-lv strong { color: var(--accent); font-size: 14px; font-weight: 700; }
 
   /* Stat 2-col grid */
   .stat-2col {
@@ -1500,16 +1500,16 @@
     gap: 4px;
   }
   .stat-2col-name {
-    font-size: 11px; color: var(--text-1); font-weight: 500;
+    font-size: 12px; color: var(--text-1); font-weight: 500;
     display: flex; align-items: center; gap: 4px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .stat-2col-name .ic { font-size: 11px; }
+  .stat-2col-name .ic { font-size: 12px; }
   .stat-2col-lv {
     font-family: "Geist Mono", monospace;
-    font-size: 10px; color: var(--text-4); flex-shrink: 0;
+    font-size: 11px; color: var(--text-4); flex-shrink: 0;
   }
-  .stat-2col-lv strong { color: var(--accent); font-weight: 700; font-size: 11px; }
+  .stat-2col-lv strong { color: var(--accent); font-weight: 700; font-size: 12px; }
   .stat-2col-bar {
     height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden;
   }
@@ -1526,7 +1526,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text-2);
-    font-size: 10.5px;
+    font-size: 11.5px;
     padding: 6px 0;
     cursor: pointer;
     font-family: "Geist", sans-serif;
@@ -1571,13 +1571,13 @@
     z-index: 1;
   }
   .modal-title {
-    font-size: 15px; font-weight: 600; color: var(--text-1);
+    font-size: 16px; font-weight: 600; color: var(--text-1);
     display: flex; align-items: center; gap: 8px;
     letter-spacing: -0.01em;
   }
   .modal-close {
     background: transparent; border: none;
-    color: var(--text-4); font-size: 22px;
+    color: var(--text-4); font-size: 23px;
     cursor: pointer; padding: 0 8px;
     border-radius: 4px;
     line-height: 1;
@@ -1613,15 +1613,15 @@
   }
   .sdc-name {
     display: flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600; color: var(--text-1);
+    font-size: 14px; font-weight: 600; color: var(--text-1);
   }
-  .sdc-name .ic { font-size: 17px; }
+  .sdc-name .ic { font-size: 18px; }
   .sdc-lv {
-    font-family: "Geist Mono", monospace; font-size: 12px; color: var(--text-3);
+    font-family: "Geist Mono", monospace; font-size: 13px; color: var(--text-3);
   }
-  .sdc-lv strong { color: var(--accent); font-size: 19px; font-weight: 700; }
+  .sdc-lv strong { color: var(--accent); font-size: 20px; font-weight: 700; }
   .sdc-title {
-    font-size: 10.5px; color: var(--accent);
+    font-size: 11.5px; color: var(--accent);
     text-transform: uppercase; letter-spacing: 0.04em;
     margin-bottom: 10px;
     font-style: italic;
@@ -1629,7 +1629,7 @@
   .sdc-xp {
     display: flex; justify-content: space-between;
     font-family: "Geist Mono", monospace;
-    font-size: 10.5px; color: var(--text-3);
+    font-size: 11.5px; color: var(--text-3);
     margin-bottom: 5px;
   }
   .sdc-bar {
@@ -1654,7 +1654,7 @@
   }
   .stat-edit-row input {
     background: var(--bg-3); border: 1px solid var(--border); border-radius: 5px;
-    color: var(--text-1); font-family: "Geist", sans-serif; font-size: 12px;
+    color: var(--text-1); font-family: "Geist", sans-serif; font-size: 13px;
     padding: 5px 8px; outline: none; min-width: 0; width: 100%; box-sizing: border-box;
   }
   .stat-edit-row input:focus { border-color: var(--accent); }
@@ -1666,11 +1666,11 @@
     border: 1px solid var(--border-accent);
     border-radius: 10px;
     text-align: center;
-    font-size: 12px; color: var(--text-2);
+    font-size: 13px; color: var(--text-2);
   }
   .sum-level-box .sl-big {
     font-family: "Geist Mono", monospace;
-    font-size: 24px; font-weight: 700;
+    font-size: 25px; font-weight: 700;
     color: var(--accent);
     display: block;
     margin-bottom: 4px;
@@ -1680,7 +1680,7 @@
   .guide-section { margin-bottom: 20px; }
   .guide-section:last-child { margin-bottom: 0; }
   .guide-section-title {
-    font-size: 12px; font-weight: 600; color: var(--text-1);
+    font-size: 13px; font-weight: 600; color: var(--text-1);
     margin-bottom: 10px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
@@ -1688,14 +1688,14 @@
   }
   .guide-table {
     width: 100%;
-    font-size: 12px;
+    font-size: 13px;
     border-collapse: separate;
     border-spacing: 0;
   }
   .guide-table th {
     text-align: left;
     padding: 7px 10px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1708,11 +1708,11 @@
     border-bottom: 1px solid var(--border);
     color: var(--text-2);
     font-family: "Geist Mono", monospace;
-    font-size: 11.5px;
+    font-size: 12.5px;
   }
   .guide-table tr.lv-cur { background: var(--accent-soft); }
   .guide-table tr.lv-cur td { color: var(--text-1); font-weight: 500; }
-  .guide-table .lv-num strong { color: var(--accent); font-weight: 700; font-size: 13px; }
+  .guide-table .lv-num strong { color: var(--accent); font-weight: 700; font-size: 14px; }
   .guide-table .lv-max { color: var(--green); font-weight: 600; }
 
   .guide-note {
@@ -1720,7 +1720,7 @@
     background: var(--accent-soft);
     border: 1px solid var(--border-accent);
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-2);
     line-height: 1.6;
     margin-top: 10px;
@@ -1730,7 +1730,7 @@
   .settings-section { margin-bottom: 22px; }
   .settings-section:last-child { margin-bottom: 0; }
   .settings-section-title {
-    font-size: 11px; color: var(--text-3); font-weight: 600;
+    font-size: 12px; color: var(--text-3); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.05em;
     margin-bottom: 10px;
     display: flex; align-items: center; gap: 6px;
@@ -1739,20 +1739,20 @@
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 10px;
   }
-  .settings-field label { font-size: 12px; color: var(--text-2); min-width: 120px; }
+  .settings-field label { font-size: 13px; color: var(--text-2); min-width: 120px; }
   .settings-field input {
     flex: 1;
     background: var(--bg-2);
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text-1);
-    font-family: "Geist", sans-serif; font-size: 12px;
+    font-family: "Geist", sans-serif; font-size: 13px;
     padding: 6px 10px;
     outline: none;
   }
   .settings-field input:focus { border-color: var(--accent); }
   .settings-field input[type="number"] { max-width: 100px; flex: none; font-family: "Geist Mono", monospace; text-align: right; }
-  .settings-hint { font-size: 10.5px; color: var(--text-4); padding-left: 130px; }
+  .settings-hint { font-size: 11.5px; color: var(--text-4); padding-left: 130px; }
 
   /* Override db-side */
   .db-side {
@@ -1798,14 +1798,14 @@
     flex-shrink: 0;
   }
   .gtr-col-title {
-    font-size: 13px; font-weight: 600;
+    font-size: 14px; font-weight: 600;
     color: var(--text-1);
     display: flex; align-items: center; gap: 6px;
     letter-spacing: -0.01em;
   }
   .gtr-col-count {
     font-family: "Geist Mono", monospace;
-    font-size: 10.5px; color: var(--text-3);
+    font-size: 11.5px; color: var(--text-3);
     padding: 2px 7px;
     background: var(--bg-2);
     border: 1px solid var(--border);
@@ -1816,7 +1816,7 @@
     border: none;
     border-radius: 6px;
     color: white;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     padding: 5px 11px;
     cursor: pointer;
@@ -1850,13 +1850,13 @@
   }
   .gmini-meta { flex: 1; min-width: 0; }
   .gmini-cat {
-    font-size: 9.5px; color: var(--accent);
+    font-size: 10.5px; color: var(--accent);
     font-family: "Geist Mono", monospace;
     text-transform: uppercase; letter-spacing: 0.05em;
     margin-bottom: 2px;
   }
   .gmini-name {
-    font-size: 12.5px; font-weight: 600;
+    font-size: 13.5px; font-weight: 600;
     color: var(--text-1);
     line-height: 1.3;
     white-space: nowrap;
@@ -1865,7 +1865,7 @@
   }
   .gmini-dday {
     font-family: "Geist Mono", monospace;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     flex-shrink: 0;
     margin-top: 2px;
@@ -1875,11 +1875,11 @@
   .gmini-prog { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
   .gmini-prog .bar { flex: 1; height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
   .gmini-prog .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); border-radius: 2px; transition: width 0.5s; }
-  .gmini-prog .pct { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--text-2); font-weight: 600; min-width: 32px; text-align: right; }
+  .gmini-prog .pct { font-family: "Geist Mono", monospace; font-size: 12px; color: var(--text-2); font-weight: 600; min-width: 32px; text-align: right; }
 
   .gmini-foot {
     display: flex; justify-content: space-between; align-items: center;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-4);
     margin-top: 4px;
   }
@@ -1890,12 +1890,12 @@
     border: 1px solid var(--border);
     border-radius: 3px;
     font-family: "Geist Mono", monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     color: var(--text-2);
   }
   .gmini-task-count {
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-3);
   }
 
@@ -1907,7 +1907,7 @@
   }
   .gmini-expand-task {
     display: flex; align-items: center; gap: 6px;
-    font-size: 11.5px;
+    font-size: 12.5px;
     padding: 4px 0;
     color: var(--text-2);
   }
@@ -1936,7 +1936,7 @@
   .gmini-expand-task .qtag {
     margin-left: auto;
     font-family: "Geist Mono", monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     padding: 1px 5px;
     background: var(--bg-2);
     border-radius: 3px;
@@ -1954,7 +1954,7 @@
     border: 1px solid var(--border);
     border-radius: 5px;
     color: var(--text-3);
-    font-size: 10.5px;
+    font-size: 11.5px;
     padding: 5px 0;
     cursor: pointer;
     font-family: "Geist", sans-serif;
@@ -1970,7 +1970,7 @@
     border-top: 2px dashed var(--border);
   }
   .unlinked-section-title {
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1984,7 +1984,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     margin-bottom: 5px;
-    font-size: 11.5px;
+    font-size: 12.5px;
     cursor: pointer;
     transition: background 0.15s;
   }
@@ -2013,7 +2013,7 @@
   .unlinked-task .qtag {
     margin-left: auto;
     font-family: "Geist Mono", monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     color: var(--text-3);
   }
 
@@ -2036,7 +2036,7 @@
   }
   .eq-cell-head {
     display: flex; align-items: center; justify-content: space-between;
-    font-size: 11px;
+    font-size: 12px;
     margin-bottom: 8px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
@@ -2044,7 +2044,7 @@
   }
   .eq-cell-title { display: flex; align-items: center; gap: 6px; font-weight: 600; }
   .eq-cell-title .qd { width: 7px; height: 7px; border-radius: 999px; }
-  .eq-cell-count { font-family: "Geist Mono", monospace; font-size: 10px; color: var(--text-4); }
+  .eq-cell-count { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--text-4); }
   .eq-cell-body {
     flex: 1; overflow-y: auto;
     display: flex; flex-direction: column;
@@ -2057,7 +2057,7 @@
     background: var(--bg-2);
     border: 1px solid var(--border);
     border-radius: 5px;
-    font-size: 11.5px;
+    font-size: 12.5px;
     cursor: pointer;
     transition: all 0.15s;
   }
@@ -2084,7 +2084,7 @@
   .eq-task-text { flex: 1; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .eq-task-row .gtag {
     font-family: "Geist Mono", monospace;
-    font-size: 9px;
+    font-size: 10px;
     color: var(--accent);
     padding: 1px 4px;
     background: var(--accent-soft);
@@ -2097,7 +2097,7 @@
     color: var(--text-4);
     cursor: pointer;
     padding: 0 2px;
-    font-size: 12px;
+    font-size: 13px;
     transition: all 0.15s;
   }
   .eq-task-row:hover .del-x { opacity: 1; }
@@ -2112,21 +2112,21 @@
     margin-bottom: 12px;
   }
   .retro-mini-summary-title {
-    font-size: 10.5px; color: var(--accent);
+    font-size: 11.5px; color: var(--accent);
     font-weight: 600;
     margin-bottom: 8px;
     display: flex; align-items: center; gap: 5px;
   }
   .retro-mini-row {
     display: flex; justify-content: space-between;
-    font-size: 11px;
+    font-size: 12px;
     padding: 3px 0;
     font-family: "Geist Mono", monospace;
   }
   .retro-mini-row .lbl { color: var(--text-3); font-family: "Geist", sans-serif; }
   .retro-mini-row .val { color: var(--text-1); font-weight: 600; }
   .retro-mini-label {
-    font-size: 10.5px; color: var(--text-3);
+    font-size: 11.5px; color: var(--text-3);
     margin: 10px 0 4px;
     display: flex; align-items: center; gap: 5px;
     font-weight: 500;
@@ -2138,7 +2138,7 @@
     border-radius: 6px;
     color: var(--text-1);
     font-family: "Geist", sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     padding: 8px 10px;
     resize: vertical;
     min-height: 56px;
@@ -2154,7 +2154,7 @@
     border: 1px dashed var(--border-accent);
     border-radius: 6px;
     color: var(--accent);
-    font-size: 11px;
+    font-size: 12px;
     padding: 7px 0;
     cursor: pointer;
     font-family: "Geist", sans-serif;
@@ -2177,13 +2177,13 @@
   }
   .retro-history-week {
     font-family: "Geist Mono", monospace;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--accent);
     font-weight: 600;
     margin-bottom: 4px;
     display: flex; justify-content: space-between;
   }
-  .retro-history-text { font-size: 11px; color: var(--text-3); line-height: 1.5; }
+  .retro-history-text { font-size: 12px; color: var(--text-3); line-height: 1.5; }
 
   /* Resources/items tab placeholder */
   .ri-placeholder {
@@ -2195,9 +2195,9 @@
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius-lg);
   }
-  .ri-placeholder .big { font-size: 48px; opacity: 0.4; }
-  .ri-placeholder .title { font-size: 16px; font-weight: 600; color: var(--text-2); letter-spacing: -0.01em; }
-  .ri-placeholder .sub { font-size: 12px; color: var(--text-4); max-width: 440px; text-align: center; line-height: 1.6; }
+  .ri-placeholder .big { font-size: 49px; opacity: 0.4; }
+  .ri-placeholder .title { font-size: 17px; font-weight: 600; color: var(--text-2); letter-spacing: -0.01em; }
+  .ri-placeholder .sub { font-size: 13px; color: var(--text-4); max-width: 440px; text-align: center; line-height: 1.6; }
 
   /* Inline add form */
   .inline-add-form {
@@ -2217,7 +2217,7 @@
     border-radius: 5px;
     color: var(--text-1);
     font-family: "Geist", sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     padding: 6px 9px;
     outline: none;
   }
@@ -2234,7 +2234,7 @@
     border: 1px solid var(--border);
     background: var(--bg-2);
     color: var(--text-3);
-    font-size: 11px;
+    font-size: 12px;
     cursor: pointer;
     font-family: "Geist", sans-serif;
   }
@@ -2255,7 +2255,7 @@
     padding: 10px 16px;
     border-radius: 999px;
     font-family: "Geist Mono", monospace;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     box-shadow: 0 8px 24px rgba(139,92,246,0.4), 0 0 0 1px rgba(255,255,255,0.2) inset;
     z-index: 9999;
@@ -2311,20 +2311,20 @@
     border-bottom: 1px solid var(--border);
   }
   .res-card-title {
-    font-size: 13px; font-weight: 600;
+    font-size: 14px; font-weight: 600;
     display: flex; align-items: center; gap: 6px;
     letter-spacing: -0.01em;
   }
-  .res-card-ic { font-size: 16px; }
+  .res-card-ic { font-size: 17px; }
   .res-card-sub {
     font-family: "Geist Mono", monospace;
-    font-size: 10.5px; color: var(--text-3);
+    font-size: 11.5px; color: var(--text-3);
   }
 
   .res-line {
     display: flex; justify-content: space-between;
     padding: 5px 0;
-    font-size: 12px;
+    font-size: 13px;
     font-family: "Geist Mono", monospace;
   }
   .res-line .lbl { color: var(--text-3); font-family: "Geist", sans-serif; }
@@ -2336,12 +2336,12 @@
     border-top: 1px solid var(--border);
     font-weight: 700;
   }
-  .res-line.profit .val { font-size: 14px; }
+  .res-line.profit .val { font-size: 15px; }
   .res-line.profit.positive .val { color: var(--green); }
   .res-line.profit.negative .val { color: var(--red); }
   .res-sub {
     padding-left: 14px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-4);
     margin-top: -2px;
   }
@@ -2351,7 +2351,7 @@
   }
   .res-bar-label {
     display: flex; justify-content: space-between;
-    font-size: 11px; color: var(--text-3);
+    font-size: 12px; color: var(--text-3);
     margin-bottom: 5px;
   }
   .res-bar-label .val {
@@ -2375,7 +2375,7 @@
     border-radius: 5px;
     color: var(--text-1);
     font-family: "Geist Mono", monospace;
-    font-size: 12px;
+    font-size: 13px;
     padding: 4px 8px;
     text-align: right;
     width: 110px;
@@ -2397,7 +2397,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text-3);
-    font-size: 11px;
+    font-size: 12px;
     padding: 5px 12px;
     cursor: pointer;
     font-family: "Geist", sans-serif;
@@ -2412,7 +2412,7 @@
   .inv-tab .cnt {
     margin-left: 4px;
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-4);
   }
   .inv-tab.active .cnt { color: var(--accent); }
@@ -2468,7 +2468,7 @@
   }
 
   .inv-slot-emoji {
-    font-size: 24px;
+    font-size: 25px;
     line-height: 1;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
   }
@@ -2505,7 +2505,7 @@
     border: 1px solid var(--border-strong);
     border-radius: 6px;
     padding: 5px 9px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-1);
     white-space: nowrap;
     z-index: 10;
@@ -2520,7 +2520,7 @@
   .inv-legend {
     display: flex; gap: 12px; align-items: center;
     margin-top: 10px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     flex-shrink: 0;
   }
@@ -2552,14 +2552,14 @@
     border: 1px solid var(--border-strong);
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
+    font-size: 33px;
     flex-shrink: 0;
   }
   .item-modal-info { flex: 1; }
-  .item-modal-name { font-size: 17px; font-weight: 600; color: var(--text-1); letter-spacing: -0.015em; }
+  .item-modal-name { font-size: 18px; font-weight: 600; color: var(--text-1); letter-spacing: -0.015em; }
   .item-modal-status {
     display: inline-block;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-family: "Geist Mono", monospace;
     padding: 2px 8px;
     border-radius: 4px;
@@ -2573,7 +2573,7 @@
     margin-bottom: 16px;
   }
   .item-effect-title {
-    font-size: 11px; color: var(--text-3); font-weight: 600;
+    font-size: 12px; color: var(--text-3); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.05em;
     margin-bottom: 8px;
     display: flex; align-items: center; gap: 6px;
@@ -2587,12 +2587,12 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     margin-bottom: 5px;
-    font-size: 12px;
+    font-size: 13px;
   }
   .item-effect-row select,
   .item-effect-row input {
     background: var(--bg-3); border: 1px solid var(--border); border-radius: 4px;
-    color: var(--text-1); font-family: "Geist", sans-serif; font-size: 11.5px;
+    color: var(--text-1); font-family: "Geist", sans-serif; font-size: 12.5px;
     padding: 4px 7px; outline: none; min-width: 0; width: 100%; box-sizing: border-box;
   }
   .item-effect-row input:focus,
@@ -2605,7 +2605,7 @@
     border: 1px dashed var(--border-accent);
     border-radius: 5px;
     color: var(--accent);
-    font-size: 11px;
+    font-size: 12px;
     padding: 6px 0;
     width: 100%;
     cursor: pointer;
@@ -2618,7 +2618,7 @@
     margin-bottom: 10px;
   }
   .item-field-label {
-    font-size: 11px; color: var(--text-3);
+    font-size: 12px; color: var(--text-3);
     margin-bottom: 4px; display: block;
   }
   .item-field input,
@@ -2630,7 +2630,7 @@
     border-radius: 6px;
     color: var(--text-1);
     font-family: "Geist", sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     padding: 7px 10px;
     outline: none;
     box-sizing: border-box;
@@ -2648,7 +2648,7 @@
     margin-bottom: 8px;
   }
   .item-field-row > label {
-    font-size: 12px; color: var(--text-2);
+    font-size: 13px; color: var(--text-2);
   }
 
   /* AI / Dream image upload */
@@ -2661,7 +2661,7 @@
     border: 1px dashed var(--border-strong);
     border-radius: 6px;
     color: var(--text-3);
-    font-size: 11.5px;
+    font-size: 12.5px;
     padding: 7px 0;
     cursor: pointer;
     font-family: "Geist", sans-serif;
@@ -2683,12 +2683,12 @@
     border: 1px solid var(--border-accent);
     border-radius: 8px;
     padding: 10px 14px;
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--text-2);
     margin-bottom: 14px;
     display: flex; align-items: center; gap: 10px;
   }
-  .ai-banner .ic { font-size: 18px; }
+  .ai-banner .ic { font-size: 19px; }
   .ai-banner .info { flex: 1; }
   .ai-banner .info strong { color: var(--accent); }
 
@@ -2704,10 +2704,10 @@
   .stat-2col-bar, .stat-2col-bar-fill { display: none; }
   .stat-2col-item { padding: 6px 8px; gap: 0; }
   .stat-2col-top { padding: 0; }
-  .stat-2col-name { font-size: 12px; }
-  .stat-2col-lv strong { font-size: 13px; }
-  .stat-panel-head .who { font-size: 12px; }
-  .stat-panel-head .all-lv strong { font-size: 14px; }
+  .stat-2col-name { font-size: 13px; }
+  .stat-2col-lv strong { font-size: 14px; }
+  .stat-panel-head .who { font-size: 13px; }
+  .stat-panel-head .all-lv strong { font-size: 15px; }
 
   /* 3. Zone1 248px + 드림 카드 200×220 */
   .dream-strip {
@@ -2728,9 +2728,9 @@
     transform: translateY(-2px);
     border-color: var(--border-accent);
   }
-  .dream-strip-card .dsc-bg { font-size: 80px; }
-  .dream-strip-card .dsc-name { font-size: 14px; }
-  .dream-strip-card .dsc-pct { font-size: 11px; }
+  .dream-strip-card .dsc-bg { font-size: 81px; }
+  .dream-strip-card .dsc-name { font-size: 15px; }
+  .dream-strip-card .dsc-pct { font-size: 12px; }
   .dream-strip-card .dsc-bar { height: 3px; }
   .dream-strip-card .dsc-overlay {
     padding: 12px 14px;
@@ -2743,7 +2743,7 @@
     top: 10px;
     left: 10px;
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     padding: 3px 8px;
     border-radius: 4px;
     font-weight: 600;
@@ -2762,7 +2762,7 @@
     border-top: 1px dashed var(--border);
   }
   .db-stage-sec-title {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-4);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -2781,11 +2781,11 @@
     align-items: center;
     gap: 6px;
     padding: 4px 0;
-    font-size: 11.5px;
+    font-size: 12.5px;
   }
   .db-stage-num {
     font-family: "Geist Mono", monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     color: var(--text-4);
     width: 16px;
     flex-shrink: 0;
@@ -2798,7 +2798,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 9px;
+    font-size: 10px;
     flex-shrink: 0;
     color: #fff;
     background: var(--bg-2);
@@ -2831,7 +2831,7 @@
   }
   .db-stage-xp {
     font-family: "Geist Mono", monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     color: var(--accent);
     flex-shrink: 0;
   }
@@ -2840,7 +2840,7 @@
   /* 5. 할일 마감일 뱃지 */
   .task-due {
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-3);
     flex-shrink: 0;
   }
@@ -2852,7 +2852,7 @@
     padding: 1px 6px;
     border-radius: 3px;
     font-family: "Geist Mono", monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: 0.05em;
   }
@@ -2868,7 +2868,7 @@
     gap: 6px;
     margin-top: 6px;
     font-family: "Geist Mono", monospace;
-    font-size: 11px;
+    font-size: 12px;
   }
   .db-goal-prog-row .pbar {
     flex: 1;
@@ -2909,7 +2909,7 @@
     gap: 8px;
     align-items: center;
     padding: 5px 0;
-    font-size: 11.5px;
+    font-size: 12.5px;
   }
   .asset-row .nm { color: var(--text-2); }
   .asset-row .val { font-family: "Geist Mono", monospace; color: var(--text-1); text-align: right; }
@@ -2921,12 +2921,12 @@
     color: var(--text-1);
     padding: 3px 7px;
     text-align: right;
-    font-size: 11px;
+    font-size: 12px;
     outline: none;
   }
   .asset-row input.val-input:focus { border-color: var(--accent); }
   .asset-cat-title {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-4);
     padding: 8px 0 4px;
     text-transform: uppercase;
@@ -2952,7 +2952,7 @@
   .stage-edit-row.active { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.3); }
   .stage-edit-row .num {
     font-family: "Geist Mono", monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-4);
     text-align: center;
   }
@@ -2965,7 +2965,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 12px;
     color: #fff;
   }
   .stage-edit-row.done .ck { background: var(--green); border-color: var(--green); }
@@ -2987,14 +2987,14 @@
     color: var(--text-1);
     padding: 0;
     outline: none;
-    font-size: 12px;
+    font-size: 13px;
     font-family: inherit;
     width: 100%;
   }
   .stage-edit-row.done input.s-name { color: var(--text-4); text-decoration: line-through; }
   .stage-edit-row .state {
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     text-align: right;
     color: var(--text-4);
   }
@@ -3002,7 +3002,7 @@
   .stage-edit-row.done .state { color: var(--green); }
   .stage-edit-row .xp {
     font-family: "Geist Mono", monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--accent);
     text-align: center;
   }
@@ -3012,7 +3012,7 @@
     border: 1px dashed var(--border-accent);
     border-radius: 6px;
     margin-top: 8px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-2);
     display: flex;
     justify-content: space-between;
@@ -3112,7 +3112,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 11px;
     color: #fff;
     transition: all 0.2s;
     position: relative;
@@ -3144,7 +3144,7 @@
     box-shadow: 0 0 6px var(--amber);
   }
   .stage-timeline-label {
-    font-size: 9px;
+    font-size: 10px;
     color: var(--text-4);
     margin-top: 5px;
     text-align: center;
@@ -3173,7 +3173,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     font-family: "Geist Mono", monospace;
     padding: 0 4px 6px;
@@ -3200,7 +3200,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--amber);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -3210,7 +3210,7 @@
   .current-stage-card.all-done .current-stage-head { color: var(--green); }
   .current-stage-card.no-active .current-stage-head { color: var(--text-4); }
   .current-stage-name {
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--text-1);
     line-height: 1.3;
@@ -3218,7 +3218,7 @@
   }
   .current-stage-meta {
     font-family: "Geist Mono", monospace;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--accent);
   }
   .current-stage-tasks {
@@ -3227,7 +3227,7 @@
     border-top: 1px dashed rgba(255,255,255,0.06);
   }
   .current-stage-tasks-head {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-4);
     margin-bottom: 4px;
     display: flex;
@@ -3240,7 +3240,7 @@
     background: rgba(139,92,246,0.06);
     border: 1px dashed rgba(139,92,246,0.25);
     border-radius: 5px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     display: flex;
     justify-content: space-between;
@@ -3283,7 +3283,7 @@
     border: 1px solid var(--border);
     border-radius: 999px;
     font-family: "Geist Mono", monospace;
-    font-size: 11.5px;
+    font-size: 12.5px;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
   }
@@ -3322,7 +3322,7 @@
     border-bottom: 1px solid var(--border);
   }
   .fin-card-title {
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--text-1);
     display: flex;
@@ -3332,7 +3332,7 @@
   }
   .fin-card-sum {
     font-family: "Geist Mono", monospace;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-1);
   }
@@ -3345,7 +3345,7 @@
     grid-template-columns: 1fr 130px;
     gap: 8px;
     padding: 5px 0;
-    font-size: 12px;
+    font-size: 13px;
     align-items: center;
   }
   .fin-row .nm { color: var(--text-2); }
@@ -3359,7 +3359,7 @@
     display: grid;
     grid-template-columns: 1fr 110px 130px;
     gap: 8px;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-4);
     padding-bottom: 4px;
     border-bottom: 1px dashed var(--border);
@@ -3370,7 +3370,7 @@
   .fin-row-head .lbl-r { text-align: right; }
 
   .fin-subcat {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-4);
     padding: 8px 0 4px;
     text-transform: uppercase;
@@ -3387,10 +3387,10 @@
     justify-content: space-between;
     align-items: baseline;
   }
-  .fin-net .lbl { font-size: 11px; color: var(--text-3); }
+  .fin-net .lbl { font-size: 12px; color: var(--text-3); }
   .fin-net .val {
     font-family: "Geist Mono", monospace;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
   }
   .fin-net .val.green { color: var(--green); }
@@ -3412,17 +3412,17 @@
     margin-bottom: 4px;
   }
   .fin-summary-card .summary-net .lbl {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-3);
   }
   .fin-summary-card .summary-net .val {
     font-family: "Geist Mono", monospace;
-    font-size: 22px;
+    font-size: 23px;
     font-weight: 700;
     color: var(--text-1);
   }
   .fin-summary-card .summary-chg {
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-4);
     font-family: "Geist Mono", monospace;
     text-align: right;
@@ -3441,7 +3441,7 @@
     color: var(--text-3);
     padding: 6px 0;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 12px;
     cursor: pointer;
     font-family: "Geist", sans-serif;
     transition: all 0.15s;
@@ -3468,7 +3468,7 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     color: var(--text-3);
-    font-size: 10px;
+    font-size: 11px;
     padding: 3px 7px;
     cursor: pointer;
     font-family: inherit;
@@ -3490,7 +3490,7 @@
     align-items: center;
     gap: 6px;
     padding: 4px 0;
-    font-size: 11px;
+    font-size: 12px;
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.15s;
@@ -3502,7 +3502,7 @@
     border-radius: 3px;
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 9px;
+    font-size: 10px;
     color: #fff;
     position: relative;
   }
@@ -3520,7 +3520,7 @@
   }
   .qb-tag {
     font-family: "Geist Mono", monospace;
-    font-size: 9px;
+    font-size: 10px;
     padding: 1px 4px;
     border-radius: 3px;
     flex-shrink: 0;
@@ -3539,7 +3539,7 @@
   .qb-row.done .qb-text { color: var(--text-4); text-decoration: line-through; }
   .qb-xp {
     font-family: "Geist Mono", monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     color: var(--accent);
     flex-shrink: 0;
   }
@@ -3549,7 +3549,7 @@
     background: transparent;
     border: 1px dashed var(--border);
     color: var(--text-4);
-    font-size: 10px;
+    font-size: 11px;
     padding: 4px 0;
     border-radius: 4px;
     width: 100%;
@@ -3575,7 +3575,7 @@
     margin-bottom: 10px;
   }
   .quest-section-title {
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -3584,7 +3584,7 @@
   }
   .quest-section-title .badge {
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     padding: 2px 7px;
     border-radius: 3px;
     font-weight: 700;
@@ -3593,7 +3593,7 @@
   .quest-section-title.side .badge { background: rgba(59,130,246,0.2); color: var(--blue); }
   .quest-section-title.chal .badge { background: rgba(245,158,11,0.2); color: var(--amber); }
   .quest-section-desc {
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-4);
     margin-top: 3px;
     font-style: italic;
@@ -3602,7 +3602,7 @@
     background: var(--bg-2);
     border: 1px solid var(--border);
     color: var(--text-3);
-    font-size: 10.5px;
+    font-size: 11.5px;
     padding: 4px 10px;
     border-radius: 4px;
     cursor: pointer;
@@ -3631,7 +3631,7 @@
   .qm-row.active { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.3); }
   .qm-row .num {
     font-family: "Geist Mono", monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-4);
     text-align: center;
   }
@@ -3644,7 +3644,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 12px;
     color: #fff;
     position: relative;
   }
@@ -3666,7 +3666,7 @@
     color: var(--text-1);
     padding: 0;
     outline: none;
-    font-size: 12px;
+    font-size: 13px;
     font-family: inherit;
     min-width: 0;
     width: 100%;
@@ -3674,7 +3674,7 @@
   .qm-row.done .name { color: var(--text-4); text-decoration: line-through; }
   .qm-row .state {
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     text-align: right;
     color: var(--text-4);
   }
@@ -3686,7 +3686,7 @@
     border-radius: 3px;
     color: var(--accent);
     font-family: "Geist Mono", monospace;
-    font-size: 11px;
+    font-size: 12px;
     text-align: center;
     padding: 2px 0;
     width: 100%;
@@ -3698,7 +3698,7 @@
     border: none;
     color: var(--text-4);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
     padding: 0;
   }
   .qm-row .del:hover { color: var(--red); }
@@ -3709,7 +3709,7 @@
     border: 1px dashed var(--border-accent);
     border-radius: 6px;
     margin-top: 8px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-2);
     display: flex;
     justify-content: space-between;
@@ -3733,7 +3733,7 @@
     background: var(--bg-3);
     border: 1px solid var(--border);
     color: var(--text-3);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     font-family: "Geist", sans-serif;
@@ -3764,13 +3764,13 @@
   .guide-quest-card.main { border-color: var(--border-accent); background: linear-gradient(180deg, rgba(139,92,246,0.06), var(--bg-2)); }
   .guide-quest-card.side { border-color: rgba(59,130,246,0.35); background: linear-gradient(180deg, rgba(59,130,246,0.06), var(--bg-2)); }
   .guide-quest-card.chal { border-color: rgba(245,158,11,0.35); background: linear-gradient(180deg, rgba(245,158,11,0.06), var(--bg-2)); }
-  .guide-quest-card .ic { font-size: 32px; margin-bottom: 6px; display: block; }
-  .guide-quest-card .nm { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .guide-quest-card .ic { font-size: 33px; margin-bottom: 6px; display: block; }
+  .guide-quest-card .nm { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
   .guide-quest-card.main .nm { color: var(--accent); }
   .guide-quest-card.side .nm { color: var(--blue); }
   .guide-quest-card.chal .nm { color: var(--amber); }
   .guide-quest-card .desc {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-3);
     line-height: 1.5;
   }
@@ -3778,7 +3778,7 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 12px;
+    font-size: 13px;
   }
   .guide-rule-table th, .guide-rule-table td {
     padding: 8px 10px;
@@ -3786,7 +3786,7 @@
     text-align: left;
   }
   .guide-rule-table th {
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -3799,7 +3799,7 @@
     padding: 2px 7px;
     border-radius: 3px;
     font-family: "Geist Mono", monospace;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
   }
   .tag-pill.main { background: rgba(139,92,246,0.2); color: var(--accent); }
@@ -3811,7 +3811,7 @@
     background: var(--accent-soft);
     border: 1px solid var(--border-accent);
     border-radius: 8px;
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--text-2);
     line-height: 1.7;
   }

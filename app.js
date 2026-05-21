@@ -446,7 +446,7 @@
 
             {/* 우측 드림 스트립 */}
             <div className="dream-strip">
-              {dreams.length === 0 && <div style={{ color: 'var(--text-4)', fontSize: 12, display: 'flex', alignItems: 'center' }}>비전·드림 탭에서 드림을 추가하세요</div>}
+              {dreams.length === 0 && <div style={{ color: 'var(--text-4)', fontSize: 13, display: 'flex', alignItems: 'center' }}>비전·드림 탭에서 드림을 추가하세요</div>}
               {dreams.map(d => {
                 const pct = d.targetAmount > 0 ? Math.min(100, Math.round((d.currentAmount / d.targetAmount) * 100)) : 0;
                 const blur = ((1 - pct / 100) * 14).toFixed(1);
@@ -478,12 +478,12 @@
             </div>
             <div className="db-header-bar"><div className="db-header-bar-fill" style={{ width: `${overall}%` }} /></div>
             <div className="db-header-divider" />
-            <span style={{ fontSize: 11, color: 'var(--text-4)', fontFamily: 'Geist Mono, monospace' }}>{`W${getWeekNumber()}`}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-4)', fontFamily: 'Geist Mono, monospace' }}>{`W${getWeekNumber()}`}</span>
             <div className="db-streak-row">
               {dayLabels.map((d, i) => (
-                <div key={i} className={"streak-dot" + (i > todayIdx ? " future" : streak[i] ? " done" : i === todayIdx ? " today" : " past")} onClick={() => toggleStreakDay(i)} style={{ width: 20, height: 20, fontSize: 9 }}>{d}</div>
+                <div key={i} className={"streak-dot" + (i > todayIdx ? " future" : streak[i] ? " done" : i === todayIdx ? " today" : " past")} onClick={() => toggleStreakDay(i)} style={{ width: 20, height: 20, fontSize: 10 }}>{d}</div>
               ))}
-              <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'Geist Mono, monospace', marginLeft: 6 }}>🔥{streakCount}일</span>
+              <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'Geist Mono, monospace', marginLeft: 6 }}>🔥{streakCount}일</span>
             </div>
             <div className="db-header-divider" />
             <div className="heatmap-row" title="최근 28일 달성 현황">
@@ -492,7 +492,7 @@
               ))}
             </div>
             <div style={{ marginLeft: 'auto' }}>
-              <button onClick={() => setFocusMode(true)} style={{ background: 'var(--accent)', border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 600, padding: '6px 14px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>
+              <button onClick={() => setFocusMode(true)} style={{ background: 'var(--accent)', border: 'none', borderRadius: 7, color: '#fff', fontSize: 13, fontWeight: 600, padding: '6px 14px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>
                 ⚡ 집중 모드
               </button>
             </div>
@@ -503,7 +503,7 @@
               {/* ZONE 3: 목표 카드들 */}
               <div className="db-zone3">
                 {goals.length === 0 && (
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: 13 }}>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: 14 }}>
                     목표 관리 탭에서 목표를 추가하세요
                   </div>
                 )}
@@ -595,14 +595,14 @@
                         <div className="db-stage-sec-title">
                           ⚡ 연결 할일 <span className="cnt">{gTasks.length}</span>
                         </div>
-                        {gTasks.length === 0 && <div style={{ fontSize: 11, color: 'var(--text-4)' }}>없음</div>}
+                        {gTasks.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-4)' }}>없음</div>}
                         {gTasks.map(t => {
                           const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
                           const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
                           return (
                             <div key={t.id} className={"check-item" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)} style={{ padding: '3px 0', gap: 6 }}>
                               <div className="check-box" style={{ width: 13, height: 13 }} />
-                              <div className="check-text" style={{ fontSize: 11.5, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.text}</div>
+                              <div className="check-text" style={{ fontSize: 12.5, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.text}</div>
                               {t.dueDate && <span className={"task-due " + dueClass}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
                             </div>
                           );
@@ -630,11 +630,11 @@
                           onKeyDown={e => { if (e.key === "Enter") { editWeeklyGoal(w.id, editingWeeklyText); setEditingWeeklyId(null); } if (e.key === "Escape") setEditingWeeklyId(null); }}
                           onBlur={() => { editWeeklyGoal(w.id, editingWeeklyText); setEditingWeeklyId(null); }}
                           onClick={e => e.stopPropagation()} autoFocus
-                          style={{ background: 'var(--bg-3)', border: '1px solid var(--accent)', borderRadius: 4, color: 'var(--text-1)', padding: '2px 6px', fontFamily: 'Geist, sans-serif', fontSize: 12, flex: 1 }} />
+                          style={{ background: 'var(--bg-3)', border: '1px solid var(--accent)', borderRadius: 4, color: 'var(--text-1)', padding: '2px 6px', fontFamily: 'Geist, sans-serif', fontSize: 13, flex: 1 }} />
                       ) : (
-                        <div className="check-text" style={{ fontSize: 12 }} onDoubleClick={e => { e.stopPropagation(); setEditingWeeklyId(w.id); setEditingWeeklyText(w.text); }}>{w.text}</div>
+                        <div className="check-text" style={{ fontSize: 13 }} onDoubleClick={e => { e.stopPropagation(); setEditingWeeklyId(w.id); setEditingWeeklyText(w.text); }}>{w.text}</div>
                       )}
-                      <button className="btn-del" onClick={e => { e.stopPropagation(); deleteWeeklyGoal(w.id); }} style={{ fontSize: 11 }}>×</button>
+                      <button className="btn-del" onClick={e => { e.stopPropagation(); deleteWeeklyGoal(w.id); }} style={{ fontSize: 12 }}>×</button>
                     </div>
                   ))}
                 </div>
@@ -646,7 +646,7 @@
                     <div key={t.slot} className="top3-item">
                       <span className="top3-num">{t.slot}</span>
                       <div className={"top3-check" + (t.done ? " checked" : "")} onClick={() => updateTop3(t.slot, 'done', !t.done)}>
-                        {t.done && <span style={{ fontSize: 9, color: '#fff' }}>✓</span>}
+                        {t.done && <span style={{ fontSize: 10, color: '#fff' }}>✓</span>}
                       </div>
                       <input
                         className={"top3-input" + (t.done ? " top3-done" : "")}
@@ -656,7 +656,7 @@
                       />
                     </div>
                   ))}
-                  <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-4)' }}>매일 자정 자동 초기화</div>
+                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-4)' }}>매일 자정 자동 초기화</div>
                 </div>
 
                 {/* 다음주 목표 */}
@@ -668,7 +668,7 @@
                   {nextWeekGoals.map(w => (
                     <div key={w.id} className={"check-item" + (w.done ? " done" : "")} onClick={() => setNextWeekGoals(prev => prev.map(g => g.id === w.id ? { ...g, done: !g.done } : g))}>
                       <div className="check-box" />
-                      <div className="check-text" style={{ fontSize: 12 }}>{w.text}</div>
+                      <div className="check-text" style={{ fontSize: 13 }}>{w.text}</div>
                     </div>
                   ))}
                   <input className="next-week-input" placeholder="+ Enter 눌러서 추가" onKeyDown={addNextWeek} />
@@ -740,7 +740,7 @@
                   </div>
                   <div className="retro-summary-item">
                     <div className="retro-summary-item-label">가장 진행된 목표</div>
-                    <div className="retro-summary-item-value" style={{ fontSize: 12 }}>{bestGoal ? bestGoal.name : '—'}</div>
+                    <div className="retro-summary-item-value" style={{ fontSize: 13 }}>{bestGoal ? bestGoal.name : '—'}</div>
                     <div className="retro-summary-item-sub">{bestGoal ? `${bestGoal.progress}%` : ''}</div>
                   </div>
                   <div className="retro-summary-item">
@@ -759,7 +759,7 @@
                     setGood(`이번 주 ${completedThisWeek}개 태스크 완료${bestGoal ? `, ${bestGoal.name} 목표 ${bestGoal.progress}% 달성` : ''}`);
                     setBad(`활동일 ${activeDays}일 — ${7 - activeDays}일 공백 발생`);
                   }}
-                  style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, padding: '7px 16px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>
+                  style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 13, fontWeight: 600, padding: '7px 16px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>
                   이 내용으로 회고 초안 채우기
                 </button>
               </div>
@@ -768,8 +768,8 @@
 
           <div className="retro-editor">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-              <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.01em" }}>이번주 회고 · W{getWeekNumber()}</div>
-              <div style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11.5, color: "var(--text-3)" }}>{new Date().getFullYear()}.{getWeekRange(0)}</div>
+              <div style={{ fontWeight: 600, fontSize: 16, letterSpacing: "-0.01em" }}>이번주 회고 · W{getWeekNumber()}</div>
+              <div style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 12.5, color: "var(--text-3)" }}>{new Date().getFullYear()}.{getWeekRange(0)}</div>
             </div>
             <div className="retro-grid">
               <div className="retro-field">
@@ -799,9 +799,9 @@
               <div key={r.id} className="retro-card">
                 <div className="retro-card-head">
                   <span className="retro-week-label">{r.week}</span>
-                  <span style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11, color: "var(--text-4)" }}>{r.date}</span>
+                  <span style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 12, color: "var(--text-4)" }}>{r.date}</span>
                   <button onClick={() => setRetros(prev => prev.filter(x => x.id !== r.id))}
-                    style={{ background: "transparent", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 13, padding: "2px 6px" }}>×</button>
+                    style={{ background: "transparent", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 14, padding: "2px 6px" }}>×</button>
                 </div>
                 <div className="retro-cols">
                   <div>
@@ -928,7 +928,7 @@
           {/* Dream Board — 사명 바로 아래 */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
             <div className="card-title"><span className="dot-purple"/>드림 보드</div>
-            <button className="btn btn-ghost" style={{ fontSize:12, padding:"6px 12px" }} onClick={addDream}>+ 추가</button>
+            <button className="btn btn-ghost" style={{ fontSize: 13, padding:"6px 12px" }} onClick={addDream}>+ 추가</button>
           </div>
           <div className="dream-grid">
             {dreams.map(d => {
@@ -949,8 +949,8 @@
                       <img src={d.imgUrl} className="dream-img" alt="" style={{ filter:`blur(${blur}px) grayscale(${gray}%)` }} />
                     ) : (
                       <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:8 }}>
-                        <span style={{ fontSize:32 }}>{d.emoji || "⭐"}</span>
-                        <span style={{ fontSize:11, color:"var(--text-4)" }}>이미지 URL 입력</span>
+                        <span style={{ fontSize: 33 }}>{d.emoji || "⭐"}</span>
+                        <span style={{ fontSize: 12, color:"var(--text-4)" }}>이미지 URL 입력</span>
                       </div>
                     )}
                     <div className="dream-img-overlay">
@@ -991,7 +991,7 @@
                         </div>
                         <div className="dream-input-row">
                           <label>티어</label>
-                          <select className="char-input" style={{ flex: 1, textAlign: "left", fontSize: 11 }} value={d.tier || inferDreamTier(d)} onChange={e => updateDream(d.id, "tier", e.target.value)}>
+                          <select className="char-input" style={{ flex: 1, textAlign: "left", fontSize: 12 }} value={d.tier || inferDreamTier(d)} onChange={e => updateDream(d.id, "tier", e.target.value)}>
                             <option value="legend">👑 Legend · +5,000 XP</option>
                             <option value="epic">💜 Epic · +2,500 XP</option>
                             <option value="rare">💎 Rare · +1,000 XP</option>
@@ -1000,7 +1000,7 @@
                         </div>
                         <div className="dream-input-row">
                           <label>이미지 URL</label>
-                          <input className="char-input" style={{ flex:1, textAlign:"left", fontSize:11 }} value={d.imgUrl}
+                          <input className="char-input" style={{ flex:1, textAlign:"left", fontSize: 12 }} value={d.imgUrl}
                             onChange={e => updateDream(d.id, "imgUrl", e.target.value)} placeholder="https://... 또는 아래 버튼으로 업로드" />
                         </div>
                         <DreamImageActions dream={d} updateDream={updateDream} />
@@ -1050,7 +1050,7 @@
                         </div>
                       </div>
                       <button onClick={() => setDreams(prev => prev.filter(x => x.id !== d.id))}
-                        style={{ background: "transparent", border: "1px solid var(--red)", borderRadius: 6, color: "var(--red)", fontSize: 12, padding: "6px 14px", cursor: "pointer", fontFamily: "Geist, sans-serif", marginTop: 8 }}>
+                        style={{ background: "transparent", border: "1px solid var(--red)", borderRadius: 6, color: "var(--red)", fontSize: 13, padding: "6px 14px", cursor: "pointer", fontFamily: "Geist, sans-serif", marginTop: 8 }}>
                         드림 삭제
                       </button>
                     </div>
@@ -1066,7 +1066,7 @@
           {/* 캐릭터 스탯 — 레이더 차트 + 컴팩트 리스트 */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
             <div className="card-title"><span className="dot-purple"/>캐릭터 스탯</div>
-            <span style={{ fontSize:11.5, color:"var(--text-3)" }}>항목 클릭 → 수정</span>
+            <span style={{ fontSize: 12.5, color:"var(--text-3)" }}>항목 클릭 → 수정</span>
           </div>
           <div className="stat-panel">
             <RadarChart stats={stats} size={200} />
@@ -1087,7 +1087,7 @@
                     </div>
                     {isOpen && (
                       <div className="stat-expand-inline">
-                        <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-4)", marginBottom:7, fontFamily:"Geist Mono, ui-monospace, monospace" }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", fontSize: 12, color:"var(--text-4)", marginBottom:7, fontFamily:"Geist Mono, ui-monospace, monospace" }}>
                           <span>XP {s.xp} / 100</span>
                           <span>다음 레벨까지 {Math.max(0, nextLvXp - s.xp)} XP</span>
                         </div>
@@ -1095,10 +1095,10 @@
                           <div className="char-xp-fill" style={{ width:`${s.xp}%` }}/>
                         </div>
                         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                          <span style={{ fontSize:12.5, color:"var(--text-2)", flex:1 }}>{s.desc} 현재값</span>
+                          <span style={{ fontSize: 13.5, color:"var(--text-2)", flex:1 }}>{s.desc} 현재값</span>
                           <input className="char-input" type="number" style={{ width:100, textAlign:"right" }}
                             value={s.value} onChange={e => updateStat(s.id, e.target.value)} />
-                          <span style={{ fontSize:12, color:"var(--text-3)" }}>{s.unit}</span>
+                          <span style={{ fontSize: 13, color:"var(--text-3)" }}>{s.unit}</span>
                         </div>
                       </div>
                     )}
@@ -1115,19 +1115,19 @@
                 <div key={yr.year} className={"bigt-year" + (yr.current ? " current" : "")}>
                   <div className="bigt-year-label">
                     <span className="bigt-ydot" />{yr.year}
-                    {yr.current && <span style={{ fontSize:9.5, color:"var(--accent)", fontFamily:"Geist Mono, ui-monospace, monospace" }}>NOW</span>}
+                    {yr.current && <span style={{ fontSize: 10.5, color:"var(--accent)", fontFamily:"Geist Mono, ui-monospace, monospace" }}>NOW</span>}
                   </div>
                   <div className="bigt-items">
                     {yr.items.map((it, i) => (
                       <div key={i} style={{ display:"flex", alignItems:"center", gap:4 }}>
                         <div className={"bigt-item " + it.state} style={{ flex:1 }}>{it.text}</div>
                         <button onClick={() => setVision(v => ({ ...v, timeline: v.timeline.map(y => y.year === yr.year ? { ...y, items: y.items.filter((_, idx) => idx !== i) } : y) }))}
-                          style={{ background:"transparent", border:"none", color:"var(--text-4)", cursor:"pointer", fontSize:12, padding:"1px 5px", flexShrink:0 }}>×</button>
+                          style={{ background:"transparent", border:"none", color:"var(--text-4)", cursor:"pointer", fontSize: 13, padding:"1px 5px", flexShrink:0 }}>×</button>
                       </div>
                     ))}
                     <input
                       placeholder="+ 항목 추가 (Enter)"
-                      style={{ marginTop:6, background:"var(--bg-3)", border:"1px solid var(--border)", borderRadius:5, color:"var(--text-2)", fontSize:11, padding:"4px 8px", fontFamily:"Geist, sans-serif", width:"100%" }}
+                      style={{ marginTop:6, background:"var(--bg-3)", border:"1px solid var(--border)", borderRadius:5, color:"var(--text-2)", fontSize: 12, padding:"4px 8px", fontFamily:"Geist, sans-serif", width:"100%" }}
                       onKeyDown={e => {
                         if (e.key === "Enter" && e.target.value.trim()) {
                           const text = e.target.value.trim();
@@ -1152,6 +1152,7 @@
       const [idx, setIdx] = useState(0);
       const [running, setRunning] = useState(false);
       const [seconds, setSeconds] = useState(25 * 60);
+      const [completed, setCompleted] = useState({}); // {idx: true} — 명시적 완료 체크
       const timerRef = useRef(null);
 
       useEffect(() => {
@@ -1171,15 +1172,26 @@
       const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
       const ss = String(seconds % 60).padStart(2, '0');
       const current = items[idx];
+      const isCurDone = !!completed[idx];
+
+      const markDone = () => {
+        if (!current) return;
+        setCompleted(prev => ({ ...prev, [idx]: !prev[idx] }));
+        // 실제 task에도 반영
+        if (!isCurDone && current.id) toggleTask(current.id);
+      };
 
       return (
         <div className="focus-overlay">
           <button className="focus-exit" onClick={onClose}>✕</button>
           <div className="focus-context">
             집중 모드 · {idx + 1} / {items.length}
+            {isCurDone && <span style={{ color: 'var(--green)', marginLeft: 10 }}>✓ 완료</span>}
           </div>
           <div className="focus-task-box">
-            <div className="focus-task-text">{current ? current.text : "할 일이 없습니다"}</div>
+            <div className="focus-task-text" style={{ textDecoration: isCurDone ? 'line-through' : 'none', color: isCurDone ? 'var(--text-4)' : 'inherit' }}>
+              {current ? current.text : "할 일이 없습니다"}
+            </div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div className="focus-timer">{mm}:{ss}</div>
@@ -1190,12 +1202,19 @@
             <button className="focus-btn primary" onClick={() => setRunning(r => !r)}>
               {running ? "⏸ 일시정지" : "▶ 시작"}
             </button>
+            <button
+              className="focus-btn"
+              style={{ background: isCurDone ? 'var(--green)' : 'var(--bg-2)', borderColor: isCurDone ? 'var(--green)' : 'var(--border)', color: isCurDone ? '#fff' : 'var(--text-2)', fontWeight: isCurDone ? 600 : 400 }}
+              onClick={markDone}
+            >
+              {isCurDone ? "✓ 완료됨" : "☑ 완료"}
+            </button>
             <button className="focus-btn" onClick={() => { setSeconds(25*60); setRunning(false); }}>↺ 초기화</button>
             <button className="focus-btn" onClick={() => setIdx(i => Math.min(items.length - 1, i + 1))}>다음 →</button>
           </div>
           <div className="focus-progress">
             {items.map((it, i) => (
-              <div key={i} className={"focus-dot" + (i < idx ? " done" : i === idx ? " active" : "")} />
+              <div key={i} className={"focus-dot" + (completed[i] ? " done" : i === idx ? " active" : "")} title={it.text} />
             ))}
           </div>
         </div>
@@ -1271,7 +1290,7 @@
               <div className="section-title">목표 & 단계</div>
               <div className="section-sub">{goals.length}개의 활성 목표 · 각 카드를 클릭해서 단계별 진행 상황을 펼쳐보세요</div>
             </div>
-            <button className="btn" onClick={() => setShowAddForm(v => !v)}><span style={{fontSize:14}}>+</span>새 목표 추가</button>
+            <button className="btn" onClick={() => setShowAddForm(v => !v)}><span style={{fontSize: 15}}>+</span>새 목표 추가</button>
           </div>
 
           {showAddForm && (
@@ -1297,7 +1316,7 @@
 
           <div className="goal-row-list">
             {goals.length === 0 && (
-              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-4)", fontSize: 13 }}>목표가 없습니다</div>
+              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-4)", fontSize: 14 }}>목표가 없습니다</div>
             )}
             {goals.map((g) => {
               const open = openId === g.id;
@@ -1314,7 +1333,7 @@
                       <div className="goal-expand-cat">{g.category}</div>
                       <div className="goal-expand-name">{g.name}</div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11.5 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 12.5 }}>
                       <span style={{ color: dday <= 30 ? "var(--red)" : dday <= 90 ? "var(--amber)" : "var(--accent)", fontWeight: 600 }}>D-{dday}</span>
                       <span style={{ color: "var(--text-4)" }}>·</span>
                       <span style={{ color: "var(--text-3)" }}>{fmtDeadline(g.deadline)}</span>
@@ -1360,7 +1379,7 @@
                           <div className="ts-node" />
                           <div className="ts-row">
                             <div className="ts-title">
-                              <span style={{ fontFamily: "Geist Mono, ui-monospace, monospace", color: "var(--text-4)", marginRight: 8, fontSize: 11.5 }}>
+                              <span style={{ fontFamily: "Geist Mono, ui-monospace, monospace", color: "var(--text-4)", marginRight: 8, fontSize: 12.5 }}>
                                 {idx + 1}단계
                               </span>
                               {m.name}
@@ -1444,7 +1463,7 @@
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)", display: "flex", gap: 14, fontSize: 11, color: "var(--text-3)" }}>
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)", display: "flex", gap: 14, fontSize: 12, color: "var(--text-3)" }}>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 8, height: 8, borderRadius: 4, background: "linear-gradient(135deg, var(--accent), var(--accent-2))" }}/> 오늘
             </span>
@@ -1491,12 +1510,12 @@
               <div style={{ display: "flex", gap: 4 }}>
                 {tags.map(tag => (
                   <button key={tag} onClick={() => setFilter(tag)}
-                    style={{ background: filter === tag ? "var(--accent)" : "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 6, color: filter === tag ? "#fff" : "var(--text-3)", fontSize: 11, padding: "4px 10px", cursor: "pointer", fontFamily: "Geist, sans-serif" }}>
+                    style={{ background: filter === tag ? "var(--accent)" : "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 6, color: filter === tag ? "#fff" : "var(--text-3)", fontSize: 12, padding: "4px 10px", cursor: "pointer", fontFamily: "Geist, sans-serif" }}>
                     {tag === "all" ? "전체" : tag}
                   </button>
                 ))}
               </div>
-              <button className="btn" onClick={() => setShowAddForm(v => !v)}><span style={{fontSize:14}}>+</span>태스크 추가</button>
+              <button className="btn" onClick={() => setShowAddForm(v => !v)}><span style={{fontSize: 15}}>+</span>태스크 추가</button>
             </div>
           </div>
 
@@ -1508,7 +1527,7 @@
                   <label>4분면</label>
                   <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
                     {["Q1","Q2","Q3","Q4"].map(q => (
-                      <button key={q} onClick={() => setNewQuadrant(q)} style={{ flex: 1, padding: "6px 0", borderRadius: 6, border: newQuadrant === q ? "1px solid var(--accent)" : "1px solid var(--border)", background: newQuadrant === q ? "var(--accent-soft)" : "var(--bg-3)", color: newQuadrant === q ? "var(--accent)" : "var(--text-3)", cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 12, fontWeight: 600 }}>{q}</button>
+                      <button key={q} onClick={() => setNewQuadrant(q)} style={{ flex: 1, padding: "6px 0", borderRadius: 6, border: newQuadrant === q ? "1px solid var(--accent)" : "1px solid var(--border)", background: newQuadrant === q ? "var(--accent-soft)" : "var(--bg-3)", color: newQuadrant === q ? "var(--accent)" : "var(--text-3)", cursor: "pointer", fontFamily: "Geist, sans-serif", fontSize: 13, fontWeight: 600 }}>{q}</button>
                     ))}
                   </div>
                 </div>
@@ -1532,7 +1551,7 @@
             <div className="card card-pad" style={{ display: "flex", flexDirection: "column" }}>
               <div className="card-header">
                 <div className="card-title"><span className="dot-purple"/>이번주 4분면 · Eisenhower</div>
-                <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>
+                <span style={{ fontSize: 12.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>
                   {`W${getWeekNumber()}`} · {tasks.length} tasks
                 </span>
               </div>
@@ -1572,7 +1591,7 @@
           <div className="card today-detail">
             <div className="card-header">
               <div className="card-title"><span className="dot-purple"/>오늘 할 일 · 상세</div>
-              <span style={{ fontSize: 11.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>
+              <span style={{ fontSize: 12.5, color: "var(--text-3)", fontFamily: "Geist Mono, ui-monospace, monospace" }}>
                 {filteredTasks.filter(t => t.done).length}/{filteredTasks.length} 완료 · {`${new Date().getMonth()+1}월 ${new Date().getDate()}일`}
               </span>
             </div>
@@ -1595,7 +1614,7 @@
                         onBlur={() => saveEditTask(t.id)}
                         onClick={e => e.stopPropagation()}
                         autoFocus
-                        style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "2px 6px", fontFamily: "Geist, sans-serif", fontSize: 13 }}
+                        style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "2px 6px", fontFamily: "Geist, sans-serif", fontSize: 14 }}
                       />
                     ) : (
                       <div className="today-text">{t.text}</div>
@@ -1708,7 +1727,7 @@
                 </div>
               ) : (
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 10 }}>아이콘 / 이름 / 총 XP / 단위 / 삭제</div>
+                  <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 10 }}>아이콘 / 이름 / 총 XP / 단위 / 삭제</div>
                   {stats.map((s) => (
                     <div key={s.id} className="stat-edit-row">
                       <input value={s.icon} onChange={(e) => updateStat(s.id, "icon", e.target.value)} style={{ textAlign: "center" }} />
@@ -1861,12 +1880,12 @@
                       <option value={settings.geminiTextModel}>⚙ {settings.geminiTextModel} (커스텀)</option>
                     )}
                   </select>
-                  <button onClick={runTextTest} disabled={testing || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
+                  <button onClick={runTextTest} disabled={testing || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 12, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
                     {testing ? "..." : "테스트"}
                   </button>
                 </div>
                 {testResult && (
-                  <div className="settings-hint" style={{ color: testResult.ok ? "var(--green)" : "var(--red)", padding: "4px 8px", background: testResult.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", borderRadius: 4, marginTop: 4, fontFamily: "Geist Mono, monospace", fontSize: 10.5 }}>
+                  <div className="settings-hint" style={{ color: testResult.ok ? "var(--green)" : "var(--red)", padding: "4px 8px", background: testResult.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", borderRadius: 4, marginTop: 4, fontFamily: "Geist Mono, monospace", fontSize: 11.5 }}>
                     {testResult.msg}
                   </div>
                 )}
@@ -1879,17 +1898,17 @@
                       <option value={settings.geminiImageModel}>⚙ {settings.geminiImageModel} (커스텀)</option>
                     )}
                   </select>
-                  <button onClick={runImageTest} disabled={imgTesting || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
+                  <button onClick={runImageTest} disabled={imgTesting || !settings.geminiKey} style={{ background: "var(--accent)", border: "none", color: "#fff", padding: "5px 12px", borderRadius: 5, fontSize: 12, cursor: "pointer", fontFamily: "Geist, sans-serif", whiteSpace: "nowrap" }}>
                     {imgTesting ? "..." : "테스트"}
                   </button>
                 </div>
                 {imgTestResult && (
-                  <div className="settings-hint" style={{ color: imgTestResult.ok ? "var(--green)" : "var(--red)", padding: "4px 8px", background: imgTestResult.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", borderRadius: 4, marginTop: 4, fontFamily: "Geist Mono, monospace", fontSize: 10.5, wordBreak: "break-word" }}>
+                  <div className="settings-hint" style={{ color: imgTestResult.ok ? "var(--green)" : "var(--red)", padding: "4px 8px", background: imgTestResult.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", borderRadius: 4, marginTop: 4, fontFamily: "Geist Mono, monospace", fontSize: 11.5, wordBreak: "break-word" }}>
                     {imgTestResult.msg}
                   </div>
                 )}
                 <div className="settings-field" style={{ marginTop: 6 }}>
-                  <label style={{ fontSize: 10.5 }}>커스텀 모델</label>
+                  <label style={{ fontSize: 11.5 }}>커스텀 모델</label>
                   <input type="text" placeholder="(드롭다운에 없는 모델 직접 입력)" onKeyDown={(e) => {
                     if (e.key === "Enter" && e.target.value.trim()) {
                       const isImage = /image|imagen/i.test(e.target.value);
@@ -1908,20 +1927,20 @@
                 <div className="settings-field">
                   <label>주간 시간풀</label>
                   <input type="number" value={settings.weeklyTimePool || 72} onChange={(e) => update("weeklyTimePool", Number(e.target.value) || 72)} />
-                  <span style={{ fontSize: 11, color: "var(--text-3)" }}>시간 / 주</span>
+                  <span style={{ fontSize: 12, color: "var(--text-3)" }}>시간 / 주</span>
                 </div>
                 <div className="settings-hint">기본 72h (12h × 6일)</div>
                 <div className="settings-field" style={{ marginTop: 12 }}>
                   <label>주간 에너지풀</label>
                   <input type="number" value={settings.weeklyEnergyPool || 100} onChange={(e) => update("weeklyEnergyPool", Number(e.target.value) || 100)} />
-                  <span style={{ fontSize: 11, color: "var(--text-3)" }}>포인트 / 주</span>
+                  <span style={{ fontSize: 12, color: "var(--text-3)" }}>포인트 / 주</span>
                 </div>
               </div>
 
               <div className="settings-section">
                 <div className="settings-section-title">계정</div>
-                <div style={{ fontSize: 12, color: "var(--text-2)", padding: "4px 0" }}>{ALLOWED_EMAIL}</div>
-                <button onClick={onLogout} style={{ marginTop: 10, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-3)", fontSize: 12, padding: "6px 14px", cursor: "pointer", fontFamily: "Geist, sans-serif" }}>로그아웃</button>
+                <div style={{ fontSize: 13, color: "var(--text-2)", padding: "4px 0" }}>{ALLOWED_EMAIL}</div>
+                <button onClick={onLogout} style={{ marginTop: 10, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-3)", fontSize: 13, padding: "6px 14px", cursor: "pointer", fontFamily: "Geist, sans-serif" }}>로그아웃</button>
               </div>
             </div>
           </div>
@@ -2078,15 +2097,34 @@
         setQuadAddIn(null);
       };
 
+      // 회고: 1주에 1개. 이번주 회고가 이미 있으면 덮어쓰기 (수정).
+      const thisWeekKey = "W" + getWeekNumber() + " · " + new Date().getFullYear();
+      const existingThisWeek = retros.find(r => r.week === thisWeekKey);
+
+      // 이번주 회고가 있으면 자동으로 입력란에 로드
+      useEffect(() => {
+        if (existingThisWeek && !retroGood && !retroBad && !retroImprove) {
+          setRetroGood(existingThisWeek.good || "");
+          setRetroBad(existingThisWeek.bad || "");
+          setRetroImprove(existingThisWeek.improve || "");
+        }
+      }, [existingThisWeek?.id]);
+
       const saveRetro = () => {
         if (!retroGood && !retroBad && !retroImprove) return;
-        setRetros((prev) => [{
-          id: "r" + Date.now(),
-          week: "W" + getWeekNumber() + " · " + new Date().getFullYear(),
+        const entry = {
+          id: existingThisWeek ? existingThisWeek.id : "r" + Date.now(),
+          week: thisWeekKey,
           date: getWeekRange(0),
-          good: retroGood, bad: retroBad, improve: retroImprove
-        }, ...prev]);
-        setRetroGood(""); setRetroBad(""); setRetroImprove("");
+          good: retroGood, bad: retroBad, improve: retroImprove,
+          updatedAt: new Date().toISOString()
+        };
+        if (existingThisWeek) {
+          setRetros((prev) => prev.map(r => r.id === existingThisWeek.id ? entry : r));
+        } else {
+          setRetros((prev) => [entry, ...prev]);
+          setRetroGood(""); setRetroBad(""); setRetroImprove("");
+        }
       };
 
       // 회고 자동 요약 계산
@@ -2215,7 +2253,7 @@
                                 editGoal(g.id, { milestones: newStages });
                               }} />
                               <span className="state">{m.status === "done" ? "완료" : m.status === "active" ? "진행중" : "예정"}</span>
-                              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", textAlign: "center" }}>+150</span>
+                              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 12, color: "var(--accent)", textAlign: "center" }}>+150</span>
                               <button className="del" onClick={(e) => {
                                 e.stopPropagation();
                                 editGoal(g.id, { milestones: (g.milestones || []).filter(x => x.id !== m.id) });
@@ -2308,7 +2346,7 @@
                     {isOpen && !isEditing && (
                       <div className="gmini-expand" onClick={(e) => e.stopPropagation()}>
                         {gTasks.length === 0
-                          ? <div style={{ fontSize: 11, color: "var(--text-4)", padding: "4px 0" }}>연결된 할 일 없음</div>
+                          ? <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0" }}>연결된 할 일 없음</div>
                           : gTasks.map((t) => (
                               <div key={t.id} className={"gmini-expand-task" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
                                 <div className="cb" />
@@ -2329,7 +2367,7 @@
               {/* 미연결 할일 */}
               <div className="unlinked-section">
                 <div className="unlinked-section-title">⚡ 미연결 할 일 ({unlinkedTasks.length})</div>
-                {unlinkedTasks.length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)" }}>모든 할일이 목표에 연결됨</div>}
+                {unlinkedTasks.length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)" }}>모든 할일이 목표에 연결됨</div>}
                 {unlinkedTasks.map((t) => (
                   <div key={t.id} className={"unlinked-task" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
                     <div className="cb" />
@@ -2411,10 +2449,10 @@
                             onKeyDown={(e) => { if (e.key === "Enter") handleQuadAdd(q.id); if (e.key === "Escape") { setQuadAddIn(null); setQuadAddText(""); } }}
                             onBlur={() => handleQuadAdd(q.id)}
                             placeholder="할 일 입력 후 Enter"
-                            style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 5, color: "var(--text-1)", fontFamily: "Geist, sans-serif", fontSize: 11.5, padding: "5px 8px", outline: "none", width: "100%", boxSizing: "border-box" }}
+                            style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 5, color: "var(--text-1)", fontFamily: "Geist, sans-serif", fontSize: 12.5, padding: "5px 8px", outline: "none", width: "100%", boxSizing: "border-box" }}
                           />
                         ) : (
-                          qt.length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)", padding: "12px 0", textAlign: "center", fontStyle: "italic" }}>+ 클릭하여 추가</div>
+                          qt.length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "12px 0", textAlign: "center", fontStyle: "italic" }}>+ 클릭하여 추가</div>
                         )}
                       </div>
                     </div>
@@ -2426,17 +2464,23 @@
             {/* ── RIGHT: RETRO ── */}
             <div className="gtr-col">
               <div className="gtr-col-head">
-                <div className="gtr-col-title">📝 회고</div>
-                <button className="gtr-btn-add" onClick={saveRetro}>저장</button>
+                <div className="gtr-col-title">📝 회고 · W{getWeekNumber()}<span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--text-3)", marginLeft: 5, fontWeight: 400 }}>{getWeekRange(0)}</span></div>
+                <button className="gtr-btn-add" onClick={saveRetro}>{existingThisWeek ? "✓ 수정" : "저장"}</button>
               </div>
 
+              {existingThisWeek && (
+                <div style={{ fontSize: 11.5, color: "var(--green)", padding: "4px 8px", background: "rgba(16,185,129,0.08)", borderRadius: 4, marginBottom: 8, fontFamily: "Geist Mono, monospace" }}>
+                  ✓ 이번주 회고 저장됨 · 내용 수정 후 [수정] 클릭
+                </div>
+              )}
+
               <div className="retro-mini-summary">
-                <div className="retro-mini-summary-title">📊 W{getWeekNumber()} 자동 요약</div>
+                <div className="retro-mini-summary-title">📊 W{getWeekNumber()} ({getWeekRange(0)}) 자동 요약</div>
                 <div className="retro-mini-row"><span className="lbl">완료 태스크</span><span className="val">{completedThisWeek}개</span></div>
                 <div className="retro-mini-row"><span className="lbl">평균 달성률</span><span className="val">{avgRate}%</span></div>
                 <div className="retro-mini-row"><span className="lbl">활동일</span><span className="val">{weekEntries.length}/7</span></div>
                 {bestGoal && (
-                  <div className="retro-mini-row"><span className="lbl">최고 진행</span><span className="val" style={{ fontSize: 10.5 }}>{bestGoal.name.slice(0, 12)} {bestGoal.progress}%</span></div>
+                  <div className="retro-mini-row"><span className="lbl">최고 진행</span><span className="val" style={{ fontSize: 11.5 }}>{bestGoal.name.slice(0, 12)} {bestGoal.progress}%</span></div>
                 )}
               </div>
 
@@ -2457,7 +2501,7 @@
                   <div key={r.id} className="retro-history-card">
                     <div className="retro-history-week">
                       <span>{r.week}</span>
-                      <button onClick={() => setRetros((p) => p.filter((x) => x.id !== r.id))} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", padding: 0, fontSize: 12 }}>×</button>
+                      <button onClick={() => setRetros((p) => p.filter((x) => x.id !== r.id))} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", padding: 0, fontSize: 13 }}>×</button>
                     </div>
                     {r.good && <div className="retro-history-text">✓ {r.good}</div>}
                     {r.improve && <div className="retro-history-text" style={{ color: "var(--accent)", marginTop: 3 }}>→ {r.improve}</div>}
@@ -2743,24 +2787,33 @@
                   return (
                     <div key={cat}>
                       <div className="asset-cat-title">{label} <span style={{ color: "var(--accent)", fontFamily: "Geist Mono, monospace" }}>{fmtKR(sumAssets(fin, cat))}</span></div>
-                      {list.map(a => (
-                        <div key={a.id} className="asset-row">
-                          {editingAssetId === a.id ? (
-                            <input type="text" value={a.name} onChange={(e) => updateAsset(a.id, { name: e.target.value })}
-                              style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "3px 7px", fontSize: 11.5, fontFamily: "Geist, sans-serif", outline: "none" }} />
-                          ) : (
-                            <span className="nm" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{a.name}</span>
-                          )}
-                          {editingAssetId === a.id ? (
-                            <input className="val-input" type="number" value={a.value} onChange={(e) => updateAsset(a.id, { value: Number(e.target.value) || 0 })}
-                              onBlur={() => setEditingAssetId(null)} onKeyDown={(e) => { if (e.key === "Enter") setEditingAssetId(null); }}
-                              autoFocus />
-                          ) : (
-                            <span className="val" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{fmtKR(a.value)}</span>
-                          )}
-                          <button onClick={() => deleteAsset(a.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 14 }}>×</button>
-                        </div>
-                      ))}
+                      {list.map(a => {
+                        const editing = editingAssetId === a.id;
+                        return (
+                          <div key={a.id} className="asset-row">
+                            {editing ? (
+                              <input type="text" value={a.name} autoFocus
+                                onChange={(e) => updateAsset(a.id, { name: e.target.value })}
+                                onKeyDown={(e) => { if (e.key === "Enter") setEditingAssetId(null); if (e.key === "Escape") setEditingAssetId(null); }}
+                                style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", borderRadius: 4, color: "var(--text-1)", padding: "3px 7px", fontSize: 13, fontFamily: "Geist, sans-serif", outline: "none", width: "100%", boxSizing: "border-box" }} />
+                            ) : (
+                              <span className="nm" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{a.name}</span>
+                            )}
+                            {editing ? (
+                              <input className="val-input" type="number" value={a.value}
+                                onChange={(e) => updateAsset(a.id, { value: Number(e.target.value) || 0 })}
+                                onKeyDown={(e) => { if (e.key === "Enter") setEditingAssetId(null); if (e.key === "Escape") setEditingAssetId(null); }} />
+                            ) : (
+                              <span className="val" onClick={() => setEditingAssetId(a.id)} style={{ cursor: "pointer" }}>{fmtKR(a.value)}</span>
+                            )}
+                            {editing ? (
+                              <button onClick={() => setEditingAssetId(null)} style={{ background: "var(--green)", border: "none", color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600, borderRadius: 4, padding: "2px 6px" }} title="저장 (또는 Enter)">✓</button>
+                            ) : (
+                              <button onClick={() => deleteAsset(a.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })}
@@ -2788,7 +2841,7 @@
                 <div className="fin-net" style={{ marginTop: 8 }}>
                   <div>
                     <div className="lbl">💵 순이익</div>
-                    <div style={{ fontSize: 10.5, color: "var(--text-4)", marginTop: 2 }}>
+                    <div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 2 }}>
                       예상 {profitExpected >= 0 ? "+" : ""}{Math.round(profitExpected/10000).toLocaleString()}만 · 실제 {profitActual >= 0 ? "+" : ""}{Math.round(profitActual/10000).toLocaleString()}만
                     </div>
                   </div>
@@ -2814,7 +2867,7 @@
                     <div className={"res-bar-fill " + (energyPct > 80 ? "warn" : "")} style={{ width: Math.min(100, energyPct) + "%" }} />
                   </div>
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 6 }}>
+                <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>
                   남은: <strong style={{ color: "var(--green)", fontFamily: "Geist Mono, monospace" }}>{computed.energy.weeklyPool + computed.energy.buff - computed.energy.used}</strong>
                 </div>
               </div>
@@ -2833,7 +2886,7 @@
                   </div>
                 </div>
                 {computed.time.buff > 0 && (
-                  <div style={{ fontSize: 10.5, color: "var(--text-4)", marginTop: 6 }}>
+                  <div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 6 }}>
                     기본 {computed.time.weeklyPool}h + 아이템 <strong style={{ color: "var(--green)" }}>+{computed.time.buff}h</strong>
                   </div>
                 )}
@@ -2970,7 +3023,7 @@
                 <input
                   value={local.name}
                   onChange={(e) => update("name", e.target.value)}
-                  style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 17, fontWeight: 600, fontFamily: "Geist, sans-serif", padding: 0, outline: "none", width: "100%" }}
+                  style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 18, fontWeight: 600, fontFamily: "Geist, sans-serif", padding: 0, outline: "none", width: "100%" }}
                 />
                 <span className={"item-modal-status " + local.status}>
                   {local.status === "equipped" ? "⚔️ 장착됨" : local.status === "developing" ? "🔨 개발중" : "📦 보관"}
@@ -2983,7 +3036,7 @@
               <div style={{ padding: "12px 22px", borderBottom: "1px solid var(--border)", background: "var(--bg-2)" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(14, 1fr)", gap: 4 }}>
                   {ITEM_EMOJIS.map((e) => (
-                    <button key={e} onClick={() => { update("emoji", e); setEmojiPicker(false); }} style={{ background: local.emoji === e ? "var(--accent-soft)" : "var(--bg-3)", border: local.emoji === e ? "1px solid var(--accent)" : "1px solid var(--border)", borderRadius: 5, padding: "4px 0", cursor: "pointer", fontSize: 16 }}>
+                    <button key={e} onClick={() => { update("emoji", e); setEmojiPicker(false); }} style={{ background: local.emoji === e ? "var(--accent-soft)" : "var(--bg-3)", border: local.emoji === e ? "1px solid var(--accent)" : "1px solid var(--border)", borderRadius: 5, padding: "4px 0", cursor: "pointer", fontSize: 17 }}>
                       {e}
                     </button>
                   ))}
@@ -3131,7 +3184,7 @@
               ✨ AI 생성 (나노바나나2)
             </button>
           </div>
-          {error && <div style={{ fontSize: 11, color: "var(--red)", marginTop: 6, padding: "4px 8px", background: "rgba(239,68,68,0.1)", borderRadius: 4 }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 6, padding: "4px 8px", background: "rgba(239,68,68,0.1)", borderRadius: 4 }}>{error}</div>}
         </>
       );
     }
@@ -3240,22 +3293,22 @@
           return (
             <div key={cat}>
               <div className="asset-cat-title">{label}</div>
-              {filtered.length === 0 && <div style={{ fontSize: 11, color: "var(--text-4)", padding: "4px 0", fontStyle: "italic" }}>없음</div>}
+              {filtered.length === 0 && <div style={{ fontSize: 12, color: "var(--text-4)", padding: "4px 0", fontStyle: "italic" }}>없음</div>}
               {filtered.map(x => (
                 <div key={x.id} style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
                   <input value={x.name} onChange={(e) => updateItem(kind, x.id, { name: e.target.value })}
-                    style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 12, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
+                    style={{ background: "transparent", border: "none", color: "var(--text-1)", fontSize: 13, fontFamily: "Geist, sans-serif", padding: 0, outline: "none" }} />
                   <input type="number" value={x.expected} onChange={(e) => updateItem(kind, x.id, { expected: Number(e.target.value) || 0 })}
                     placeholder="예상"
-                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 11.5, textAlign: "right", outline: "none" }} />
+                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
                   <input type="number" value={x.actual} onChange={(e) => updateItem(kind, x.id, { actual: Number(e.target.value) || 0 })}
                     placeholder="실제"
-                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 11.5, textAlign: "right", outline: "none" }} />
-                  <button onClick={() => deleteItem(kind, x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 14 }}>×</button>
+                    style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-1)", fontFamily: "Geist Mono, monospace", padding: "4px 7px", fontSize: 12.5, textAlign: "right", outline: "none" }} />
+                  <button onClick={() => deleteItem(kind, x.id)} style={{ background: "none", border: "none", color: "var(--text-4)", cursor: "pointer", fontSize: 15 }}>×</button>
                 </div>
               ))}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, padding: "4px 0", marginTop: 4 }}>
-                <button onClick={() => addItem(kind, cat)} style={{ gridColumn: "1 / -1", background: "var(--bg-2)", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "5px 0", borderRadius: 5, fontSize: 11, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>+ {label} 추가</button>
+                <button onClick={() => addItem(kind, cat)} style={{ gridColumn: "1 / -1", background: "var(--bg-2)", border: "1px dashed var(--border-accent)", color: "var(--accent)", padding: "5px 0", borderRadius: 5, fontSize: 12, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>+ {label} 추가</button>
               </div>
             </div>
           );
@@ -3280,12 +3333,12 @@
             <div className="modal-body">
               {sub === "income" && (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 10, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
                     <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
                   </div>
                   {renderItems("incomes", INCOME_CATS)}
                   <div className="fin-net" style={{ marginTop: 14 }}>
-                    <div><div className="lbl">📈 수입 합계</div><div style={{ fontSize: 10.5, color: "var(--text-4)", marginTop: 2 }}>예상 vs 실제</div></div>
+                    <div><div className="lbl">📈 수입 합계</div><div style={{ fontSize: 11.5, color: "var(--text-4)", marginTop: 2 }}>예상 vs 실제</div></div>
                     <span className="val green">+{Math.round(totalInExp/10000).toLocaleString()}만 / +{Math.round(totalInAct/10000).toLocaleString()}만</span>
                   </div>
                 </>
@@ -3293,7 +3346,7 @@
 
               {sub === "expense" && (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 10, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 28px", gap: 8, fontSize: 11, color: "var(--text-4)", textTransform: "uppercase", letterSpacing: "0.05em", paddingBottom: 6, borderBottom: "1px dashed var(--border)", marginBottom: 6 }}>
                     <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
                   </div>
                   {renderItems("expenses", EXPENSE_CATS)}
@@ -3322,7 +3375,7 @@
                       <span className="lbl">💵 이번달 순이익</span>
                       <span className="val" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>{profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만</span>
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--text-3)", textAlign: "right" }}>예상 {profitExp >= 0 ? "+" : ""}{Math.round(profitExp/10000).toLocaleString()}만 대비 {profitAct - profitExp >= 0 ? "+" : ""}{Math.round((profitAct - profitExp)/10000).toLocaleString()}만</div>
+                    <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "right" }}>예상 {profitExp >= 0 ? "+" : ""}{Math.round(profitExp/10000).toLocaleString()}만 대비 {profitAct - profitExp >= 0 ? "+" : ""}{Math.round((profitAct - profitExp)/10000).toLocaleString()}만</div>
                   </div>
                   <div className="fin-card">
                     <div className="fin-card-head"><div className="fin-card-title">📈 수입</div><div className="fin-card-sum green">+{Math.round(totalInAct/10000).toLocaleString()}만</div></div>
@@ -3339,7 +3392,7 @@
             </div>
 
             <div className="modal-foot">
-              <span style={{ fontSize: 11, color: "var(--text-4)" }}>💡 항목 클릭하여 인라인 편집 · 변경 즉시 자동 저장</span>
+              <span style={{ fontSize: 12, color: "var(--text-4)" }}>💡 항목 클릭하여 인라인 편집 · 변경 즉시 자동 저장</span>
               <button className="btn-save" onClick={onClose}>✓ 완료</button>
             </div>
           </div>
@@ -3583,7 +3636,7 @@
       }, []);
 
       if (!loaded) return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', color: 'var(--text-3)', fontFamily: 'Geist, sans-serif', fontSize: 14 }}>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', color: 'var(--text-3)', fontFamily: 'Geist, sans-serif', fontSize: 15 }}>
           데이터 불러오는 중...
         </div>
       );
@@ -3713,10 +3766,10 @@
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', fontFamily: 'Geist, sans-serif', gap: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <div className="brand-mark" />
-            <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-1)', letterSpacing: '-0.5px' }}>DreamBoard</span>
+            <span style={{ fontSize: 23, fontWeight: 700, color: 'var(--text-1)', letterSpacing: '-0.5px' }}>DreamBoard</span>
           </div>
-          <p style={{ color: 'var(--text-4)', fontSize: 13, margin: 0 }}>개인 목표 대시보드 · 로그인이 필요합니다</p>
-          <button onClick={onLogin} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-2)', border: '1px solid var(--border-strong)', borderRadius: 10, color: 'var(--text-1)', fontSize: 14, fontWeight: 500, padding: '12px 24px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>
+          <p style={{ color: 'var(--text-4)', fontSize: 14, margin: 0 }}>개인 목표 대시보드 · 로그인이 필요합니다</p>
+          <button onClick={onLogin} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-2)', border: '1px solid var(--border-strong)', borderRadius: 10, color: 'var(--text-1)', fontSize: 15, fontWeight: 500, padding: '12px 24px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>
             <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
             Google로 로그인
           </button>
@@ -3727,9 +3780,9 @@
     function AccessDenied({ onLogout }) {
       return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', fontFamily: 'Geist, sans-serif', gap: 16 }}>
-          <p style={{ color: 'var(--red)', fontSize: 15, fontWeight: 600, margin: 0 }}>접근 권한이 없습니다</p>
-          <p style={{ color: 'var(--text-4)', fontSize: 13, margin: 0 }}>허가된 계정으로만 접근 가능합니다</p>
-          <button onClick={onLogout} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-3)', fontSize: 13, padding: '8px 18px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>다른 계정으로 로그아웃</button>
+          <p style={{ color: 'var(--red)', fontSize: 16, fontWeight: 600, margin: 0 }}>접근 권한이 없습니다</p>
+          <p style={{ color: 'var(--text-4)', fontSize: 14, margin: 0 }}>허가된 계정으로만 접근 가능합니다</p>
+          <button onClick={onLogout} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-3)', fontSize: 14, padding: '8px 18px', cursor: 'pointer', fontFamily: 'Geist, sans-serif' }}>다른 계정으로 로그아웃</button>
         </div>
       );
     }
@@ -3747,7 +3800,7 @@
       };
 
       if (user === undefined) return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', color: 'var(--text-4)', fontFamily: 'Geist, sans-serif', fontSize: 14 }}>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', color: 'var(--text-4)', fontFamily: 'Geist, sans-serif', fontSize: 15 }}>
           로딩 중...
         </div>
       );
