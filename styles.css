@@ -5060,8 +5060,19 @@
 /* 집중모드 — 2열 (좌: 타이머·컨트롤 / 우: 큐) */
 .focus-mode-view { display: grid; gap: 0; padding: 10px 0; align-items: start; }
 @media (max-width: 1100px) { .focus-mode-view { grid-template-columns: 1fr !important; } .focus-queue-resize { display: none; } }
-.focus-queue-resize { width: 6px; cursor: col-resize; background: var(--border); border-radius: 3px; transition: background 0.15s; align-self: stretch; min-height: 200px; margin: 0 8px; }
+.focus-queue-resize {
+  width: 6px; cursor: col-resize; background: var(--border); border-radius: 3px;
+  transition: background 0.15s; align-self: stretch; min-height: 300px;
+  margin: 0 20px 0 8px; /* 우측 여유 20px 확보 — 큐 컨텐츠와 분리 */
+  position: relative; z-index: 100;
+}
+.focus-queue-resize::before {
+  /* 넓은 hit zone (좌우 10px씩 확장) */
+  content: ""; position: absolute; top: 0; bottom: 0;
+  left: -10px; right: -10px;
+}
 .focus-queue-resize:hover, .focus-queue-resize:active { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+.focus-mode-view .focus-right { padding-left: 4px; }
 .focus-mode-view .focus-left { display: flex; flex-direction: column; align-items: center; gap: 20px; min-width: 0; }
 .focus-mode-view .focus-right { display: flex; flex-direction: column; gap: 8px; min-width: 0; max-height: 75vh; overflow-y: auto; padding-right: 4px; }
 
