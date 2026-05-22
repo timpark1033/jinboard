@@ -10,7 +10,7 @@
 
 - **사용자**: timpark1033@gmail.com (부동산 + 유튜브 + NoteUp 창업자)
 - **배포**: jinboard.pages.dev (Cloudflare Pages, github `timpark1033/jinboard`, master → main)
-- **현재 캐시버스터**: `?v=20260522q` (변경 시 다음 글자로 bump)
+- **현재 캐시버스터**: `?v=20260522r` (변경 시 다음 글자로 bump)
 
 ---
 
@@ -139,22 +139,24 @@ C:\Users\sj\Desktop\jinboard\
 
 ---
 
-### 2️⃣ 사업별 수입·지출 (선택 대기)
+### 2️⃣ ~~사업별 수입·지출~~ → **사업별 자금 흐름 (구현 완료 2026-05-22)**
 
-**참고 목업**: `C:\Users\sj\Downloads\jinboard-business-flow.html`
+**참고 목업 (최종)**: `C:\Users\sj\Downloads\jinboard-business-final.html`
 
-**컨셉**:
-- 부동산(주수입) / 유튜브(부수입) / 가정 — 3 사업 단위로 수입·지출 묶기
-- 데이터 모델: 모든 income/expense에 `business` 필드 추가 (`estate`/`youtube`/`home`)
-- 사업 컬러: 🏠 부동산=앰버 / 📺 유튜브=빨강 / 🏡 가정=블루
+**확정 컨셉**:
+- 2섹션만 — **주수입 / 부수입** (3사업 묶음 안 → 2섹션으로 단순화)
+- 섹션명·아이콘·컬러 더블클릭 편집 (settings.incomeSections에 저장)
+- 좌: 통합 입력 테이블 (한 곳에서 모두 입력)
+- 우: 도넛 비중 카드 + 주/부 히어로 카드 2개
+- 예상 컬럼 제거 — 금액 1컬럼
+- 항목 추가: 상단 + 버튼 (인라인 행 포커스) + 하단 인라인 행 (Enter 제출)
+- segment pill 클릭 → 주↔부 토글 / type pill 클릭 → 수입↔지출 전환
 
-**3안**:
-- 🅐 **사업 필터 토글**: 상단 토글로 사업 선택 → 좌우 (수입/지출) 표시
-- 🅑 **사업별 3 컬럼**: 3개 박스 동시 표시, 각 박스에 수입+지출+Net
-- 🅒 **흐름 시각화 + 매트릭스**: Sankey-like 그림 + 비중 표
-- **추천**: 🅑 메인 + 🅒 요약 탭 조합
+**데이터 모델 추가**:
+- `settings.incomeSections`: `[{id, name, icon, color}, ...]` (기본 주수입/부수입)
+- `incomes[]`/`expenses[]` 각 항목에 `segment: "primary"|"secondary"` 필드 (없으면 "primary")
 
-**상태**: 사용자 선택 대기 중. ①번 자원탭 매거진 리디자인 후 진행 권장.
+**구현 위치**: `BusinessFlowSection` (app.js, FinanceDetailModal 직전). FinanceDetailModal의 ROW 2가 이걸로 대체됨.
 
 ---
 
