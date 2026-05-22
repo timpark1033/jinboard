@@ -5042,8 +5042,10 @@
 .weekly-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .gcal-connect-btn { background: var(--bg-2); border: 1px solid var(--border-accent); color: var(--accent); padding: 5px 10px; border-radius: 6px; font-family: inherit; font-size: 11px; cursor: pointer; font-weight: 600; transition: all 0.15s; }
 .gcal-connect-btn:hover { background: var(--accent-soft); }
-.weekly-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.weekly-day { background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 6px; min-height: 140px; display: flex; flex-direction: column; }
+.weekly-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.weekly-day { background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 6px; min-height: 140px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.weekly-day-body { min-width: 0; overflow: hidden; }
+.weekly-sch { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .weekly-day.today { background: rgba(139,92,246,0.06); border-color: var(--border-accent); }
 .weekly-day-head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 5px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
 .weekly-day-head .dlbl { font-size: 10.5px; color: var(--text-3); font-weight: 700; }
@@ -5263,23 +5265,14 @@
 /* 월간 그리드 */
 .month-weekday-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
 .month-weekday-lbl { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; text-align: center; padding: 4px; }
-.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(110px, 1fr); gap: 4px; }
+.month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: minmax(110px, 1fr); gap: 4px; }
 .month-grid .weekly-day { min-height: 110px; }
 .month-grid .weekly-day.other-month { opacity: 0.4; background: transparent; }
 
-/* hover 시 task 전체 텍스트 표시 (말줄임 해제) */
-.weekly-task:hover .t {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  word-break: keep-all;
-}
-.weekly-task:hover {
-  z-index: 5;
-  position: relative;
-  background: var(--bg-3);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
+/* hover 시 텍스트는 OS 툴팁(title)으로만 표시 — 레이아웃 흔들림 방지 */
+.weekly-task:hover .t { /* 말줄임 유지 */ }
+.weekly-task:hover { background: var(--bg-3); }
+.weekly-sch:hover { /* 배경만 살짝 변경 */ }
 
 /* TaskEditModal — 좌측 비주얼 사이드바 + 우측 폼 */
 .tem-modal { background: var(--bg-1); border-radius: 18px; overflow: hidden; display: grid; grid-template-columns: 240px 1fr; width: 800px; max-width: 95vw; max-height: 90vh; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
