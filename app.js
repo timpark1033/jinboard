@@ -2068,12 +2068,23 @@
       );
     }
 
-    function SettingsModal({ open, onClose, settings, setSettings, onLogout }) {
+    function SettingsModal({ open, onClose, settings, setSettings, onLogout, user }) {
       const [testResult, setTestResult] = useState(null);
       const [testing, setTesting] = useState(false);
       const [imgTestResult, setImgTestResult] = useState(null);
       const [imgTesting, setImgTesting] = useState(false);
+      const [uidCopied, setUidCopied] = useState(false);
       if (!open) return null;
+      const userUid = user?.uid || "";
+      const copyUid = async () => {
+        try {
+          await navigator.clipboard.writeText(userUid);
+          setUidCopied(true);
+          setTimeout(() => setUidCopied(false), 2000);
+        } catch (e) {
+          alert("복사 실패: " + e.message + "\n수동 복사: " + userUid);
+        }
+      };
       const update = (k, v) => setSettings((prev) => ({ ...prev, [k]: v }));
 
       const runTextTest = async () => {
@@ -2104,6 +2115,31 @@
               <button className="modal-close" onClick={onClose}>×</button>
             </div>
             <div className="modal-body">
+              {/* 🔑 내 UID — 부동산 업로더 동기 설정용 */}
+              <div className="settings-section">
+                <div className="settings-section-title">🔑 내 UID (부동산 업로더 동기용)</div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="text" readOnly value={userUid}
+                    style={{ flex: 1, fontFamily: "Geist Mono, monospace", fontSize: 12.5, letterSpacing: 0.3 }}
+                    onClick={(e) => e.target.select()} />
+                  <button
+                    onClick={copyUid}
+                    style={{
+                      background: uidCopied ? "var(--green)" : "var(--accent)",
+                      border: "none", color: "#fff",
+                      padding: "9px 14px", borderRadius: 7,
+                      fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    }}>
+                    {uidCopied ? "✓ 복사됨" : "📋 복사"}
+                  </button>
+                </div>
+                <div className="settings-hint" style={{ marginTop: 8 }}>
+                  이 UID를 <b>부동산 매물 멀티 업로더</b> → 매출관리 탭 → ⚙ 설정에 붙여넣으세요.
+                  매출관리 데이터가 10분마다 자동 동기됩니다.
+                </div>
+              </div>
+
               <div className="settings-section">
                 <div className="settings-section-title">🤖 Gemini AI 연동</div>
                 <div className="settings-field">
@@ -7036,6 +7072,7 @@
             settings={settings}
             setSettings={setSettings}
             onLogout={() => _auth.signOut()}
+            user={user}
           />
           <FinanceDetailModal
             open={financeModalOpen}
