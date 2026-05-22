@@ -2207,43 +2207,37 @@
     }
 
     /* ─── Stage 2: GoalsTasksRetroTab ─── */
-    /* ─── 분야별 업무 뷰 (6 스탯 × 컬럼) ─── */
+    /* ─── 목표별 업무 뷰 (목표 × 컬럼) ─── */
     function FieldTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, deleteTask, goalColor }) {
-      const STAT_ORDER = ["youtube", "estate", "dev", "english", "health", "finance"];
-      const grouped = STAT_ORDER.map(sid => {
-        const stat = stats.find(s => s.id === sid);
-        if (!stat) return null;
-        const matched = tasks.filter(t => resolveStatId(t, goals) === sid);
-        return { stat, tasks: matched };
-      }).filter(Boolean);
-      const unlinked = tasks.filter(t => !resolveStatId(t, goals));
+      const grouped = goals.map(g => ({
+        goal: g,
+        tasks: tasks.filter(t => t.goalId === g.id)
+      }));
+      const unlinked = tasks.filter(t => !t.goalId);
 
       return (
         <div className="field-task-grid">
-          {grouped.map(({ stat, tasks: list }) => (
-            <div key={stat.id} className="field-task-col">
+          {grouped.map(({ goal: g, tasks: list }) => (
+            <div key={g.id} className="field-task-col" style={{ borderLeft: `3px solid ${goalColor(g.id)}` }}>
               <div className="field-col-head">
-                <span className="field-col-name"><span className="ic">{stat.icon}</span>{stat.label}</span>
+                <span className="field-col-name" style={{ color: goalColor(g.id) }}>{g.name}</span>
                 <span className="field-col-count">{list.filter(t => t.done).length}/{list.length}</span>
               </div>
               {list.length === 0 && <div className="field-col-empty">없음</div>}
-              {list.map(t => {
-                const g = t.goalId ? goals.find(x => x.id === t.goalId) : null;
-                return (
-                  <div key={t.id} className={"eq-task-row" + (t.done ? " done" : "")} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
-                    <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} />
-                    <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }}>{t.text}</span>
-                    <span className="qtag" style={{ background: "var(--bg-3)", color: "var(--text-3)" }}>Q{t.quadrant}</span>
-                    <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
-                  </div>
-                );
-              })}
+              {list.map(t => (
+                <div key={t.id} className={"eq-task-row" + (t.done ? " done" : "")} style={{ boxShadow: `inset 3px 0 0 ${goalColor(g.id)}` }}>
+                  <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} />
+                  <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }}>{t.text}</span>
+                  <span className="qtag" style={{ background: "var(--bg-3)", color: "var(--text-3)" }}>Q{t.quadrant}</span>
+                  <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
+                </div>
+              ))}
             </div>
           ))}
           {unlinked.length > 0 && (
             <div className="field-task-col" style={{ gridColumn: "1 / -1" }}>
               <div className="field-col-head">
-                <span className="field-col-name">⚡ 미분류</span>
+                <span className="field-col-name">⚡ 목표 미연결</span>
                 <span className="field-col-count">{unlinked.length}</span>
               </div>
               {unlinked.map(t => (
@@ -3351,7 +3345,7 @@
                 <div className="task-tabs-bar">
                   <button className={"task-tab-btn" + (taskTab === "eisen" ? " active" : "")} onClick={() => persistTaskTab("eisen")}>📋 4분면<span className="cnt">{tasks.length}</span></button>
                   <button className={"task-tab-btn" + (taskTab === "weekly" ? " active" : "")} onClick={() => persistTaskTab("weekly")}>📅 주간</button>
-                  <button className={"task-tab-btn" + (taskTab === "field" ? " active" : "")} onClick={() => persistTaskTab("field")}>⚔️ 분야별</button>
+                  <button className={"task-tab-btn" + (taskTab === "field" ? " active" : "")} onClick={() => persistTaskTab("field")}>🎯 목표별</button>
                   <button className={"task-tab-btn" + (taskTab === "focus" ? " active" : "")} onClick={() => persistTaskTab("focus")}>🍅 집중</button>
                 </div>
                 <button className="task-fullscreen-btn" onClick={() => setTaskFullscreen(true)} title="풀스크린 모드" style={{ marginLeft: "auto" }}>⛶</button>
