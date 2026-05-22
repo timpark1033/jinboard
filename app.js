@@ -3571,69 +3571,116 @@
             if (!t) return null;
             const linkedGoal = t.goalId ? goals.find(x => x.id === t.goalId) : null;
             const availQuests = (linkedGoal?.quests || []).filter(q => !q.done || q.id === t.questId);
+            const linkedStat = linkedGoal?.statId ? stats.find(s => s.id === linkedGoal.statId) : null;
             const update = (k, v) => editTask(t.id, { [k]: v });
+            const QUADS = {
+              1: { num: "Q1", lbl: "긴급 · 중요", desc: "지금 처리해야 할 일", color: "#ef4444" },
+              2: { num: "Q2", lbl: "중요", desc: "장기적으로 가치 있는 일", color: "#8b5cf6" },
+              3: { num: "Q3", lbl: "긴급", desc: "당장 처리하지만 가치 낮음", color: "#f59e0b" },
+              4: { num: "Q4", lbl: "나중에", desc: "지금은 우선순위 낮음", color: "#6b7280" }
+            };
+            const qInfo = QUADS[t.quadrant] || QUADS[2];
+            const dday = t.dueDate ? calcDday(t.dueDate) : null;
+            const xpPreview = t.quadrant === 1 ? 40 : 15;
+
             return (
               <div className="modal-overlay" onClick={() => setEditingTaskId(null)}>
-                <div className="modal-box" style={{ width: 520 }} onClick={(e) => e.stopPropagation()}>
-                  <div className="modal-head">
-                    <div className="modal-title">✏️ 할일 편집</div>
-                    <button className="modal-close" onClick={() => setEditingTaskId(null)}>×</button>
+                <div className="tem-modal" onClick={(e) => e.stopPropagation()} style={{ "--tem-q-color": qInfo.color }}>
+                  {/* LEFT: 비주얼 사이드바 */}
+                  <div className="tem-sidebar">
+                    <div className="tem-q-num">{qInfo.num}</div>
+                    <div className="tem-q-lbl">{qInfo.lbl}</div>
+                    <div className="tem-q-desc">{qInfo.desc}</div>
+
+                    <div className="tem-divider"></div>
+
+                    <div className="tem-stat-block">
+                      <div className="tem-stat-title">연결 정보</div>
+                      {linkedGoal
+                        ? <div className="tem-stat-row"><span className="ic">🎯</span>{linkedGoal.name}</div>
+                        : <div className="tem-stat-row dim"><span className="ic">🎯</span>목표 미연결</div>}
+                      {linkedStat
+                        ? <div className="tem-stat-row"><span className="ic">{linkedStat.icon}</span>{linkedStat.label} (Lv.{statLevel(getStatTotalXp(linkedStat))})</div>
+                        : null}
+                      {dday !== null
+                        ? <div className="tem-stat-row"><span className="ic">⏰</span>D-{dday} {dday <= 3 ? "(긴급)" : dday <= 7 ? "(임박)" : ""}</div>
+                        : <div className="tem-stat-row dim"><span className="ic">⏰</span>마감일 없음</div>}
+                      <div className="tem-stat-row"><span className="ic">⚡</span>+{xpPreview} XP 예정</div>
+                      {t.questId && linkedGoal && (() => {
+                        const q = (linkedGoal.quests || []).find(x => x.id === t.questId);
+                        return q ? <div className="tem-stat-row"><span className="ic">💎</span>{q.name} {q.xpPerStep > 0 ? "(+" + q.xpPerStep + " XP)" : ""}</div> : null;
+                      })()}
+                      {t.done && <div className="tem-stat-row" style={{ color: "rgba(255,255,255,0.95)", fontWeight: 700 }}><span className="ic">✓</span>완료됨</div>}
+                    </div>
                   </div>
-                  <div className="modal-body">
-                    <div className="item-field">
-                      <label className="item-field-label">할 일</label>
-                      <input type="text" value={t.text} onChange={(e) => update("text", e.target.value)} />
-                    </div>
-                    <div className="item-field-row">
-                      <label>4분면</label>
-                      <select value={t.quadrant} onChange={(e) => update("quadrant", Number(e.target.value))}>
-                        <option value="1">🔴 Q1 · 긴급+중요</option>
-                        <option value="2">🟡 Q2 · 중요</option>
-                        <option value="3">🟠 Q3 · 긴급</option>
-                        <option value="4">⚪ Q4 · 나중에</option>
-                      </select>
-                    </div>
-                    <div className="item-field-row">
-                      <label>연결 목표</label>
-                      <select value={t.goalId || ""} onChange={(e) => { update("goalId", e.target.value || null); update("questId", null); }}>
-                        <option value="">미연결</option>
-                        {goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                      </select>
-                    </div>
-                    {linkedGoal && availQuests.length > 0 && (
-                      <div className="item-field-row">
-                        <label>✨ 연결 퀘스트</label>
-                        <select value={t.questId || ""} onChange={(e) => update("questId", e.target.value || null)}>
-                          <option value="">선택 안 함</option>
-                          {availQuests.map(q => (
-                            <option key={q.id} value={q.id}>
-                              💎 {q.name} ({q.current}/{q.target}{q.unit ? " " + q.unit : ""}){q.xpPerStep > 0 ? " +" + q.xpPerStep + " XP/회" : ""}
-                            </option>
-                          ))}
-                        </select>
+
+                  {/* RIGHT: 폼 */}
+                  <div className="tem-right">
+                    <div className="tem-form">
+                      <div className="tem-form-head">
+                        <div className="tem-form-title">✏️ 할일 편집</div>
+                        <button className="tem-close" onClick={() => setEditingTaskId(null)}>✕</button>
                       </div>
-                    )}
-                    <div className="item-field-row">
-                      <label>태그</label>
-                      <input type="text" value={t.tag || ""} onChange={(e) => update("tag", e.target.value)} placeholder="예: 유튜브" />
-                    </div>
-                    <div className="item-field-row">
-                      <label>마감일</label>
-                      <input type="date" value={t.dueDate || ""} onChange={(e) => update("dueDate", e.target.value)} />
-                    </div>
-                    <div className="item-field-row">
-                      <label>예정 시간</label>
-                      <input type="text" value={t.time || ""} onChange={(e) => update("time", e.target.value)} placeholder="HH:MM (선택)" />
-                    </div>
-                    {t.questId && (
-                      <div style={{ marginTop: 10, padding: 10, background: "var(--accent-soft)", border: "1px solid var(--border-accent)", borderRadius: 6, fontSize: 11, color: "var(--text-2)", lineHeight: 1.6 }}>
-                        💡 이 할일 완료 시 연결 퀘스트 카운트 +1<br/>해제 시 -1
+
+                      <div className="tem-field">
+                        <label>할 일</label>
+                        <input className="tem-input" type="text" value={t.text} onChange={(e) => update("text", e.target.value)} placeholder="할 일 내용" autoFocus />
                       </div>
-                    )}
-                  </div>
-                  <div className="modal-foot">
-                    <button onClick={() => { deleteTask(t.id); setEditingTaskId(null); }} style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "var(--red)", padding: "7px 14px", borderRadius: 6, fontSize: 12, cursor: "pointer", fontFamily: "Geist, sans-serif" }}>🗑 삭제</button>
-                    <button className="btn-save" onClick={() => setEditingTaskId(null)}>✓ 완료</button>
+
+                      <div className="tem-field-row">
+                        <div className="tem-field">
+                          <label>4분면</label>
+                          <select className="tem-input" value={t.quadrant} onChange={(e) => update("quadrant", Number(e.target.value))}>
+                            <option value="1">🔴 Q1 · 긴급 + 중요</option>
+                            <option value="2">🟣 Q2 · 중요</option>
+                            <option value="3">🟡 Q3 · 긴급</option>
+                            <option value="4">⚪ Q4 · 나중에</option>
+                          </select>
+                        </div>
+                        <div className="tem-field">
+                          <label>연결 목표</label>
+                          <select className="tem-input" value={t.goalId || ""} onChange={(e) => { update("goalId", e.target.value || null); update("questId", null); }}>
+                            <option value="">미연결</option>
+                            {goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      {linkedGoal && availQuests.length > 0 && (
+                        <div className="tem-field">
+                          <label>✨ 연결 퀘스트 (선택 시 완료 자동 카운트)</label>
+                          <select className="tem-input" value={t.questId || ""} onChange={(e) => update("questId", e.target.value || null)}>
+                            <option value="">선택 안 함</option>
+                            {availQuests.map(q => (
+                              <option key={q.id} value={q.id}>
+                                💎 {q.name} ({q.current}/{q.target}{q.unit ? " " + q.unit : ""}){q.xpPerStep > 0 ? " +" + q.xpPerStep + " XP/회" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="tem-field-row">
+                        <div className="tem-field">
+                          <label>태그</label>
+                          <input className="tem-input" type="text" value={t.tag || ""} onChange={(e) => update("tag", e.target.value)} placeholder="예: 유튜브" />
+                        </div>
+                        <div className="tem-field">
+                          <label>마감일</label>
+                          <input className="tem-input" type="date" value={t.dueDate || ""} onChange={(e) => update("dueDate", e.target.value)} />
+                        </div>
+                      </div>
+
+                      <div className="tem-field">
+                        <label>예정 시간</label>
+                        <input className="tem-input" type="text" value={t.time || ""} onChange={(e) => update("time", e.target.value)} placeholder="HH:MM (선택)" />
+                      </div>
+                    </div>
+
+                    <div className="tem-foot">
+                      <button className="tem-btn-danger" onClick={() => { if (confirm("이 할일을 삭제할까요?")) { deleteTask(t.id); setEditingTaskId(null); } }}>🗑 삭제</button>
+                      <button className="tem-btn-primary" onClick={() => setEditingTaskId(null)}>✓ 완료</button>
+                    </div>
                   </div>
                 </div>
               </div>
