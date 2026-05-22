@@ -2885,6 +2885,28 @@
 
       // 4분면 빈 영역 클릭으로 인라인 추가
       const [quadAddIn, setQuadAddIn] = useState(null); // quadrant id
+      const [taskDragId, setTaskDragId] = useState(null);
+      const [dragOverQuad, setDragOverQuad] = useState(null);
+      const handleTaskDragStart = (taskId) => (e) => {
+        setTaskDragId(taskId);
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", taskId);
+      };
+      const handleTaskDragEnd = () => { setTaskDragId(null); setDragOverQuad(null); };
+      const handleQuadDragOver = (quadId) => (e) => {
+        if (!taskDragId) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setDragOverQuad(quadId);
+      };
+      const handleQuadDrop = (quadId) => (e) => {
+        e.preventDefault();
+        if (!taskDragId) return;
+        const t = tasks.find(x => x.id === taskDragId);
+        if (t && t.quadrant !== quadId) editTask(taskDragId, { quadrant: quadId });
+        setTaskDragId(null);
+        setDragOverQuad(null);
+      };
       const [quadAddText, setQuadAddText] = useState("");
 
       // 할일 세부 편집 모달
@@ -3464,7 +3486,10 @@
                 {QUADRANTS.map((q) => {
                   const qt = tasks.filter((t) => t.quadrant === q.id);
                   return (
-                    <div key={q.id} className="eq-cell">
+                    <div key={q.id} className={"eq-cell" + (dragOverQuad === q.id ? " drag-over" : "")}
+                      onDragOver={handleQuadDragOver(q.id)}
+                      onDrop={handleQuadDrop(q.id)}
+                      onDragLeave={(e) => { if (e.currentTarget === e.target) setDragOverQuad(null); }}>
                       <div className="eq-cell-head">
                         <div className="eq-cell-title">
                           <span className={"qd " + q.dot} />{q.num} · {q.title}
@@ -3477,7 +3502,12 @@
                           const dueLeft = t.dueDate ? calcDday(t.dueDate) : null;
                           const dueClass = dueLeft !== null && dueLeft <= 3 ? "urgent" : dueLeft !== null && dueLeft <= 7 ? "soon" : "";
                           return (
-                            <div key={t.id} data-conn-task={t.id} className={"eq-task-row" + (t.done ? " done" : "") + (openGoalId && t.goalId !== openGoalId ? " conn-dim" : "") + (openGoalId && t.goalId === openGoalId ? " conn-active" : "")} style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}` } : null}>
+                            <div key={t.id} data-conn-task={t.id}
+                              draggable
+                              onDragStart={handleTaskDragStart(t.id)}
+                              onDragEnd={handleTaskDragEnd}
+                              className={"eq-task-row" + (t.done ? " done" : "") + (openGoalId && t.goalId !== openGoalId ? " conn-dim" : "") + (openGoalId && t.goalId === openGoalId ? " conn-active" : "") + (taskDragId === t.id ? " task-dragging" : "")}
+                              style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}`, cursor: "grab" } : { cursor: "grab" }}>
                               <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} title="완료 토글" />
                               <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }} title="클릭으로 수정">{t.text}</span>
                               {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
