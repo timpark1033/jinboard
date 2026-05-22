@@ -579,7 +579,7 @@
     }
 
     /* ---------- TAB 1: Dashboard (B 컨셉 개편) ---------- */
-    function Dashboard({ goals, tasks, toggleTask, stats, dreams, streak, dailyLog, focusMode, setFocusMode, resources, onOpenSettings, onOpenResources, onDreamClick, toggleStage, adjustQuestCount, onOpenQuestGuide, onEditGoal, summaryCards, setSummaryCards, settings, onOpenGoalDetail }) {
+    function Dashboard({ goals, tasks, toggleTask, stats, dreams, streak, dailyLog, focusMode, setFocusMode, resources, onOpenSettings, onOpenResources, onDreamClick, toggleStage, adjustQuestCount, onOpenQuestGuide, onEditGoal, summaryCards, setSummaryCards, settings, onOpenGoalDetail, finance, items, onOpenFinGoals }) {
       const [ctxMenu, setCtxMenu] = useState(null); // { x, y, cardId }
       const [editingCardId, setEditingCardId] = useState(null);
       const [iconPickerId, setIconPickerId] = useState(null);
@@ -681,15 +681,49 @@
             </div>
 
             <div className="db2-kpi-stack">
+              {(() => {
+                // 재무 데이터와 라이브 매칭 — 저장된 값 대신 finance에서 derive
+                const fin = finance || {};
+                const sections = (settings?.incomeSections && settings.incomeSections.length >= 2) ? settings.incomeSections : INITIAL_SETTINGS.incomeSections;
+                const incomesArr = fin.incomes || [];
+                const totalA = (fin.assets || []).reduce((s, a) => s + (a.value || 0), 0);
+                const totalD = (fin.debts || []).reduce((s, d) => s + (d.value || 0), 0);
+                const liveNetWorth = totalA - totalD;
+                const primarySum = incomesArr.filter(i => (i.segment || "primary") === sections[0].id).reduce((s, i) => s + (i.actual || i.expected || 0), 0);
+                const secondarySum = incomesArr.filter(i => (i.segment || "primary") === sections[1].id).reduce((s, i) => s + (i.actual || i.expected || 0), 0);
+                const finGoals = settings?.finGoals || {};
+                window.__liveSummaryData = { liveNetWorth, primarySum, secondarySum, primaryName: sections[0].name, secondaryName: sections[1].name, targetNetWorth: finGoals.netWorth || 0 };
+                return null;
+              })()}
               {summaryCards.map((c, idx) => {
                 const isEditing = editingCardId === c.id;
                 const isIconPicker = iconPickerId === c.id;
                 const isAsset = c.type === "asset";
-                const pct = isAsset && c.target > 0 ? Math.min(100, (c.value / c.target) * 100) : null;
+                // 라이브 데이터 매핑: 1번 = 순자산(asset), 2번 = 주수입, 3번 = 부수입
+                const live = window.__liveSummaryData || {};
+                let displayValue = c.value;
+                let displayTarget = c.target;
+                let displayName = c.name;
+                if (isAsset && idx === 0) {
+                  displayValue = live.liveNetWorth || 0;
+                  displayTarget = live.targetNetWorth || c.target;
+                } else if (!isAsset && idx === 1) {
+                  displayValue = live.primarySum || 0;
+                  displayName = c.name || live.primaryName;
+                } else if (!isAsset && idx === 2) {
+                  displayValue = live.secondarySum || 0;
+                  displayName = c.name || live.secondaryName;
+                }
+                const pct = isAsset && displayTarget > 0 ? Math.min(100, (displayValue / displayTarget) * 100) : null;
                 const isLast = idx === summaryCards.length - 1;
-                const linked = c.linkedSection || (c.type === "asset" ? "assets" : (idx === 1 ? "main-income" : "side-income"));
+                const linked = c.linkedSection || (c.type === "asset" ? "assets" : (idx === 1 ? "incomes" : "incomes"));
+                const handleCardClick = () => {
+                  if (isAsset && onOpenFinGoals) { onOpenFinGoals(); return; }
+                  onOpenResources && onOpenResources(linked);
+                };
+                const titleText = isAsset ? "클릭 → 재무 목표 설정 모달" : ("클릭 → 자원·아이템 탭의 " + linked + " 섹션");
                 return (
-                  <div key={c.id} className="kpi-big" onContextMenu={onCardContext(c.id)} onClick={() => onOpenResources && onOpenResources(linked)} style={{ cursor: "pointer" }} title={"클릭 → 자원·아이템 탭의 " + linked + " 섹션"}>
+                  <div key={c.id} className="kpi-big" onContextMenu={onCardContext(c.id)} onClick={handleCardClick} style={{ cursor: "pointer" }} title={titleText}>
                     {isLast && summaryCards.length < 4 && (
                       <button onClick={(e) => { e.stopPropagation(); addCard(); }} className="kpi-add-mini" title="새 KPI 카드 추가">+</button>
                     )}
@@ -707,16 +741,16 @@
                           onBlur={() => setEditingCardId(null)}
                           style={{ background: "var(--bg-3)", border: "1px solid var(--accent)", color: "var(--text-1)", padding: "3px 7px", borderRadius: 4, fontSize: 12, fontFamily: "inherit", outline: "none", width: "100%" }} />
                       ) : (
-                        <span className="kpi-lbl-text" onClick={() => setEditingCardId(c.id)} title="클릭으로 이름 수정 · 우클릭 메뉴">{c.name}</span>
+                        <span className="kpi-lbl-text" onClick={(e) => { e.stopPropagation(); setEditingCardId(c.id); }} title="클릭으로 이름 수정 · 우클릭 메뉴">{displayName}</span>
                       )}
                     </div>
                     <div className="kpi-val-huge">
-                      {fmtVal(c.value)}<span className="u">{fmtUnit(c.value, c.unit)}</span>
+                      {fmtVal(displayValue)}<span className="u">{fmtUnit(displayValue, c.unit)}</span>
                     </div>
                     {isAsset ? (
-                      <div className="kpi-val-sub">/ {fmtVal(c.target)}{fmtUnit(c.target, c.unit)} 목표</div>
+                      <div className="kpi-val-sub">/ {fmtVal(displayTarget)}{fmtUnit(displayTarget, c.unit)} 목표 · <span style={{ color: "var(--accent)" }}>✏ 클릭 설정</span></div>
                     ) : (
-                      <div className="kpi-val-sub">월 수익{c.changePct ? " · 전월 " + (c.changePct >= 0 ? "↑" : "↓") + " " + Math.abs(c.changePct) + "%" : ""}</div>
+                      <div className="kpi-val-sub">월 수익 · 재무 데이터 자동 매칭{c.changePct ? " · 전월 " + (c.changePct >= 0 ? "↑" : "↓") + " " + Math.abs(c.changePct) + "%" : ""}</div>
                     )}
                     <div className="kpi-prog-line">
                       {isAsset ? (
@@ -4682,9 +4716,9 @@
                 );
               })()}
 
-              {/* 🏦 자산 & 💼 수익 (4열) */}
-              <div className="ri2-sec-head"><span className="h">🏦 자산 & 💼 수익</span><span className="sub">클릭으로 상세 모달</span></div>
-              <div className="ri2-detail-grid">
+              {/* 🏦 자산 & 💼 수익 (4열) — 매거진 카드에서 상세 모달로 진입하므로 숨김 */}
+              <div className="ri2-sec-head" style={{ display: "none" }}><span className="h">🏦 자산 & 💼 수익</span><span className="sub">클릭으로 상세 모달</span></div>
+              <div className="ri2-detail-grid" style={{ display: "none" }}>
                 {/* 자산 */}
                 <div ref={sectionRefs.assets} className={"ri2-detail" + (pulseSection === "assets" ? " pulse" : "")} style={{ order: 1 }}>
                   <div className="dc-head">
@@ -6285,6 +6319,9 @@
             setSummaryCards={setSummaryCards}
             settings={settings}
             onOpenGoalDetail={(gId) => setGoalDetailId(gId)}
+            finance={finance}
+            items={items}
+            onOpenFinGoals={() => setFinGoalsModalOpen(true)}
           />}
           {tab === "gtr" && <GoalsTasksRetroTab
             goals={goals} setGoals={setGoals} addGoal={addGoal} editGoal={editGoal} deleteGoal={deleteGoal}
