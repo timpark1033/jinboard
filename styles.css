@@ -6563,3 +6563,39 @@
   border-radius: 7px; padding: 10px 13px;
 }
 .gcal-note b { color: var(--text-2); }
+
+
+/* 자동 동기 토글 (모달 내) */
+.gcal-auto-toggle {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.04));
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;
+  cursor: pointer;
+}
+.gcal-auto-toggle input[type="checkbox"] {
+  width: 18px; height: 18px; margin-top: 1px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+}
+.gcal-auto-toggle .ttl {
+  font-size: 13px; font-weight: 800; color: var(--text-1); margin-bottom: 3px;
+}
+.gcal-auto-toggle .sub {
+  font-size: 11px; color: var(--text-3); line-height: 1.5;
+}
+
+/* 자동 동기 활성화 버튼 */
+.gcal-connect-btn.auto-on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(139,92,246,0.08);
+  position: relative;
+}
+.gcal-connect-btn .gcal-dot.auto {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  animation: gcalPulse 2s infinite;
+}
+@keyframes gcalPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}

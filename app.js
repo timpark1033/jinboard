@@ -408,7 +408,7 @@
     }
 
     // OAuth 토큰 요청 (팝업 → 사용자 동의)
-    function requestGcalToken(clientId) {
+    function requestGcalToken(clientId, opts = {}) {
       return new Promise((resolve, reject) => {
         try {
           const tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -421,10 +421,69 @@
                 reject(new Error(tokenResp?.error || "토큰 받기 실패"));
               }
             },
+            error_callback: (err) => {
+              reject(new Error(err?.message || err?.type || "토큰 요청 실패"));
+            },
           });
-          tokenClient.requestAccessToken({ prompt: "" });
+          tokenClient.requestAccessToken({ prompt: opts.silent ? "none" : "" });
         } catch (e) { reject(e); }
       });
+    }
+    // silent: 이미 동의한 사용자가 있을 때 팝업 없이 토큰 갱신
+    function requestGcalTokenSilent(clientId) {
+      return requestGcalToken(clientId, { silent: true });
+    }
+
+    // 동기 수행 (push + pull) — 단독 사용 가능
+    async function gcalAutoSync(token, calendarId, schedules, eventMap) {
+      window.gapi.client.setToken({ access_token: token });
+      const cid = calendarId || "primary";
+      const map = { ...(eventMap || {}) };
+      const reverseMap = {};
+      Object.entries(map).forEach(([lid, gid]) => { reverseMap[gid] = lid; });
+
+      // 1) Pull
+      const now = new Date();
+      const min = new Date(now); min.setMonth(min.getMonth() - 6);
+      const max = new Date(now); max.setMonth(max.getMonth() + 12);
+      const events = await gcalListEvents(cid, min.toISOString(), max.toISOString());
+      const pulledNew = [];
+      for (const ev of events) {
+        if (reverseMap[ev.id]) continue;
+        const s = gcalEventToSchedule(ev);
+        if (!s) continue;
+        pulledNew.push(s);
+        map[s.id] = ev.id;
+        reverseMap[ev.id] = s.id;
+      }
+      const mergedSchedules = [...(schedules || []), ...pulledNew];
+
+      // 2) Push (신규 + 갱신)
+      let pushedNew = 0, pushedUpdated = 0, pushErrors = 0;
+      for (const s of mergedSchedules) {
+        // pulledNew 항목은 이미 Google에 있으므로 건너뜀
+        if (pulledNew.find(p => p.id === s.id)) continue;
+        try {
+          const existingId = map[s.id];
+          if (existingId) {
+            await gcalPatchEvent(cid, existingId, s);
+            pushedUpdated++;
+          } else {
+            const created = await gcalInsertEvent(cid, s);
+            map[s.id] = created.id;
+            pushedNew++;
+          }
+        } catch (e) { pushErrors++; }
+      }
+
+      return {
+        mergedSchedules,
+        eventMap: map,
+        pulledNew: pulledNew.length,
+        pushedNew,
+        pushedUpdated,
+        pushErrors,
+      };
     }
 
     function revokeGcalToken(token) {
@@ -2673,11 +2732,20 @@
                 <button className={mode === "week" ? "active" : ""} onClick={() => setModePersist("week")}>주간</button>
                 <button className={mode === "month" ? "active" : ""} onClick={() => setModePersist("month")}>월간</button>
               </div>
-              <button className={"gcal-connect-btn" + (settings?.googleCalendar?.clientId ? " configured" : "")}
+              <button className={"gcal-connect-btn"
+                        + (settings?.googleCalendar?.clientId ? " configured" : "")
+                        + (settings?.googleCalendar?.syncEnabled ? " auto-on" : "")}
                       onClick={() => setGcalOpen(true)}
-                      title={settings?.googleCalendar?.clientId ? "Google Calendar 동기 — 마지막: " + (settings?.googleCalendar?.lastSyncMessage || "없음") : "Google Calendar 연동 (클릭하여 설정)"}>
+                      title={
+                        settings?.googleCalendar?.syncEnabled
+                          ? "자동 동기 ON · 마지막: " + (settings?.googleCalendar?.lastSyncMessage || "동기 대기 중")
+                          : settings?.googleCalendar?.clientId
+                            ? "Google Calendar 연결됨 (자동 동기 OFF) · 클릭하여 설정"
+                            : "Google Calendar 연동 (클릭하여 설정)"
+                      }>
                 🔗 Google
-                {settings?.googleCalendar?.lastSyncStatus === "success" && <span className="gcal-dot success"></span>}
+                {settings?.googleCalendar?.syncEnabled && <span className="gcal-dot auto"></span>}
+                {!settings?.googleCalendar?.syncEnabled && settings?.googleCalendar?.lastSyncStatus === "success" && <span className="gcal-dot success"></span>}
               </button>
             </div>
           </div>
@@ -6692,6 +6760,17 @@
                 </div>
               )}
 
+              {/* 자동 백그라운드 동기 토글 */}
+              <label className="gcal-auto-toggle">
+                <input type="checkbox"
+                       checked={!!gcalCfg.syncEnabled}
+                       onChange={(e) => saveCfg({ syncEnabled: e.target.checked })} />
+                <div>
+                  <div className="ttl">☑ 자동 백그라운드 동기 (5분 주기)</div>
+                  <div className="sub">활성화 시 페이지 로드 + 매 5분마다 자동 pull + push. 토큰은 만료 10분 전 자동 갱신.</div>
+                </div>
+              </label>
+
               {/* 결과 메시지 */}
               {msg && (
                 <div className={"gcal-msg " + msgKind}>
@@ -7084,6 +7163,7 @@
       const [financeInitialSection, setFinanceInitialSection] = useState(null);
       const [finGoalsModalOpen, setFinGoalsModalOpen] = useState(false);
       const [realEstateSync, setRealEstateSync] = useState(null); // 부동산 업로더 동기 데이터
+      const [gcalAutoStatus, setGcalAutoStatus] = useState({ active: false, lastAt: "", lastMsg: "", token: null });
       const [settings, setSettings] = useState(() => {
         const loaded = loadLS("dreamboard_settings", INITIAL_SETTINGS);
         // 셧다운된 모델명 자동 마이그레이션
@@ -7099,6 +7179,9 @@
       const [settingsOpen, setSettingsOpen] = useState(false);
       const [xpToast, setXpToast] = useState(null);
       useEffect(() => { saveLS("dreamboard_settings", settings); }, [settings]);
+      // settings를 ref로도 유지 (자동 동기 클로저용 — stale state 회피)
+      const settingsRef = useRef(settings);
+      useEffect(() => { settingsRef.current = settings; }, [settings]);
 
       // Firestore에서 데이터 로드
       useEffect(() => {
@@ -7144,6 +7227,94 @@
           );
         return () => unsub && unsub();
       }, [user.uid]);
+
+      // 🔗 Google Calendar 자동 백그라운드 동기 (5분 주기)
+      const gcalSyncEnabled = settings?.googleCalendar?.syncEnabled;
+      const gcalClientId = settings?.googleCalendar?.clientId;
+      const gcalCalendarId = settings?.googleCalendar?.calendarId || "primary";
+      useEffect(() => {
+        if (!loaded) return;
+        if (!gcalSyncEnabled || !gcalClientId) {
+          setGcalAutoStatus({ active: false, lastAt: "", lastMsg: "", token: null });
+          return;
+        }
+
+        let intervalId = null;
+        let refreshTimerId = null;
+        let mounted = true;
+        let currentToken = null;
+
+        const tryRefreshToken = async () => {
+          try {
+            await initGcalClient();
+            const resp = await requestGcalTokenSilent(gcalClientId);
+            if (!mounted) return null;
+            currentToken = resp.access_token;
+            setGcalAutoStatus(prev => ({ ...prev, token: currentToken, active: true }));
+            window.gapi.client.setToken({ access_token: currentToken });
+            // 만료 10분 전에 갱신
+            const refreshIn = Math.max(60_000, ((resp.expires_in || 3600) - 600) * 1000);
+            if (refreshTimerId) clearTimeout(refreshTimerId);
+            refreshTimerId = setTimeout(tryRefreshToken, refreshIn);
+            return currentToken;
+          } catch (e) {
+            console.warn("[gcal-auto] 토큰 갱신 실패:", e.message || e);
+            if (!mounted) return null;
+            setGcalAutoStatus(prev => ({ ...prev, token: null, active: false, lastMsg: "재연결 필요" }));
+            return null;
+          }
+        };
+
+        const doSync = async () => {
+          if (!mounted) return;
+          if (!currentToken) {
+            const t = await tryRefreshToken();
+            if (!t) return;
+          }
+          try {
+            const currentSchedules = settingsRef.current?.schedules || [];
+            const currentEventMap = settingsRef.current?.googleCalendar?.eventMap || {};
+            const result = await gcalAutoSync(currentToken, gcalCalendarId, currentSchedules, currentEventMap);
+            if (!mounted) return;
+            setSettings(prev => ({
+              ...prev,
+              schedules: result.mergedSchedules,
+              googleCalendar: {
+                ...(prev.googleCalendar || INITIAL_SETTINGS.googleCalendar),
+                eventMap: result.eventMap,
+                lastSyncAt: new Date().toISOString(),
+                lastSyncStatus: result.pushErrors === 0 ? "success" : "error",
+                lastSyncMessage: `pull ${result.pulledNew} · push ${result.pushedNew}+${result.pushedUpdated}` + (result.pushErrors ? ` · 실패 ${result.pushErrors}` : ""),
+              }
+            }));
+            setGcalAutoStatus({
+              active: true, token: currentToken,
+              lastAt: new Date().toISOString(),
+              lastMsg: `pull ${result.pulledNew} · push ${result.pushedNew}+${result.pushedUpdated}`,
+            });
+          } catch (e) {
+            console.warn("[gcal-auto] 동기 실패:", e);
+            // 토큰 만료 등 → 재요청 트리거
+            if (String(e.message || e).match(/401|invalid|expired/i)) {
+              currentToken = null;
+              tryRefreshToken();
+            }
+            if (mounted) setGcalAutoStatus(prev => ({ ...prev, lastMsg: "오류 — " + (e.message || e) }));
+          }
+        };
+
+        // 초기 토큰 + 첫 동기
+        tryRefreshToken().then(t => { if (t) doSync(); });
+
+        // 5분 주기
+        intervalId = setInterval(doSync, 5 * 60 * 1000);
+
+        return () => {
+          mounted = false;
+          if (intervalId) clearInterval(intervalId);
+          if (refreshTimerId) clearTimeout(refreshTimerId);
+        };
+      }, [loaded, gcalSyncEnabled, gcalClientId, gcalCalendarId]);
 
       // 저장 상태 (idle | saving | saved | error)
       const [saveStatus, setSaveStatus] = useState("idle");
