@@ -2255,13 +2255,12 @@
 
     /* ─── 주간 업무 뷰 (요일 그리드 + 일정/업무 + Google 연결 stub) ─── */
     function WeeklyTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, goalColor, settings, setSettings }) {
+      const savedMode = settings?.calendarMode === "month" ? "month" : "week";
+      const [mode, setMode] = useState(savedMode);
+      const setModePersist = (m) => { setMode(m); setSettings(p => ({ ...p, calendarMode: m })); };
+      const [cursor, setCursor] = useState(new Date()); // 현재 표시 기준일
+
       const today = new Date();
-      const day = today.getDay() === 0 ? 6 : today.getDay() - 1; // 월=0
-      const monday = new Date(today); monday.setDate(today.getDate() - day);
-      const days = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(monday); d.setDate(monday.getDate() + i);
-        return d;
-      });
       const fmt = (d) => d.toISOString().slice(0, 10);
       const dayLabels = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -2280,49 +2279,115 @@
         setSettings(p => ({ ...p, schedules: (p.schedules || []).filter(s => s.id !== id) }));
       };
 
+      // 주간 — 월~일 7일
+      const weekDays = (() => {
+        const day = cursor.getDay() === 0 ? 6 : cursor.getDay() - 1;
+        const monday = new Date(cursor); monday.setDate(cursor.getDate() - day);
+        return Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(monday); d.setDate(monday.getDate() + i);
+          return d;
+        });
+      })();
+
+      // 월간 — 그 달의 1일~말일, 앞뒤 다른 달 패딩 포함 (7×6 그리드)
+      const monthDays = (() => {
+        const y = cursor.getFullYear(), m = cursor.getMonth();
+        const first = new Date(y, m, 1);
+        const firstWeekday = first.getDay() === 0 ? 6 : first.getDay() - 1; // 월=0
+        const start = new Date(first); start.setDate(1 - firstWeekday);
+        return Array.from({ length: 42 }, (_, i) => {
+          const d = new Date(start); d.setDate(start.getDate() + i);
+          return d;
+        });
+      })();
+
+      const goPrev = () => {
+        const next = new Date(cursor);
+        if (mode === "week") next.setDate(cursor.getDate() - 7);
+        else next.setMonth(cursor.getMonth() - 1);
+        setCursor(next);
+      };
+      const goNext = () => {
+        const next = new Date(cursor);
+        if (mode === "week") next.setDate(cursor.getDate() + 7);
+        else next.setMonth(cursor.getMonth() + 1);
+        setCursor(next);
+      };
+      const goToday = () => setCursor(new Date());
+
+      const renderDayCell = (d, options = {}) => {
+        const ds = fmt(d);
+        const isToday = ds === fmt(today);
+        const isOtherMonth = options.dim && d.getMonth() !== cursor.getMonth();
+        const dayTasks = tasksByDate(ds);
+        const daySchedules = schedulesByDate(ds);
+        return (
+          <div key={ds + (options.keyPrefix || "")} className={"weekly-day" + (isToday ? " today" : "") + (isOtherMonth ? " other-month" : "")}>
+            <div className="weekly-day-head">
+              {options.showWeekday !== false && <span className="dlbl">{dayLabels[d.getDay() === 0 ? 6 : d.getDay() - 1]}</span>}
+              <span className="dnum">{d.getDate()}</span>
+            </div>
+            <div className="weekly-day-body">
+              {daySchedules.map(s => (
+                <div key={s.id} className="weekly-sch" title={s.title} onClick={(e) => { e.stopPropagation(); if (confirm("'" + s.title + "' 삭제할까요?")) deleteSchedule(s.id); }}>
+                  📌 {s.title}
+                </div>
+              ))}
+              {dayTasks.map(t => {
+                const g = t.goalId ? goals.find(x => x.id === t.goalId) : null;
+                return (
+                  <div key={t.id} className={"weekly-task" + (t.done ? " done" : "")} style={g ? { borderLeftColor: goalColor(g.id) } : null} onClick={() => setEditingTaskId(t.id)} title={t.text + (g ? " · " + g.name : "")}>
+                    <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} />
+                    <span className="t">{t.text}</span>
+                    {g && <span className="meta">{g.name.slice(0, 4)}</span>}
+                  </div>
+                );
+              })}
+              {daySchedules.length === 0 && dayTasks.length === 0 && (
+                <div className="weekly-empty">비어있음</div>
+              )}
+              <button className="weekly-add" onClick={() => addSchedule(ds)}>+ 일정</button>
+            </div>
+          </div>
+        );
+      };
+
+      const headLabel = mode === "week"
+        ? `${fmt(weekDays[0]).slice(5)} ~ ${fmt(weekDays[6]).slice(5)}`
+        : `${cursor.getFullYear()}년 ${cursor.getMonth() + 1}월`;
+
       return (
         <div>
           <div className="weekly-head">
-            <div style={{ fontSize: 13, color: "var(--text-3)", fontFamily: "Geist Mono, monospace" }}>📅 {fmt(monday).slice(5)} ~ {fmt(days[6]).slice(5)}</div>
-            <button className="gcal-connect-btn" onClick={() => alert("Google Calendar 연동 안내\n\n1. Google Cloud Console에서 OAuth 2.0 클라이언트 ID 생성\n2. Calendar API 활성화\n3. 클라이언트 ID를 설정에 입력\n4. '연결' 버튼 → 권한 허용\n\n(설정 후 양방향 동기 활성화. 현재는 자체 캘린더만 동작)")} title="Google Calendar 연동">🔗 Google 연동</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button className="cal-mode-btn" onClick={goPrev} title="이전">◀</button>
+              <button className="cal-mode-btn" onClick={goToday}>오늘</button>
+              <button className="cal-mode-btn" onClick={goNext} title="다음">▶</button>
+              <div style={{ fontSize: 14, color: "var(--text-2)", fontFamily: "Geist Mono, monospace", marginLeft: 8, fontWeight: 700 }}>{headLabel}</div>
+            </div>
+            <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+              <div className="cal-mode-toggle">
+                <button className={mode === "week" ? "active" : ""} onClick={() => setModePersist("week")}>주간</button>
+                <button className={mode === "month" ? "active" : ""} onClick={() => setModePersist("month")}>월간</button>
+              </div>
+              <button className="gcal-connect-btn" onClick={() => alert("Google Calendar 연동 안내\n\n1. Google Cloud Console에서 OAuth 2.0 클라이언트 ID 생성\n2. Calendar API 활성화\n3. 클라이언트 ID를 설정에 입력\n4. '연결' 버튼 → 권한 허용\n\n(설정 후 양방향 동기 활성화. 현재는 자체 캘린더만 동작)")} title="Google Calendar 연동">🔗 Google</button>
+            </div>
           </div>
-          <div className="weekly-grid">
-            {days.map((d, idx) => {
-              const ds = fmt(d);
-              const isToday = ds === fmt(today);
-              const dayTasks = tasksByDate(ds);
-              const daySchedules = schedulesByDate(ds);
-              return (
-                <div key={ds} className={"weekly-day" + (isToday ? " today" : "")}>
-                  <div className="weekly-day-head">
-                    <span className="dlbl">{dayLabels[idx]}</span>
-                    <span className="dnum">{d.getDate()}</span>
-                  </div>
-                  <div className="weekly-day-body">
-                    {daySchedules.map(s => (
-                      <div key={s.id} className="weekly-sch" onClick={(e) => { e.stopPropagation(); if (confirm("'" + s.title + "' 삭제할까요?")) deleteSchedule(s.id); }}>
-                        📌 {s.title}
-                      </div>
-                    ))}
-                    {dayTasks.map(t => {
-                      const g = t.goalId ? goals.find(x => x.id === t.goalId) : null;
-                      return (
-                        <div key={t.id} className={"weekly-task" + (t.done ? " done" : "")} style={g ? { borderLeftColor: goalColor(g.id) } : null} onClick={() => setEditingTaskId(t.id)}>
-                          <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} />
-                          <span className="t">{t.text}</span>
-                          {g && <span className="meta">{g.name.slice(0, 4)}</span>}
-                        </div>
-                      );
-                    })}
-                    {daySchedules.length === 0 && dayTasks.length === 0 && (
-                      <div className="weekly-empty">비어있음</div>
-                    )}
-                    <button className="weekly-add" onClick={() => addSchedule(ds)}>+ 일정</button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+
+          {mode === "week" ? (
+            <div className="weekly-grid">
+              {weekDays.map(d => renderDayCell(d))}
+            </div>
+          ) : (
+            <>
+              <div className="month-weekday-row">
+                {dayLabels.map(l => <div key={l} className="month-weekday-lbl">{l}</div>)}
+              </div>
+              <div className="month-grid">
+                {monthDays.map(d => renderDayCell(d, { dim: true, showWeekday: false, keyPrefix: "m" }))}
+              </div>
+            </>
+          )}
         </div>
       );
     }
@@ -3344,7 +3409,7 @@
               <div className="gtr-col-head" style={{ flexWrap: "wrap" }}>
                 <div className="task-tabs-bar">
                   <button className={"task-tab-btn" + (taskTab === "eisen" ? " active" : "")} onClick={() => persistTaskTab("eisen")}>📋 4분면<span className="cnt">{tasks.length}</span></button>
-                  <button className={"task-tab-btn" + (taskTab === "weekly" ? " active" : "")} onClick={() => persistTaskTab("weekly")}>📅 주간</button>
+                  <button className={"task-tab-btn" + (taskTab === "weekly" ? " active" : "")} onClick={() => persistTaskTab("weekly")}>📅 달력</button>
                   <button className={"task-tab-btn" + (taskTab === "field" ? " active" : "")} onClick={() => persistTaskTab("field")}>🎯 목표별</button>
                   <button className={"task-tab-btn" + (taskTab === "focus" ? " active" : "")} onClick={() => persistTaskTab("focus")}>🍅 집중</button>
                 </div>
