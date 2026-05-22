@@ -2209,12 +2209,26 @@
 
     /* ─── Stage 2: GoalsTasksRetroTab ─── */
     /* ─── 목표별 업무 뷰 (목표 × 컬럼) ─── */
-    function FieldTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, deleteTask, goalColor }) {
+    function FieldTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, deleteTask, goalColor, addTask }) {
       const grouped = goals.map(g => ({
         goal: g,
         tasks: tasks.filter(t => t.goalId === g.id)
       }));
       const unlinked = tasks.filter(t => !t.goalId);
+      const [addModalGoal, setAddModalGoal] = useState(null); // goalId 또는 "unlinked"
+      const [addText, setAddText] = useState("");
+      const [addQuad, setAddQuad] = useState(2);
+      const closeAdd = () => { setAddModalGoal(null); setAddText(""); setAddQuad(2); };
+      const submitAdd = () => {
+        const text = addText.trim();
+        if (!text) { closeAdd(); return; }
+        const goalId = addModalGoal === "unlinked" ? null : addModalGoal;
+        if (addTask) addTask({
+          id: "t" + Date.now(), text, quadrant: Number(addQuad) || 2,
+          goalId, questId: null, tag: "", dueDate: "", done: false, time: ""
+        });
+        closeAdd();
+      };
 
       return (
         <div className="field-task-grid">
@@ -2233,6 +2247,7 @@
                   <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                 </div>
               ))}
+              <div className="field-add-zone" onDoubleClick={() => setAddModalGoal(g.id)} title="더블클릭으로 업무 추가">＋ 더블클릭하여 추가</div>
             </div>
           ))}
           {unlinked.length > 0 && (
@@ -2248,8 +2263,52 @@
                   <span className="qtag">Q{t.quadrant}</span>
                 </div>
               ))}
+              <div className="field-add-zone" onDoubleClick={() => setAddModalGoal("unlinked")} title="더블클릭으로 업무 추가">＋ 더블클릭하여 추가</div>
             </div>
           )}
+
+          {/* 간소화 입력 모달 */}
+          {addModalGoal && (() => {
+            const targetGoal = addModalGoal === "unlinked" ? null : goals.find(g => g.id === addModalGoal);
+            return (
+              <div className="modal-overlay" onClick={closeAdd}>
+                <div className="quickadd-modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="quickadd-head">
+                    <div>
+                      <div className="quickadd-title">⚡ 새 업무</div>
+                      <div className="quickadd-target" style={targetGoal ? { color: goalColor(targetGoal.id) } : null}>
+                        {targetGoal ? "🎯 " + targetGoal.name : "⚡ 목표 미연결"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="quickadd-body">
+                    <input
+                      autoFocus
+                      className="quickadd-input"
+                      value={addText}
+                      onChange={(e) => setAddText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.nativeEvent.isComposing) submitAdd();
+                        if (e.key === "Escape") closeAdd();
+                      }}
+                      placeholder="할 일 내용"
+                    />
+                    <div className="quickadd-quads">
+                      <button className={"quickadd-quad q1" + (Number(addQuad) === 1 ? " active" : "")} onClick={() => setAddQuad(1)}>Q1 긴급·중요</button>
+                      <button className={"quickadd-quad q2" + (Number(addQuad) === 2 ? " active" : "")} onClick={() => setAddQuad(2)}>Q2 중요</button>
+                      <button className={"quickadd-quad q3" + (Number(addQuad) === 3 ? " active" : "")} onClick={() => setAddQuad(3)}>Q3 긴급</button>
+                      <button className={"quickadd-quad q4" + (Number(addQuad) === 4 ? " active" : "")} onClick={() => setAddQuad(4)}>Q4 나중</button>
+                    </div>
+                    <div className="quickadd-hint">Enter 추가 · ESC 취소 · 세부 편집은 추가 후 텍스트 클릭</div>
+                  </div>
+                  <div className="quickadd-foot">
+                    <button className="quickadd-btn-cancel" onClick={closeAdd}>취소</button>
+                    <button className="quickadd-btn-save" onClick={submitAdd} disabled={!addText.trim()}>✓ 추가</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       );
     }
@@ -3569,7 +3628,7 @@
                 })}
               </div>}
 
-              {taskTab === "field" && <FieldTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} deleteTask={deleteTask} goalColor={goalColor} />}
+              {taskTab === "field" && <FieldTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} deleteTask={deleteTask} goalColor={goalColor} addTask={addTask} />}
 
               {taskTab === "weekly" && <WeeklyTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} goalColor={goalColor} settings={settings} setSettings={setSettings} />}
 
