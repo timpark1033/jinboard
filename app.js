@@ -2510,7 +2510,8 @@
       tasks, toggleTask, addTask, editTask, deleteTask,
       retros, setRetros, dailyLog, stats, onOpenQuestGuide,
       initialOpenGoalId, onGoalOpened,
-      settings, setSettings
+      settings, setSettings,
+      taskFullscreen, setTaskFullscreen
     }) {
       const toggleStageInForm = toggleStage || ((gId, mId) => {
         const g = goals.find(x => x.id === gId);
@@ -2523,6 +2524,25 @@
       const savedTaskTab = (settings?.taskTab && ["eisen","weekly","field","focus"].includes(settings.taskTab)) ? settings.taskTab : "eisen";
       const [taskTab, setTaskTab] = useState(savedTaskTab);
       const persistTaskTab = (v) => { setTaskTab(v); if (setSettings) setSettings(p => ({ ...p, taskTab: v })); };
+
+      // 풀스크린 탭 순환
+      const TAB_ORDER = ["eisen", "weekly", "field", "focus"];
+      const cycleTab = (dir) => {
+        const idx = TAB_ORDER.indexOf(taskTab);
+        const nextIdx = (idx + dir + TAB_ORDER.length) % TAB_ORDER.length;
+        persistTaskTab(TAB_ORDER[nextIdx]);
+      };
+      // ESC 키로 풀스크린 종료
+      useEffect(() => {
+        if (!taskFullscreen) return;
+        const onKey = (e) => {
+          if (e.key === "Escape") setTaskFullscreen(false);
+          else if (e.key === "ArrowRight") cycleTab(1);
+          else if (e.key === "ArrowLeft") cycleTab(-1);
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+      }, [taskFullscreen, taskTab]);
 
       /* ─── SVG 연결선 + 줌 ─── */
       const gtrRef = useRef(null);
@@ -2876,7 +2896,14 @@
 
       return (
         <div className="panel-enter">
-          <div className="gtr-split" ref={gtrRef} style={{ position: "relative", gridTemplateColumns: `${colWidths[0]}% 6px ${colWidths[1]}% 6px ${colWidths[2]}%` }}>
+          <div className={"gtr-split" + (taskFullscreen ? " fullscreen" : "")} ref={gtrRef} style={{ position: "relative", gridTemplateColumns: taskFullscreen ? "100%" : `${colWidths[0]}% 6px ${colWidths[1]}% 6px ${colWidths[2]}%` }}>
+            {taskFullscreen && (
+              <>
+                <button className="fs-exit-btn" onClick={() => setTaskFullscreen(false)} title="풀스크린 종료 (ESC)">✕</button>
+                <div className="fs-arrow-zone left" onClick={() => cycleTab(-1)} title="이전 탭 (←)"><span className="fs-arrow">◀</span></div>
+                <div className="fs-arrow-zone right" onClick={() => cycleTab(1)} title="다음 탭 (→)"><span className="fs-arrow">▶</span></div>
+              </>
+            )}
             <svg className="gtr-connections" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1, overflow: "visible" }}>
               {connPaths.filter(p => p.goalId === openGoalId).map((p) => (
                 <g key={p.key}>
@@ -3267,7 +3294,8 @@
                   <button className={"task-tab-btn" + (taskTab === "field" ? " active" : "")} onClick={() => persistTaskTab("field")}>⚔️ 분야별</button>
                   <button className={"task-tab-btn" + (taskTab === "focus" ? " active" : "")} onClick={() => persistTaskTab("focus")}>🍅 집중</button>
                 </div>
-                <button className="gtr-btn-add" onClick={() => setShowAddTask((v) => !v)} style={{ marginLeft: "auto" }}>
+                <button className="task-fullscreen-btn" onClick={() => setTaskFullscreen(true)} title="풀스크린 모드" style={{ marginLeft: "auto" }}>⛶</button>
+                <button className="gtr-btn-add" onClick={() => setShowAddTask((v) => !v)}>
                   {showAddTask ? "✕" : "+ 추가"}
                 </button>
               </div>
@@ -5198,6 +5226,7 @@
       // 목표 카드 수정 → 목표·업무 탭 이동
       const [goalToOpen, setGoalToOpen] = useState(null);
       const [resourcesHighlight, setResourcesHighlight] = useState(null);
+      const [taskFullscreen, setTaskFullscreen] = useState(false);
       const handleEditGoal = (goalId) => {
         setGoalToOpen(goalId);
         setTab("gtr");
@@ -5298,7 +5327,7 @@
                 </div>
                 <Tabs active={tab} onChange={setTab} />
                 <div className="topbar-right">
-                  <button className="focus-quick-btn" onClick={() => { setSettings(p => ({ ...p, taskTab: "focus" })); setTab("gtr"); }} title="집중모드 (포모도로) 바로 진입">🍅 집중</button>
+                  <button className="focus-quick-btn" onClick={() => { setSettings(p => ({ ...p, taskTab: "focus" })); setTab("gtr"); setTaskFullscreen(true); }} title="풀스크린 집중모드 진입">🍅 집중</button>
                   <div className="player-bar">
                     <span className="pb-lv">Lv.{totalLv}</span>
                     <div className="pb-bar"><div className="pb-bar-fill" style={{ width: `${Math.min(100, (totalXp / maxXpAtLv60) * 100)}%` }} /></div>
@@ -5342,6 +5371,7 @@
             onOpenQuestGuide={() => setQuestGuideOpen(true)}
             initialOpenGoalId={goalToOpen} onGoalOpened={() => setGoalToOpen(null)}
             settings={settings} setSettings={setSettings}
+            taskFullscreen={taskFullscreen} setTaskFullscreen={setTaskFullscreen}
           />}
           {tab === "resources" && <ResourcesItemsTab
             items={items} setItems={setItems}
