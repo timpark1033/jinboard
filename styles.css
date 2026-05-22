@@ -2448,13 +2448,17 @@
 
   .inv-grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
+    /* 슬롯 max 72px로 캡 → 8 cols × 72 + 7 gap = 약 600px, 4 rows × 72 = 288px (스크롤 안 생김) */
+    grid-template-columns: repeat(8, minmax(40px, 72px));
+    grid-auto-rows: minmax(40px, 72px);
+    justify-content: center;
+    gap: 6px;
     padding: 12px;
     background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));
     border: 1px solid var(--border-strong);
     border-radius: 10px;
     flex-shrink: 0;
+    container-type: inline-size;
   }
   .inv-slot {
     aspect-ratio: 1;
@@ -2497,7 +2501,8 @@
   }
 
   .inv-slot-emoji {
-    font-size: 25px;
+    /* 슬롯 폭의 ~38%로 비례 조정 (72px 슬롯 → 27px, 40px 슬롯 → 15px) */
+    font-size: clamp(15px, 4cqi, 28px);
     line-height: 1;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
   }
