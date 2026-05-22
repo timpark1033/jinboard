@@ -4683,26 +4683,72 @@
                         </div>
                       </div>
                     </div>
-                    <div className="mag-stats-row">
-                      <div ref={sectionRefs.assets} className={"mag-stat assets" + (pulseSection === "assets" ? " pulse" : "")} onClick={() => onOpenFinance("assets")}>
-                        <div className="mag-stat-head"><div className="mag-stat-lbl">🏦 자산</div><div className="mag-stat-arrow">›</div></div>
-                        <div className="mag-stat-val green">{fmtKRShort(totalAssets)}</div>
-                        <div className="mag-stat-sub">{(fin.assets || []).length}건 · {Object.entries(ASSET_CATS).filter(([c]) => sumAssets(fin, c) > 0).map(([c, l]) => l.replace(/^[^ ]+ /, "")).join(" + ") || "없음"}</div>
+                    <div className="mag-stats-with-inv">
+                      <div className="mag-mini-grid">
+                        {/* 좌 상단: 자산 */}
+                        <div ref={sectionRefs.assets} className={"mag-stat assets" + (pulseSection === "assets" ? " pulse" : "")} onClick={() => onOpenFinance("assets")}>
+                          <div className="mag-stat-head"><div className="mag-stat-lbl">🏦 자산</div><div className="mag-stat-arrow">›</div></div>
+                          <div className="mag-stat-val green">{fmtKRShort(totalAssets)}</div>
+                          <div className="mag-stat-sub">{(fin.assets || []).length}건 · {Object.entries(ASSET_CATS).filter(([c]) => sumAssets(fin, c) > 0).map(([c, l]) => l.replace(/^[^ ]+ /, "")).join(" + ") || "없음"}</div>
+                        </div>
+                        {/* 우 상단: 월 저축 */}
+                        <div className="mag-stat savings" onClick={() => onOpenFinance("incomes")}>
+                          <div className="mag-stat-head"><div className="mag-stat-lbl">🪙 월 저축</div><div className="mag-stat-arrow">›</div></div>
+                          <div className={"mag-stat-val " + (monthlySavings >= 0 ? "blue" : "red")}>{fmtKRShortSigned(monthlySavings)}</div>
+                          <div className="mag-stat-sub">잉여 (수입 − 지출)</div>
+                        </div>
+                        {/* 좌 하단: 부채 */}
+                        <div ref={sectionRefs.debts} className={"mag-stat debts" + (pulseSection === "debts" ? " pulse" : "")} onClick={() => onOpenFinance("debts")}>
+                          <div className="mag-stat-head"><div className="mag-stat-lbl">🚨 부채</div><div className="mag-stat-arrow">›</div></div>
+                          <div className="mag-stat-val red">{totalDebts > 0 ? "-" + fmtKRShort(totalDebts) : "0"}</div>
+                          <div className="mag-stat-sub">{(fin.debts || []).length > 0 ? (fin.debts || []).length + "건 · 대출 + 보증금 등" : "부채 없음"}</div>
+                        </div>
+                        {/* 우 하단: 월 지출 */}
+                        <div ref={sectionRefs.expenses} className={"mag-stat expense" + (pulseSection === "expenses" ? " pulse" : "")} onClick={() => onOpenFinance("expenses")}>
+                          <div className="mag-stat-head"><div className="mag-stat-lbl">📉 월 지출</div><div className="mag-stat-arrow">›</div></div>
+                          <div className="mag-stat-val amber">-{fmtKRShort(totalExpenseActual || totalExpense)}</div>
+                          <div className="mag-stat-sub">{(fin.expenses || []).length}건 · 고정 + 변동</div>
+                        </div>
                       </div>
-                      <div ref={sectionRefs.debts} className={"mag-stat debts" + (pulseSection === "debts" ? " pulse" : "")} onClick={() => onOpenFinance("debts")}>
-                        <div className="mag-stat-head"><div className="mag-stat-lbl">🚨 부채</div><div className="mag-stat-arrow">›</div></div>
-                        <div className="mag-stat-val red">{totalDebts > 0 ? "-" + fmtKRShort(totalDebts) : "0"}</div>
-                        <div className="mag-stat-sub">{(fin.debts || []).length > 0 ? (fin.debts || []).length + "건 · 대출 + 보증금 등" : "부채 없음"}</div>
-                      </div>
-                      <div className="mag-stat savings" onClick={() => onOpenFinance("incomes")}>
-                        <div className="mag-stat-head"><div className="mag-stat-lbl">🪙 월 저축</div><div className="mag-stat-arrow">›</div></div>
-                        <div className={"mag-stat-val " + (monthlySavings >= 0 ? "blue" : "red")}>{fmtKRShortSigned(monthlySavings)}</div>
-                        <div className="mag-stat-sub">잉여 (수입 − 지출)</div>
-                      </div>
-                      <div ref={sectionRefs.expenses} className={"mag-stat expense" + (pulseSection === "expenses" ? " pulse" : "")} onClick={() => onOpenFinance("expenses")}>
-                        <div className="mag-stat-head"><div className="mag-stat-lbl">📉 월 지출</div><div className="mag-stat-arrow">›</div></div>
-                        <div className="mag-stat-val amber">-{fmtKRShort(totalExpenseActual || totalExpense)}</div>
-                        <div className="mag-stat-sub">{(fin.expenses || []).length}건 · 고정 + 변동</div>
+
+                      {/* 우측: 인벤토리 (높이 매칭) */}
+                      <div className="ri2-inv-section inv-side">
+                        <div className="inv-side-title">🎒 인벤토리 <span className="inv-side-sub">아이템 장착 → 자원·스탯 반영</span></div>
+                        <div className="ri2-inv-head">
+                          <div className="inv-tabs">
+                            {[
+                              { id: "all", label: "전체" },
+                              { id: "equipped", label: "장착" },
+                              { id: "developing", label: "개발중" },
+                              { id: "stored", label: "보관" }
+                            ].map((t) => (
+                              <button key={t.id} className={"inv-tab" + (filter === t.id ? " active" : "")} onClick={() => setFilter(t.id)}>
+                                {t.label}<span className="cnt">{counts[t.id]}</span>
+                              </button>
+                            ))}
+                          </div>
+                          <button className="gtr-btn-add" onClick={addItem}>+ 아이템</button>
+                        </div>
+                        <div className="inv-grid">
+                          {slots.map((it, idx) => (
+                            <div key={it ? it.id : "empty-" + idx} className={"inv-slot " + (it ? "filled " + it.status : "empty")} onClick={() => it && setSelectedItem(it)}>
+                              {it && (
+                                <>
+                                  <span className="inv-slot-emoji">{it.emoji}</span>
+                                  {it.status === "developing" && (
+                                    <div className="inv-slot-progress"><div className="inv-slot-progress-fill" style={{ width: (it.devProgress || 0) + "%" }} /></div>
+                                  )}
+                                  <div className="inv-slot-tooltip">{it.name}</div>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="inv-legend">
+                          <span><span className="inv-legend-dot eq" />장착됨</span>
+                          <span><span className="inv-legend-dot dev" />개발중</span>
+                          <span><span className="inv-legend-dot stored" />보관</span>
+                        </div>
                       </div>
                     </div>
                   </>
@@ -4851,45 +4897,7 @@
                 </div>
               </div>
 
-              {/* 🎒 인벤토리 (전체 폭) */}
-              <div className="ri2-sec-head"><span className="h">🎒 인벤토리</span><span className="sub">아이템 장착 → 자원·스탯 반영</span></div>
-              <div className="ri2-inv-section">
-                <div className="ri2-inv-head">
-                  <div className="inv-tabs">
-                    {[
-                      { id: "all", label: "전체" },
-                      { id: "equipped", label: "장착" },
-                      { id: "developing", label: "개발중" },
-                      { id: "stored", label: "보관" }
-                    ].map((t) => (
-                      <button key={t.id} className={"inv-tab" + (filter === t.id ? " active" : "")} onClick={() => setFilter(t.id)}>
-                        {t.label}<span className="cnt">{counts[t.id]}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <button className="gtr-btn-add" onClick={addItem}>+ 아이템 추가</button>
-                </div>
-                <div className="inv-grid">
-                  {slots.map((it, idx) => (
-                    <div key={it ? it.id : "empty-" + idx} className={"inv-slot " + (it ? "filled " + it.status : "empty")} onClick={() => it && setSelectedItem(it)}>
-                      {it && (
-                        <>
-                          <span className="inv-slot-emoji">{it.emoji}</span>
-                          {it.status === "developing" && (
-                            <div className="inv-slot-progress"><div className="inv-slot-progress-fill" style={{ width: (it.devProgress || 0) + "%" }} /></div>
-                          )}
-                          <div className="inv-slot-tooltip">{it.name}</div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="inv-legend">
-                  <span><span className="inv-legend-dot eq" />장착됨 (자원 반영)</span>
-                  <span><span className="inv-legend-dot dev" />개발중</span>
-                  <span><span className="inv-legend-dot stored" />보관</span>
-                </div>
-              </div>
+              {/* 🎒 인벤토리는 위 mag-stats-with-inv 우측으로 이동됨 */}
 
             </main>
           </div>

@@ -5923,3 +5923,76 @@
 .hero-goal-cancel:hover { background: var(--bg-2); color: var(--text-1); }
 .hero-goal-save { background: var(--accent); border-color: var(--accent); color: #fff; }
 .hero-goal-save:hover { background: var(--accent-2); box-shadow: 0 0 12px var(--accent-glow); }
+
+
+/* ============================================================
+   📐 mag-stats (2x2 미니) + 인벤토리 우측 배치
+   ============================================================ */
+.mag-stats-with-inv {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 14px;
+  margin-bottom: 18px;
+  align-items: stretch;
+}
+.mag-mini-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+}
+.mag-mini-grid .mag-stat {
+  margin: 0; /* 기존 inline 여백 제거 */
+}
+
+/* 우측 인벤토리 — 좌측 2x2 높이 매칭 */
+.ri2-inv-section.inv-side {
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 16px;
+  display: flex; flex-direction: column;
+  min-height: 100%;
+}
+.inv-side-title {
+  font-size: 13px; font-weight: 800; color: var(--text-1);
+  margin-bottom: 10px; display: flex; align-items: baseline; gap: 8px;
+}
+.inv-side-title .inv-side-sub {
+  font-size: 11px; color: var(--text-4); font-weight: 500;
+}
+.ri2-inv-section.inv-side .ri2-inv-head {
+  margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.ri2-inv-section.inv-side .inv-tabs { gap: 3px; }
+.ri2-inv-section.inv-side .inv-tab { padding: 5px 9px; font-size: 11.5px; }
+.ri2-inv-section.inv-side .inv-tab .cnt { font-size: 10px; margin-left: 4px; }
+.ri2-inv-section.inv-side .gtr-btn-add { padding: 5px 10px; font-size: 11px; }
+
+/* 인벤토리 그리드 — 우측 패널 폭에 맞게 자동 조정 */
+.ri2-inv-section.inv-side .inv-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  flex: 1;
+  align-content: start;
+}
+.ri2-inv-section.inv-side .inv-slot {
+  aspect-ratio: 1;
+  max-width: none;
+}
+.ri2-inv-section.inv-side .inv-legend {
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  font-size: 11px;
+}
+.ri2-inv-section.inv-side .inv-legend span { gap: 5px; }
+
+/* 좁은 화면(1280px 이하) — 인벤토리 아래로 떨어뜨림 */
+@media (max-width: 1280px) {
+  .mag-stats-with-inv { grid-template-columns: 1fr; }
+  .ri2-inv-section.inv-side .inv-grid { grid-template-columns: repeat(8, 1fr); }
+}
+
+/* 미니 카드 내용 약간 압축 (높이 1/2씩 차지하므로) */
+.mag-mini-grid .mag-stat { padding: 12px 16px; }
+.mag-mini-grid .mag-stat-val { font-size: 22px; margin-top: 4px; }
+.mag-mini-grid .mag-stat-sub { font-size: 10.5px; }
