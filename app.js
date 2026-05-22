@@ -328,8 +328,14 @@
       characterName: "",
       gtrColumnWidths: [35, 40, 25],
       gtrZoomLevel: 1,
-      finGoals: { netWorth: 3000000000, monthlyIncome: 10000000, monthlySavings: 5000000, milestones: [] }
+      finGoals: { netWorth: 3000000000, monthlyIncome: 10000000, monthlySavings: 5000000, milestones: [] },
+      incomeSections: [
+        { id: "primary",   name: "주수입", icon: "🏠", color: "#fbbf24" },
+        { id: "secondary", name: "부수입", icon: "📺", color: "#6366f1" }
+      ]
     };
+    const SECTION_COLOR_PRESETS = ["#fbbf24", "#10b981", "#3b82f6", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316"];
+    const SECTION_ICON_PRESETS = ["🏠","📺","💼","💎","🚀","🎯","⚡","🏢","💰","📦","🎨","🛒"];
 
     const INITIAL_RETROS = [
       { id: "r1", week: "W20 · 2026", date: "05.10 ~ 05.16",
@@ -5243,6 +5249,322 @@
       );
     }
 
+    function BusinessFlowSection({ finance, setFinance, settings, setSettings }) {
+      const sections = (settings.incomeSections && settings.incomeSections.length >= 2)
+        ? settings.incomeSections.slice(0, 2)
+        : INITIAL_SETTINGS.incomeSections;
+
+      const [editing, setEditing] = useState(null); // section id being edited
+      const [editDraft, setEditDraft] = useState({ name: "", icon: "", color: "" });
+      const [inline, setInline] = useState({ name: "", type: "in", segment: "primary", amount: 0 });
+      const nameInputRef = useRef(null);
+
+      // 통합 항목 목록
+      const allItems = [
+        ...(finance.incomes  || []).map(i => ({ ...i, _kind: "incomes",  _type: "in"  })),
+        ...(finance.expenses || []).map(e => ({ ...e, _kind: "expenses", _type: "out" }))
+      ];
+      const segOf = (x) => x.segment || "primary";
+
+      const segStats = (segId) => {
+        const arr = allItems.filter(x => segOf(x) === segId);
+        const income  = arr.filter(x => x._type === "in" ).reduce((s, x) => s + (Number(x.actual) || 0), 0);
+        const expense = arr.filter(x => x._type === "out").reduce((s, x) => s + (Number(x.actual) || 0), 0);
+        return { income, expense, net: income - expense, count: arr.length };
+      };
+      const s0 = segStats(sections[0].id);
+      const s1 = segStats(sections[1].id);
+      const totalIncome = s0.income + s1.income;
+      const totalNet    = s0.net + s1.net;
+      const pct0 = totalIncome > 0 ? Math.round((s0.income / totalIncome) * 100) : (s0.income > 0 ? 100 : 0);
+      const pct1 = totalIncome > 0 ? 100 - pct0 : 0;
+
+      const updateItem = (kind, id, updates) => {
+        setFinance(prev => ({ ...prev, [kind]: (prev[kind] || []).map(x => x.id === id ? { ...x, ...updates } : x) }));
+      };
+      const deleteItem = (kind, id) => {
+        setFinance(prev => ({ ...prev, [kind]: (prev[kind] || []).filter(x => x.id !== id) }));
+      };
+      const toggleSegment = (item) => {
+        const nextSeg = segOf(item) === sections[0].id ? sections[1].id : sections[0].id;
+        updateItem(item._kind, item.id, { segment: nextSeg });
+      };
+      const swapKind = (item) => {
+        // 수입 ↔ 지출 전환 (배열 이동)
+        const fromKind = item._kind;
+        const toKind   = fromKind === "incomes" ? "expenses" : "incomes";
+        const newId    = (toKind === "incomes" ? "in" : "ex") + Date.now();
+        const newCat   = toKind === "incomes" ? "regular" : "fixed";
+        const moved    = { id: newId, category: newCat, name: item.name, actual: item.actual || 0, expected: item.expected || item.actual || 0, day: item.day || 1, segment: segOf(item), note: item.note || "" };
+        setFinance(prev => ({
+          ...prev,
+          [fromKind]: (prev[fromKind] || []).filter(x => x.id !== item.id),
+          [toKind]:   [...(prev[toKind] || []), moved]
+        }));
+      };
+
+      const addItemButton = () => {
+        // 신규 항목을 인라인 입력 영역에 포커스 — 사용자가 이름부터 채우도록 유도
+        if (nameInputRef.current) nameInputRef.current.focus();
+      };
+
+      const submitInline = () => {
+        const name = inline.name.trim();
+        if (!name) return;
+        const kind = inline.type === "in" ? "incomes" : "expenses";
+        const id   = (inline.type === "in" ? "in" : "ex") + Date.now();
+        const amt  = Number(inline.amount) || 0;
+        const newRow = {
+          id, name,
+          category: inline.type === "in" ? "regular" : "fixed",
+          actual: amt, expected: amt, day: 1,
+          segment: inline.segment
+        };
+        setFinance(prev => ({ ...prev, [kind]: [...(prev[kind] || []), newRow] }));
+        setInline({ name: "", type: inline.type, segment: inline.segment, amount: 0 });
+        setTimeout(() => { if (nameInputRef.current) nameInputRef.current.focus(); }, 0);
+      };
+
+      const beginEdit = (sec) => {
+        setEditing(sec.id);
+        setEditDraft({ name: sec.name, icon: sec.icon, color: sec.color });
+      };
+      const saveEdit = () => {
+        if (!editing) return;
+        setSettings(prev => ({
+          ...prev,
+          incomeSections: sections.map(s => s.id === editing ? { ...s, name: editDraft.name.trim() || s.name, icon: editDraft.icon || s.icon, color: editDraft.color || s.color } : s)
+        }));
+        setEditing(null);
+      };
+
+      // 도넛 (반지름 38, 둘레 ~238.76)
+      const C = 2 * Math.PI * 38;
+      const arc0 = (pct0 / 100) * C;
+      const arc1 = (pct1 / 100) * C;
+
+      const fmtAmtMan = (n) => {
+        const v = Math.round((Number(n) || 0) / 10000);
+        return (v >= 0 ? "+" : "") + v.toLocaleString() + "만";
+      };
+      const fmtAmtManAbs = (n) => Math.round(Math.abs(Number(n) || 0) / 10000).toLocaleString() + "만";
+
+      const segPillClass = (segId) => "biz-seg-pill" + (segId === sections[0].id ? " s0" : " s1");
+      const segCss = (segId) => ({
+        "--seg-color": segId === sections[0].id ? sections[0].color : sections[1].color
+      });
+
+      return (
+        <div className="biz-flow">
+          <div className="biz-flow-row">
+            {/* ============ 좌: 통합 입력 ============ */}
+            <div className="biz-input-panel">
+              <div className="biz-input-head">
+                <div className="biz-input-title">
+                  ✏ 통합 입력
+                  <span className="biz-input-sub">한 곳에서 모두 관리</span>
+                </div>
+                <button className="biz-add-btn" onClick={addItemButton}>+ 항목 추가</button>
+              </div>
+
+              <table className="biz-input-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "32%" }}>이름</th>
+                    <th style={{ width: "16%" }}>구분</th>
+                    <th style={{ width: "14%" }}>유형</th>
+                    <th style={{ width: "12%" }}>분류</th>
+                    <th style={{ width: "20%", textAlign: "right" }}>금액</th>
+                    <th style={{ width: "6%" }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allItems.length === 0 && (
+                    <tr><td colSpan="6" style={{ color: "var(--text-4)", fontStyle: "italic", padding: "16px 6px", textAlign: "center" }}>아래 행에서 직접 입력하거나 [+ 항목 추가]를 눌러주세요</td></tr>
+                  )}
+                  {allItems.map(x => (
+                    <tr key={x._kind + "-" + x.id}>
+                      <td>
+                        <input value={x.name} onChange={(e) => updateItem(x._kind, x.id, { name: e.target.value })}
+                          className="biz-cell-input" />
+                      </td>
+                      <td>
+                        <span className={segPillClass(segOf(x))} style={segCss(segOf(x))}
+                              onClick={() => toggleSegment(x)} title="클릭하여 전환">
+                          {(sections.find(s => s.id === segOf(x)) || sections[0]).name}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={"biz-type-pill " + (x._type === "in" ? "in" : "out")}
+                              onClick={() => swapKind(x)} title="클릭하여 수입↔지출 전환">
+                          {x._type === "in" ? "수입" : "지출"}
+                        </span>
+                      </td>
+                      <td>
+                        <select value={x.category || (x._type === "in" ? "regular" : "fixed")}
+                                onChange={(e) => updateItem(x._kind, x.id, { category: e.target.value })}
+                                className="biz-cell-select">
+                          {x._type === "in"
+                            ? Object.entries(INCOME_CATS).map(([c, l]) => <option key={c} value={c}>{l}</option>)
+                            : Object.entries(EXPENSE_CATS).map(([c, l]) => <option key={c} value={c}>{l}</option>)}
+                        </select>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <input type="text" inputMode="numeric"
+                          value={fmtComma(x.actual)}
+                          onChange={(e) => updateItem(x._kind, x.id, { actual: parseComma(e.target.value), expected: parseComma(e.target.value) })}
+                          className={"biz-cell-num " + (x._type === "in" ? "in" : "out")} />
+                      </td>
+                      <td>
+                        <button onClick={() => deleteItem(x._kind, x.id)} className="biz-row-del">×</button>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {/* 인라인 추가 행 */}
+                  <tr className="biz-inline-row">
+                    <td>
+                      <input ref={nameInputRef} value={inline.name}
+                        onChange={(e) => setInline(s => ({ ...s, name: e.target.value }))}
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) submitInline(); }}
+                        placeholder="+ 직접 입력 후 Enter"
+                        className="biz-cell-input biz-inline-name" />
+                    </td>
+                    <td>
+                      <span className={segPillClass(inline.segment)} style={segCss(inline.segment)}
+                            onClick={() => setInline(s => ({ ...s, segment: s.segment === sections[0].id ? sections[1].id : sections[0].id }))}>
+                        {(sections.find(s => s.id === inline.segment) || sections[0]).name}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={"biz-type-pill " + (inline.type === "in" ? "in" : "out")}
+                            onClick={() => setInline(s => ({ ...s, type: s.type === "in" ? "out" : "in" }))}>
+                        {inline.type === "in" ? "수입" : "지출"}
+                      </span>
+                    </td>
+                    <td style={{ color: "var(--text-4)", fontSize: 12 }}>{inline.type === "in" ? "정기" : "고정"}</td>
+                    <td style={{ textAlign: "right" }}>
+                      <input type="text" inputMode="numeric"
+                        value={inline.amount ? fmtComma(inline.amount) : ""}
+                        onChange={(e) => setInline(s => ({ ...s, amount: parseComma(e.target.value) }))}
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) submitInline(); }}
+                        placeholder="금액"
+                        className={"biz-cell-num " + (inline.type === "in" ? "in" : "out")} />
+                    </td>
+                    <td>
+                      <button onClick={submitInline} className="biz-inline-submit" title="추가 (Enter)">+</button>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan="4" style={{ paddingTop: 14, fontWeight: 800, color: "var(--text-2)" }}>월 전체 Net</td>
+                    <td style={{ textAlign: "right", fontSize: 16, fontWeight: 800, paddingTop: 14, fontFamily: "Geist Mono, monospace", color: totalNet >= 0 ? "var(--green)" : "var(--red)" }}>
+                      {fmtAmtMan(totalNet)}
+                    </td>
+                    <td style={{ paddingTop: 14 }}></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* ============ 우: 도넛 + 히어로 ============ */}
+            <div className="biz-right-stack">
+              {/* 도넛 비중 카드 */}
+              <div className="biz-share-card">
+                <svg viewBox="0 0 100 100" className="biz-share-svg">
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="#1f1f28" strokeWidth="14"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke={sections[0].color} strokeWidth="14"
+                          strokeDasharray={`${arc0} ${C - arc0}`} strokeDashoffset="0"
+                          transform="rotate(-90 50 50)" />
+                  <circle cx="50" cy="50" r="38" fill="none" stroke={sections[1].color} strokeWidth="14"
+                          strokeDasharray={`${arc1} ${C - arc1}`} strokeDashoffset={-arc0}
+                          transform="rotate(-90 50 50)" />
+                  <text x="50" y="46" textAnchor="middle" fill="#9a9aa3" fontSize="8" fontWeight="700" fontFamily="Geist">전체 Net</text>
+                  <text x="50" y="60" textAnchor="middle" fill={totalNet >= 0 ? "#10b981" : "#ef4444"} fontSize="12" fontWeight="800" fontFamily="Geist Mono">{fmtAmtMan(totalNet)}</text>
+                </svg>
+                <div className="biz-share-info">
+                  <div className="biz-share-title">월간 수입 비중</div>
+                  {sections.map((sec, i) => (
+                    <div key={sec.id} className="biz-share-row">
+                      <span className="biz-share-sw" style={{ background: sec.color }}></span>
+                      <span className="biz-share-name" onDoubleClick={() => beginEdit(sec)} title="더블클릭하여 편집">{sec.icon} {sec.name}</span>
+                      <span className="biz-share-pct">{i === 0 ? pct0 : pct1}%</span>
+                    </div>
+                  ))}
+                  <div className="biz-share-total">총 수입 {fmtAmtManAbs(totalIncome)}원 기준</div>
+                </div>
+              </div>
+
+              {/* 히어로 카드 2개 */}
+              {sections.map((sec, i) => {
+                const st = i === 0 ? s0 : s1;
+                const inMax  = Math.max(st.income, st.expense, 1);
+                return (
+                  <div key={sec.id} className="biz-hero-card" style={{
+                    background: `linear-gradient(135deg, ${sec.color}26 0%, ${sec.color}06 100%)`,
+                    borderColor: sec.color + "4D"
+                  }}>
+                    <div className="biz-hero-head">
+                      <div className="biz-hero-name">
+                        <span className="biz-hero-dot" style={{ background: sec.color, boxShadow: `0 0 10px ${sec.color}` }}></span>
+                        <span className="biz-hero-title" onDoubleClick={() => beginEdit(sec)} title="더블클릭하여 편집">
+                          {sec.icon} {sec.name}
+                        </span>
+                        <span className="biz-hero-pin">{st.count}건</span>
+                      </div>
+                      <div className="biz-hero-mlbl">월 Net</div>
+                    </div>
+                    <div className="biz-hero-net" style={{ color: sec.color }}>{fmtAmtMan(st.net)}</div>
+                    <div className="biz-hero-bar">
+                      {st.income > 0 && <div className="seg-in" style={{ flex: st.income }}>↑ {fmtAmtManAbs(st.income)}</div>}
+                      {st.expense > 0 && <div className="seg-out" style={{ flex: st.expense }}>↓ {fmtAmtManAbs(st.expense)}</div>}
+                      {st.net > 0 && st.income > st.expense && <div className="seg-save" style={{ flex: Math.max(st.net, inMax * 0.1) }}></div>}
+                    </div>
+                    <div className="biz-hero-bottom">
+                      <span>수입 {fmtAmtManAbs(st.income)}</span>
+                      <span>지출 {fmtAmtManAbs(st.expense)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 섹션 편집 팝오버 */}
+          {editing && (
+            <div className="biz-edit-overlay" onClick={() => setEditing(null)}>
+              <div className="biz-edit-pop" onClick={(e) => e.stopPropagation()}>
+                <div className="biz-edit-title">섹션 편집</div>
+                <div className="biz-edit-lbl">이름</div>
+                <input value={editDraft.name} onChange={(e) => setEditDraft(s => ({ ...s, name: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) saveEdit(); }}
+                  autoFocus className="biz-edit-input" />
+                <div className="biz-edit-lbl">컬러</div>
+                <div className="biz-swatch-row">
+                  {SECTION_COLOR_PRESETS.map(c => (
+                    <span key={c} className={"biz-swatch" + (editDraft.color === c ? " active" : "")}
+                          style={{ background: c }} onClick={() => setEditDraft(s => ({ ...s, color: c }))}></span>
+                  ))}
+                </div>
+                <div className="biz-edit-lbl">아이콘</div>
+                <div className="biz-icon-row">
+                  {SECTION_ICON_PRESETS.map(ic => (
+                    <span key={ic} className={"biz-icon-cell" + (editDraft.icon === ic ? " active" : "")}
+                          onClick={() => setEditDraft(s => ({ ...s, icon: ic }))}>{ic}</span>
+                  ))}
+                </div>
+                <div className="biz-edit-actions">
+                  <button className="biz-edit-cancel" onClick={() => setEditing(null)}>취소</button>
+                  <button className="biz-edit-save" onClick={saveEdit}>저장</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     function FinanceDetailModal({ open, onClose, finance, setFinance, items, settings, setSettings, initialSection }) {
       // 2×2 grid layout — 자산/부채/수입/지출 동시 표시, 행별 가로 분할 사용자 조절
       const savedSplit1 = (typeof settings?.financeSplit1 === "number" && settings.financeSplit1 >= 20 && settings.financeSplit1 <= 80) ? settings.financeSplit1 : 50;
@@ -5452,41 +5774,25 @@
                 </section>
               </div>
 
-              {/* ROW 2: 수입 | 지출 */}
-              <div className="fin2-row" style={{ gridTemplateColumns: `${split2}% 8px ${100-split2}%` }}>
-                <section ref={sectionRefs.incomes} className={"fin2-section" + (pulse === "incomes" ? " pulse" : "")}>
-                  <div className="fin2-sec-head">
-                    <div className="fin2-sec-title">📈 수입</div>
-                    <div className="fin2-sec-sum green">+{Math.round(totalInAct/10000).toLocaleString()}만 / +{Math.round(totalInExp/10000).toLocaleString()}만</div>
+              {/* ROW 2: 사업별 자금 흐름 (주수입 / 부수입) */}
+              <section ref={(el) => { sectionRefs.incomes.current = el; sectionRefs.expenses.current = el; }}
+                       className={"fin2-section biz-flow-section" + ((pulse === "incomes" || pulse === "expenses") ? " pulse" : "")}>
+                <div className="fin2-sec-head">
+                  <div className="fin2-sec-title">💼 사업별 자금 흐름</div>
+                  <div className="fin2-sec-sum" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>
+                    Net {profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만
                   </div>
-                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 110px 110px 28px" }}>
-                    <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
+                </div>
+                <BusinessFlowSection finance={finance} setFinance={setFinance} settings={settings} setSettings={setSettings} />
+                {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).length > 0 && (
+                  <div className="biz-debuff-strip">
+                    <span className="lbl">⚔️ 장착 아이템 디버프</span>
+                    {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).map(i => (
+                      <span key={"d-" + i.id} className="chip">{i.emoji} {i.name} <span style={{ color: "var(--red)" }}>-{(i.debuffs || []).filter(d => d.type === "money").reduce((s,d)=>s+d.value,0).toLocaleString()}</span></span>
+                    ))}
                   </div>
-                  {renderItems("incomes", INCOME_CATS)}
-                </section>
-                <div className="fin2-resize-handle" onMouseDown={startResize(2)} title="드래그로 폭 조절" />
-                <section ref={sectionRefs.expenses} className={"fin2-section" + (pulse === "expenses" ? " pulse" : "")}>
-                  <div className="fin2-sec-head">
-                    <div className="fin2-sec-title">📉 지출</div>
-                    <div className="fin2-sec-sum" style={{ color: "var(--red)" }}>-{Math.round(totalExAct/10000).toLocaleString()}만 / -{Math.round(totalExExp/10000).toLocaleString()}만</div>
-                  </div>
-                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 110px 110px 28px" }}>
-                    <span>항목</span><span style={{ textAlign: "right" }}>예상</span><span style={{ textAlign: "right" }}>실제</span><span />
-                  </div>
-                  {renderItems("expenses", EXPENSE_CATS)}
-                  {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).length > 0 && (
-                    <>
-                      <div className="asset-cat-title">⚔️ 장착 아이템 디버프 (자동)</div>
-                      {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).map(i => (
-                        <div key={"d-" + i.id} className="res-line">
-                          <span className="lbl">{i.emoji} {i.name}</span>
-                          <span className="val" style={{ color: "var(--red)" }}>-{(i.debuffs || []).filter(d => d.type === "money").reduce((s,d)=>s+d.value,0).toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </section>
-              </div>
+                )}
+              </section>
             </div>
 
             <div className="modal-foot">

@@ -5464,3 +5464,127 @@
 .quickadd-btn-save { background: var(--accent); border: 1px solid var(--accent); color: #fff; padding: 7px 16px; border-radius: 7px; font-family: inherit; font-size: 12.5px; cursor: pointer; font-weight: 700; }
 .quickadd-btn-save:hover:not(:disabled) { background: var(--accent-2); box-shadow: 0 0 10px var(--accent-glow); }
 .quickadd-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+
+
+/* ============================================================
+   💼 사업별 자금 흐름 (BusinessFlowSection)
+   주수입/부수입 2섹션 · 좌 통합 입력 / 우 도넛+히어로
+   ============================================================ */
+.biz-flow-section { padding: 18px 20px; }
+.biz-flow { width: 100%; }
+.biz-flow-row { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; }
+@media (max-width: 1280px) {
+  .biz-flow-row { grid-template-columns: 1fr; }
+}
+
+/* === 좌: 통합 입력 === */
+.biz-input-panel { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.biz-input-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.biz-input-title { font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: baseline; gap: 8px; }
+.biz-input-title .biz-input-sub { font-size: 11px; color: var(--text-4); font-weight: 500; text-transform: none; letter-spacing: 0; }
+.biz-add-btn { background: var(--accent); border: none; color: #fff; padding: 6px 13px; border-radius: 7px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.biz-add-btn:hover { background: var(--accent-2); box-shadow: 0 0 10px var(--accent-glow); }
+
+.biz-input-table { width: 100%; border-collapse: collapse; }
+.biz-input-table th { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; padding: 7px 5px; text-align: left; border-bottom: 1px solid var(--border); }
+.biz-input-table td { padding: 6px 5px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+.biz-input-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+.biz-input-table tfoot td { border-bottom: none; }
+
+.biz-cell-input { width: 100%; background: transparent; border: none; color: var(--text-1); font-family: inherit; font-size: 13px; padding: 4px 0; outline: none; }
+.biz-cell-input:focus { background: var(--bg-3); border-radius: 4px; padding: 4px 6px; }
+.biz-cell-select { background: var(--bg-3); border: 1px solid var(--border); border-radius: 4px; color: var(--text-2); padding: 3px 5px; font-size: 11.5px; font-family: inherit; outline: none; cursor: pointer; width: 100%; }
+.biz-cell-num { width: 100%; background: var(--bg-3); border: 1px solid var(--border); border-radius: 4px; color: var(--text-1); font-family: 'Geist Mono', monospace; font-weight: 600; padding: 4px 7px; font-size: 12.5px; text-align: right; outline: none; }
+.biz-cell-num.in { color: var(--green); }
+.biz-cell-num.out { color: var(--red); }
+.biz-cell-num:focus { border-color: var(--accent); }
+
+.biz-seg-pill {
+  display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.12s;
+  background: color-mix(in srgb, var(--seg-color) 15%, transparent);
+  color: var(--seg-color);
+  border: 1px solid color-mix(in srgb, var(--seg-color) 30%, transparent);
+}
+.biz-seg-pill:hover { filter: brightness(1.15); }
+
+.biz-type-pill { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; transition: filter 0.12s; }
+.biz-type-pill.in { background: rgba(16,185,129,0.13); color: var(--green); }
+.biz-type-pill.out { background: rgba(239,68,68,0.13); color: var(--red); }
+.biz-type-pill:hover { filter: brightness(1.2); }
+
+.biz-row-del { background: none; border: none; color: var(--text-4); cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 4px; transition: all 0.12s; }
+.biz-row-del:hover { background: rgba(239,68,68,0.15); color: var(--red); }
+
+/* 인라인 추가 행 */
+.biz-inline-row td { background: rgba(139,92,246,0.04); border-bottom: 1px solid var(--border-strong) !important; }
+.biz-inline-row .biz-inline-name { font-style: italic; }
+.biz-inline-row .biz-inline-name::placeholder { color: var(--accent); font-weight: 600; opacity: 0.7; font-style: normal; }
+.biz-inline-submit {
+  background: var(--accent); border: none; color: #fff; cursor: pointer;
+  width: 24px; height: 24px; border-radius: 6px; font-size: 16px; font-weight: 800; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.biz-inline-submit:hover { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-glow); }
+
+/* === 우: 도넛 + 히어로 === */
+.biz-right-stack { display: flex; flex-direction: column; gap: 12px; }
+
+.biz-share-card {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 18px; display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center;
+}
+.biz-share-svg { width: 120px; height: 120px; flex-shrink: 0; }
+.biz-share-info { display: flex; flex-direction: column; gap: 8px; }
+.biz-share-title { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 2px; }
+.biz-share-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.biz-share-sw { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+.biz-share-name { color: var(--text-1); font-weight: 600; cursor: text; padding: 1px 4px; border-radius: 4px; transition: background 0.12s; }
+.biz-share-name:hover { background: rgba(255,255,255,0.06); }
+.biz-share-pct { font-family: 'Geist Mono', monospace; font-weight: 700; color: var(--text-2); margin-left: auto; font-size: 12px; }
+.biz-share-total { font-size: 10.5px; color: var(--text-4); margin-top: 3px; }
+
+.biz-hero-card {
+  border-radius: 12px; padding: 14px 16px; border: 1.5px solid; position: relative; overflow: hidden;
+}
+.biz-hero-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.biz-hero-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; }
+.biz-hero-dot { width: 9px; height: 9px; border-radius: 50%; }
+.biz-hero-title { cursor: text; padding: 2px 6px; border-radius: 5px; transition: background 0.12s; }
+.biz-hero-title:hover { background: rgba(255,255,255,0.05); }
+.biz-hero-pin { font-size: 10px; color: var(--text-4); font-weight: 500; padding: 2px 6px; border-radius: 4px; background: var(--bg-3); }
+.biz-hero-mlbl { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.biz-hero-net { font-size: 28px; font-weight: 900; font-family: 'Geist Mono', monospace; letter-spacing: -0.03em; margin-bottom: 8px; }
+.biz-hero-bar { display: flex; gap: 3px; height: 24px; border-radius: 6px; overflow: hidden; background: rgba(0,0,0,0.3); margin-bottom: 5px; }
+.biz-hero-bar .seg-in { background: var(--green); display: flex; align-items: center; padding: 0 9px; font-size: 10.5px; font-weight: 700; color: #fff; font-family: 'Geist Mono', monospace; min-width: 0; overflow: hidden; white-space: nowrap; }
+.biz-hero-bar .seg-out { background: var(--red); display: flex; align-items: center; padding: 0 9px; font-size: 10.5px; font-weight: 700; color: #fff; font-family: 'Geist Mono', monospace; min-width: 0; overflow: hidden; white-space: nowrap; }
+.biz-hero-bar .seg-save { background: rgba(255,255,255,0.04); }
+.biz-hero-bottom { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-3); }
+
+/* 디버프 스트립 (사업별 흐름 외부 자동 항목) */
+.biz-debuff-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; padding: 10px 12px; background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); border-radius: 8px; }
+.biz-debuff-strip .lbl { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.biz-debuff-strip .chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--bg-2); color: var(--text-2); border: 1px solid var(--border); }
+
+/* 섹션 편집 팝오버 */
+.biz-edit-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
+.biz-edit-pop { background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 14px; padding: 22px 26px; min-width: 380px; max-width: 440px; }
+.biz-edit-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; color: var(--text-1); }
+.biz-edit-lbl { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin: 12px 0 6px; }
+.biz-edit-lbl:first-of-type { margin-top: 0; }
+.biz-edit-input { width: 100%; background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 7px; padding: 9px 12px; color: var(--text-1); font-family: inherit; font-size: 14px; font-weight: 700; outline: none; box-sizing: border-box; }
+.biz-edit-input:focus { border-color: var(--accent); }
+.biz-swatch-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.biz-swatch { width: 22px; height: 22px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s; }
+.biz-swatch:hover { transform: scale(1.1); }
+.biz-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 3px rgba(255,255,255,0.3); }
+.biz-icon-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.biz-icon-cell { padding: 6px 9px; background: var(--bg-3); border-radius: 6px; cursor: pointer; font-size: 16px; border: 1px solid var(--border); transition: all 0.12s; }
+.biz-icon-cell:hover { background: var(--bg-2); border-color: var(--border-strong); }
+.biz-icon-cell.active { background: var(--accent-soft); border-color: var(--accent); }
+.biz-edit-actions { display: flex; gap: 8px; margin-top: 18px; }
+.biz-edit-cancel { flex: 1; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); padding: 9px; border-radius: 8px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; }
+.biz-edit-cancel:hover { background: var(--bg-2); color: var(--text-1); }
+.biz-edit-save { flex: 1; background: var(--accent); border: 1px solid var(--accent); color: #fff; padding: 9px; border-radius: 8px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; }
+.biz-edit-save:hover { background: var(--accent-2); box-shadow: 0 0 10px var(--accent-glow); }
