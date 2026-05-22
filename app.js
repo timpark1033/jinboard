@@ -2567,7 +2567,6 @@
       const dayLabels = ["월", "화", "수", "목", "금", "토", "일"];
 
       const tasksByDate = (dateStr) => tasks.filter(t => t.dueDate === dateStr);
-      const schedules = settings?.schedules || [];
       const schedulesByDate = (dateStr) => schedules.filter(s => s.date === dateStr);
 
       // 일정 빠른 추가 모달 state
