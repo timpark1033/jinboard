@@ -2432,6 +2432,7 @@
 
       return (
         <div className="focus-mode-view">
+          <div className="focus-left">
           <div className="focus-current-box">
             <div className="lbl">📍 현재 집중</div>
             <div className="task">{currentTask ? currentTask.text : "큐가 비어있습니다"}</div>
@@ -2475,7 +2476,9 @@
               ))}
             </div>
           </div>
+          </div>
 
+          <div className="focus-right">
           <div className="focus-queue-title">⚡ 업무 큐 ({queue.length}) — 드래그로 순서 변경</div>
           <div className="focus-queue">
             {queue.length === 0 && <div style={{ color: "var(--text-4)", padding: 14, textAlign: "center", fontStyle: "italic", fontSize: 12 }}>완료 안 된 업무가 없습니다</div>}
@@ -2500,6 +2503,7 @@
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
       );
