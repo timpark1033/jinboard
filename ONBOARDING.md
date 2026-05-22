@@ -160,7 +160,38 @@ C:\Users\sj\Desktop\jinboard\
 
 ---
 
-### 3️⃣ Google Calendar 양방향 동기 (구현 보류)
+### 3️⃣ 🆕 부동산 업로더 ↔ Jinboard 매출 동기 (업로더 측 구현 완료, 웹 측 대기)
+
+**참고 목업**: `C:\Users\sj\Downloads\jinboard-finance-modal-restructure.html`
+
+**업로더 측 (완료, 2026-05-22)**:
+- 경로: `C:\Users\sj\Desktop\자체프로그램\real_estate_uploader_v3\real_estate_uploader\app\sync\`
+- 모듈: `firestore_client.py` / `aggregator.py` / `jinboard_sync.py` / `sync_settings_dialog.py`
+- 매출관리 페이지 우측 상단에 `🌐 Jinboard · 동기` 위젯 추가
+- 10분 QTimer 자동 + 수동 동기 버튼
+- firebase-admin 미설치 시 graceful 무시
+- `requirements.txt` + `.gitignore` 갱신
+- 상세: `app/sync/README.md`
+
+**Firestore 경로**: `users/{uid}/realEstateSync/current` (3,000건까지 단일 doc)
+
+**jinboard 웹 측 (대기 — Step 4)**:
+- FinanceDetailModal 수입·지출 탭 안에 서브탭 3개 추가
+  - 전체 (BusinessFlowSection)
+  - 🏠 부동산 (realEstateSync 자동 동기 데이터 표시 · 읽기 전용)
+  - 📺 유튜브 (channels 시스템 — 채널 추가/편집/삭제, 일/주/월 정산, 캘린더)
+- 매거진 듀얼 히어로 주수입 푸터에 부동산 합산 자동 표시
+- `settings.youtubeChannels` 데이터 모델 추가
+- `finance.youtubeDaily` / `finance.monthlyHistory` 일별·월별 집계 캐시
+
+**사용자가 해야 할 것**:
+1. `pip install firebase-admin` (또는 setup.bat 재실행)
+2. Firebase Console → jinboard-c8402 → 서비스 계정 키 발급
+3. 업로더 매출관리 탭 → ⚙ 설정 → 경로/UID 입력 → 연결 테스트 → 자동 동기 활성화
+
+---
+
+### 4️⃣ Google Calendar 양방향 동기 (구현 보류)
 
 **참고**: 달력 탭 헤더 "🔗 Google" 버튼 → 안내 모달
 

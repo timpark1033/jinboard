@@ -355,10 +355,17 @@
       incomeSections: [
         { id: "primary",   name: "주수입", icon: "🏠", color: "#fbbf24" },
         { id: "secondary", name: "부수입", icon: "📺", color: "#6366f1" }
+      ],
+      youtubeChannels: [
+        { id: "ch1", name: "메인 채널", icon: "🎬", color: "#ef4444" },
+        { id: "ch2", name: "쇼츠 채널", icon: "📱", color: "#3b82f6" },
+        { id: "ch3", name: "강의 채널", icon: "🎓", color: "#a855f7" }
       ]
     };
     const SECTION_COLOR_PRESETS = ["#fbbf24", "#10b981", "#3b82f6", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316"];
     const SECTION_ICON_PRESETS = ["🏠","📺","💼","💎","🚀","🎯","⚡","🏢","💰","📦","🎨","🛒"];
+    const CHANNEL_ICON_PRESETS = ["🎬","📱","🎓","🎥","🎮","📡","💬","🎙️","🎨","🍿","🏆","✨"];
+    const CHANNEL_COLOR_PRESETS = ["#ef4444", "#3b82f6", "#a855f7", "#10b981", "#f59e0b", "#ec4899", "#06b6d4", "#fbbf24"];
 
     const INITIAL_RETROS = [
       { id: "r1", week: "W20 · 2026", date: "05.10 ~ 05.16",
@@ -5410,6 +5417,502 @@
       );
     }
 
+    /* ─── 🏠 부동산 매출 (업로더 동기 데이터 표시 · 읽기 전용) ─── */
+    function RealEstateSyncView({ data }) {
+      // 만원 단위 포맷
+      const fmtMan = (n) => {
+        const v = Math.round((Number(n) || 0) / 10000);
+        return v.toLocaleString() + "만";
+      };
+      const fmtManSigned = (n) => {
+        const v = Math.round((Number(n) || 0) / 10000);
+        return (v >= 0 ? "+" : "") + v.toLocaleString() + "만";
+      };
+      const fmtDateRel = (iso) => {
+        if (!iso) return "—";
+        try {
+          const d = new Date(iso);
+          const now = new Date();
+          const diff = Math.round((now - d) / 60000); // 분
+          if (diff < 1) return "방금 전";
+          if (diff < 60) return diff + "분 전";
+          const hr = Math.round(diff / 60);
+          if (hr < 24) return hr + "시간 전";
+          return Math.round(hr / 24) + "일 전";
+        } catch { return iso; }
+      };
+
+      // 데이터 없음 — placeholder
+      if (!data) {
+        return (
+          <section className="re-empty">
+            <div className="re-empty-icon">📡</div>
+            <div className="re-empty-title">동기 대기 중</div>
+            <div className="re-empty-desc">
+              부동산 매물 멀티 업로더에서 Jinboard 동기를 설정하면<br />
+              여기에 매출관리 데이터가 자동으로 표시됩니다.
+            </div>
+            <div className="re-empty-steps">
+              <div className="step">
+                <div className="num">1</div>
+                <div>업로더 매출관리 탭 → <b>⚙ 설정</b> 버튼</div>
+              </div>
+              <div className="step">
+                <div className="num">2</div>
+                <div>Firebase 서비스 계정 JSON 키 + UID 입력</div>
+              </div>
+              <div className="step">
+                <div className="num">3</div>
+                <div><b>☑ 자동 동기 활성화</b> + 저장</div>
+              </div>
+              <div className="step">
+                <div className="num">4</div>
+                <div>10분마다 자동 (또는 <b>↻ 동기</b> 버튼)</div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      const tm = data.thisMonth || {};
+      const ya = data.yearAccum || {};
+      const txs = data.transactions || [];
+      const fixed = data.fixedExpenses || [];
+      const variable = data.variableExpenses || [];
+      const monthly = data.monthlyHistory || {};
+
+      const today = new Date();
+      const thisMonthKey = today.getFullYear() + "-" + String(today.getMonth()+1).padStart(2,"0");
+
+      // 거래 내역 — 이번 달 필터 (settlementDate 또는 contractDate 기준)
+      const thisMonthTxs = txs.filter(t => {
+        const d = t.settlementDate || t.contractDate || "";
+        return d.startsWith(thisMonthKey);
+      });
+      // 정렬: D-day 가까운 순 (계약중 우선)
+      const sortedTxs = [...thisMonthTxs].sort((a, b) => {
+        const da = a.dday ?? 9999, db = b.dday ?? 9999;
+        if (a.status === "pending" && b.status !== "pending") return -1;
+        if (b.status === "pending" && a.status !== "pending") return 1;
+        return Math.abs(da) - Math.abs(db);
+      });
+
+      // 월별 차트 데이터 (12개월)
+      const months = Array.from({ length: 12 }, (_, i) => {
+        const m = i + 1;
+        const key = today.getFullYear() + "-" + String(m).padStart(2,"0");
+        const h = monthly[key] || { revenue: 0, expense: 0, net: 0 };
+        return { month: m, ...h, isCurrent: m === today.getMonth() + 1, isFuture: m > today.getMonth() + 1 };
+      });
+      const maxRevenue = Math.max(1, ...months.map(m => m.revenue));
+
+      const ddayChip = (dday, status) => {
+        if (status === "completed") return <span className="re-dday done">완료</span>;
+        if (dday === null || dday === undefined) return <span className="re-dday">—</span>;
+        const cls = dday < 0 ? "future" : dday <= 5 ? "urgent" : dday <= 10 ? "soon" : "normal";
+        return <span className={"re-dday " + cls}>D{dday >= 0 ? "-" : "+"}{Math.abs(dday)}</span>;
+      };
+
+      return (
+        <section className="re-view">
+          {/* 동기 상태 배너 */}
+          <div className="re-banner">
+            <div><span className="re-lock">🔒 읽기 전용</span> · 매출관리 데이터는 업로더에서만 편집</div>
+            <div className="re-banner-right">
+              <span className="re-sync-dot"></span>
+              <span>마지막 동기: {fmtDateRel(data.lastSyncAt)}</span>
+              {data.syncSource && <span style={{ color: "var(--text-4)", marginLeft: 8 }}>· {data.syncSource}</span>}
+            </div>
+          </div>
+
+          {/* KPI 6칸 */}
+          <div className="re-kpi-row">
+            <div className="re-kpi expected">
+              <div className="lbl">📅 이번 달 예상</div>
+              <div className="val">{fmtMan(tm.expectedFee)}</div>
+              <div className="sub">완료 {tm.counts?.completed || 0} + 계약중 {tm.counts?.pending || 0}</div>
+            </div>
+            <div className="re-kpi completed">
+              <div className="lbl">✅ 이번 달 완료</div>
+              <div className="val">{fmtMan(tm.completedFee)}</div>
+              <div className="sub">거래완료 {tm.counts?.completed || 0}건</div>
+            </div>
+            <div className="re-kpi pending">
+              <div className="lbl">⏳ 미수 수수료</div>
+              <div className="val">{fmtMan(tm.pendingFee)}</div>
+              <div className="sub">계약중 {tm.counts?.pending || 0}건</div>
+            </div>
+            <div className="re-kpi expense">
+              <div className="lbl">💸 이번 달 지출</div>
+              <div className="val">-{fmtMan(tm.expenses)}</div>
+              <div className="sub">고정 {fixed.length} + 변동 {variable.length}</div>
+            </div>
+            <div className="re-kpi net">
+              <div className="lbl">💎 이번 달 순수익</div>
+              <div className="val">{fmtManSigned(tm.netProfit)}</div>
+              <div className="sub">미수 포함 기준</div>
+            </div>
+            <div className="re-kpi accum">
+              <div className="lbl">📊 올해 누적</div>
+              <div className="val">{fmtMan(ya.totalRevenue)}</div>
+              <div className="sub">월평균 {fmtMan(ya.monthlyAvg)} · {ya.txCount || 0}건</div>
+            </div>
+          </div>
+
+          {/* 월별 차트 */}
+          <div className="re-chart">
+            <div className="re-chart-head">
+              <div className="re-chart-title">📊 월별 매출 / 순익 추이 <span className="re-badge">{today.getFullYear()}년</span></div>
+              <div className="re-chart-legend">
+                <span><span className="sw amber"></span>매출</span>
+                <span><span className="sw green-line"></span>순익</span>
+              </div>
+            </div>
+            <div className="re-chart-bars">
+              {months.map((m, i) => {
+                const h = (m.revenue / maxRevenue) * 100;
+                const netH = m.revenue > 0 ? Math.max(0, (m.net / maxRevenue) * 100) : 0;
+                return (
+                  <div key={i} className={"re-month" + (m.isCurrent ? " current" : "") + (m.isFuture ? " future" : "")}>
+                    <div className="re-month-val">{m.revenue > 0 ? fmtMan(m.revenue).replace("만","") : ""}</div>
+                    <div className="re-month-bar-wrap">
+                      <div className="re-month-bar" style={{ height: h + "%" }}></div>
+                      {netH > 0 && <div className="re-month-net-dot" style={{ bottom: netH + "%" }}></div>}
+                    </div>
+                    <div className="re-month-label">{m.month}월</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="re-chart-stats">
+              <div><div className="l">누적 매출</div><div className="v gold">{fmtMan(ya.totalRevenue)}</div></div>
+              <div><div className="l">누적 순익</div><div className="v green">{fmtManSigned(ya.totalNetProfit)}</div></div>
+              <div><div className="l">월평균</div><div className="v">{fmtMan(ya.monthlyAvg)}</div></div>
+              <div><div className="l">진행 월</div><div className="v">{ya.monthsPassed || 0} / 12</div></div>
+            </div>
+          </div>
+
+          {/* 거래 내역 */}
+          <div className="re-section">
+            <div className="re-section-head">
+              <div className="re-section-title">📋 거래 내역 <span className="re-badge">{sortedTxs.length}건 (이번 달)</span></div>
+              <div style={{ fontSize: 11, color: "var(--text-4)" }}>전체 {txs.length}건 보관 중</div>
+            </div>
+            {sortedTxs.length === 0 ? (
+              <div className="re-empty-line">이번 달 거래 없음</div>
+            ) : (
+              <div className="re-tx-table-wrap">
+                <table className="re-tx-table">
+                  <thead>
+                    <tr>
+                      <th>상태</th><th>매물</th><th>거래</th>
+                      <th style={{ textAlign: "right" }}>거래가</th>
+                      <th style={{ textAlign: "right" }}>요율</th>
+                      <th style={{ textAlign: "right" }}>합계</th>
+                      <th>잔금일</th><th>D-Day</th><th>신고</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedTxs.map(t => (
+                      <tr key={t.id}>
+                        <td><span className={"re-status " + t.status}>{t.status === "pending" ? "계약중" : "완료"}</span></td>
+                        <td className="re-property">{t.property}</td>
+                        <td><span className="re-deal">{t.dealType}</span></td>
+                        <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace" }}>
+                          {t.priceMain ? t.priceMain.toLocaleString() : "-"}{t.priceSub ? "/" + t.priceSub : ""}
+                        </td>
+                        <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace" }}>
+                          {t.rate ? t.rate.toFixed(2) + "%" : "—"}
+                        </td>
+                        <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace", color: "var(--green)", fontWeight: 700 }}>
+                          +{fmtMan(t.total)}
+                        </td>
+                        <td style={{ fontSize: 11, color: "var(--text-3)" }}>
+                          {(t.settlementDate || "").slice(5, 10)}
+                        </td>
+                        <td>{ddayChip(t.dday, t.status)}</td>
+                        <td>{t.reported ? <span style={{ color: "var(--green)" }}>✓</span> : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* 지출 (고정 + 변동) */}
+          <div className="re-expense-row">
+            <div className="re-expense-block">
+              <div className="re-expense-h">
+                <span className="nm">💰 고정 지출 ({thisMonthKey.replace("-", ".")})</span>
+                <span className="sum">-{fmtMan(fixed.reduce((s,f)=>s+(f.amount||0),0))}</span>
+              </div>
+              {fixed.length === 0 ? <div className="re-empty-line">고정 지출 없음</div> :
+                fixed.map(f => (
+                  <div key={f.id} className="re-expense-item">
+                    <span className="lbl">{f.name}{f.payDay ? <span style={{ color: "var(--text-4)", fontSize: 10, marginLeft: 6 }}>매월 {f.payDay}일</span> : ""}</span>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <span className="amt">{fmtMan(f.amount)}</span>
+                      <span className={f.paid ? "paid" : "unpaid"}>{f.paid ? "✓ 납부" : "대기"}</span>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+            <div className="re-expense-block">
+              <div className="re-expense-h">
+                <span className="nm">📉 변동 지출 ({thisMonthKey.replace("-", ".")})</span>
+                <span className="sum">-{fmtMan(variable.reduce((s,v)=>s+(v.amount||0),0))}</span>
+              </div>
+              {variable.length === 0 ? <div className="re-empty-line">변동 지출 없음</div> :
+                variable.map(v => (
+                  <div key={v.id} className="re-expense-item">
+                    <span className="lbl">{v.category || "기타"}{v.memo ? " · " + v.memo : ""}</span>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <span className="amt">{fmtMan(v.amount)}</span>
+                      <span style={{ color: "var(--text-4)", fontSize: 10 }}>{(v.date || "").slice(5, 10)}</span>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /* ─── 📺 유튜브 채널 시스템 ─── */
+    function YoutubeChannelsView({ finance, setFinance, settings, setSettings }) {
+      const channels = (settings.youtubeChannels && settings.youtubeChannels.length > 0)
+        ? settings.youtubeChannels
+        : INITIAL_SETTINGS.youtubeChannels;
+
+      const [editing, setEditing] = useState(null); // channel id being edited / "new"
+      const [editDraft, setEditDraft] = useState({ name: "", icon: "🎬", color: "#ef4444" });
+      const [filterCh, setFilterCh] = useState("all");
+
+      // 유튜브 항목만 (segment === "secondary")
+      const allItems = [
+        ...(finance.incomes || []).filter(i => (i.segment || "primary") === "secondary").map(i => ({ ...i, _kind: "incomes", _type: "in" })),
+        ...(finance.expenses || []).filter(e => (e.segment || "primary") === "secondary").map(e => ({ ...e, _kind: "expenses", _type: "out" }))
+      ];
+
+      const channelStats = (chId) => {
+        const arr = allItems.filter(x => (x.channelId || channels[0].id) === chId);
+        const income = arr.filter(x => x._type === "in").reduce((s, x) => s + (x.actual || x.expected || 0), 0);
+        const expense = arr.filter(x => x._type === "out").reduce((s, x) => s + (x.actual || x.expected || 0), 0);
+        return { income, expense, net: income - expense, count: arr.length };
+      };
+
+      const fmtMan = (n) => {
+        const v = Math.round((Number(n) || 0) / 10000);
+        return v.toLocaleString() + "만";
+      };
+      const fmtManSigned = (n) => {
+        const v = Math.round((Number(n) || 0) / 10000);
+        return (v >= 0 ? "+" : "") + v.toLocaleString() + "만";
+      };
+
+      const totalNet = channels.reduce((s, c) => s + channelStats(c.id).net, 0);
+      const totalIn = channels.reduce((s, c) => s + channelStats(c.id).income, 0);
+      const totalOut = channels.reduce((s, c) => s + channelStats(c.id).expense, 0);
+
+      // 채널 추가
+      const addChannel = () => {
+        const newId = "ch" + Date.now();
+        const pickColor = CHANNEL_COLOR_PRESETS[channels.length % CHANNEL_COLOR_PRESETS.length];
+        const pickIcon = CHANNEL_ICON_PRESETS[channels.length % CHANNEL_ICON_PRESETS.length];
+        setEditing(newId);
+        setEditDraft({ name: "새 채널", icon: pickIcon, color: pickColor });
+        setSettings(prev => ({
+          ...prev,
+          youtubeChannels: [...((prev.youtubeChannels && prev.youtubeChannels.length) ? prev.youtubeChannels : INITIAL_SETTINGS.youtubeChannels),
+                            { id: newId, name: "새 채널", icon: pickIcon, color: pickColor }]
+        }));
+      };
+      const beginEdit = (ch) => {
+        setEditing(ch.id);
+        setEditDraft({ name: ch.name, icon: ch.icon, color: ch.color });
+      };
+      const saveEdit = () => {
+        if (!editing) return;
+        setSettings(prev => ({
+          ...prev,
+          youtubeChannels: (prev.youtubeChannels || channels).map(c =>
+            c.id === editing ? { ...c, name: editDraft.name.trim() || c.name, icon: editDraft.icon, color: editDraft.color } : c
+          )
+        }));
+        setEditing(null);
+      };
+      const deleteChannel = (chId) => {
+        if (channels.length <= 1) {
+          alert("최소 1개 채널은 유지해야 합니다.");
+          return;
+        }
+        if (!confirm("채널을 삭제하시겠어요? (소속 항목은 첫 채널로 이동)")) return;
+        const fallback = channels.find(c => c.id !== chId)?.id;
+        // 채널 삭제 + 해당 channelId 가진 항목 fallback으로
+        setSettings(prev => ({
+          ...prev,
+          youtubeChannels: (prev.youtubeChannels || channels).filter(c => c.id !== chId)
+        }));
+        setFinance(prev => ({
+          ...prev,
+          incomes: (prev.incomes || []).map(i => i.channelId === chId ? { ...i, channelId: fallback } : i),
+          expenses: (prev.expenses || []).map(e => e.channelId === chId ? { ...e, channelId: fallback } : e)
+        }));
+      };
+
+      const filteredItems = filterCh === "all" ? allItems : allItems.filter(x => (x.channelId || channels[0].id) === filterCh);
+
+      return (
+        <section className="yt-view">
+          {/* 전체 요약 */}
+          <div className="yt-summary-card">
+            <div className="tag">📺 YOUTUBE NET (전 채널)</div>
+            <div className="val">{fmtManSigned(totalNet)}</div>
+            <div className="sub">월 부수입 · {channels.length}개 채널 운영</div>
+            <div className="meta-row">
+              <div><div className="l">수입</div><div className="v green">{fmtManSigned(totalIn)}</div></div>
+              <div><div className="l">지출</div><div className="v red">-{fmtMan(totalOut)}</div></div>
+              <div><div className="l">항목</div><div className="v">{allItems.length}건</div></div>
+            </div>
+          </div>
+
+          {/* 채널 카드 row */}
+          <div className="yt-channel-header">
+            <div className="title">📺 운영 채널 <span className="cnt">{channels.length}개</span></div>
+            <div className="hint">채널명 더블클릭으로 편집 · × 삭제</div>
+          </div>
+          <div className="yt-channel-row">
+            {channels.map((ch, idx) => {
+              const st = channelStats(ch.id);
+              return (
+                <div key={ch.id} className="yt-channel-card" style={{
+                  borderColor: ch.color + "66",
+                  background: `linear-gradient(135deg, ${ch.color}1A, var(--bg-2))`
+                }}>
+                  <div className="ch-head">
+                    <span className="ch-icon">{ch.icon}</span>
+                    <span className="ch-name" onDoubleClick={() => beginEdit(ch)} title="더블클릭하여 편집">{ch.name}</span>
+                    <button className="ch-del" onClick={() => deleteChannel(ch.id)} title="삭제">×</button>
+                  </div>
+                  <div className="ch-net" style={{ color: ch.color }}>{fmtManSigned(st.net)}</div>
+                  <div className="ch-sub">
+                    <span style={{ color: "var(--green)" }}>↑ {fmtMan(st.income)}</span>
+                    <span style={{ color: "var(--red)" }}>↓ {fmtMan(st.expense)}</span>
+                  </div>
+                  <div className="ch-periods">
+                    <div><div className="pl">항목</div><div className="pv">{st.count}건</div></div>
+                    <div><div className="pl">수입</div><div className="pv" style={{ color: "var(--green)" }}>{fmtMan(st.income)}</div></div>
+                    <div><div className="pl">지출</div><div className="pv" style={{ color: "var(--red)" }}>{fmtMan(st.expense)}</div></div>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="yt-channel-card add" onClick={addChannel}>
+              <div className="plus">+</div>
+              <div>채널 추가</div>
+            </div>
+          </div>
+
+          {/* 채널 편집 팝오버 */}
+          {editing && (
+            <div className="yt-edit-overlay" onClick={() => setEditing(null)}>
+              <div className="yt-edit-pop" onClick={(e) => e.stopPropagation()}>
+                <div className="pop-title">📺 채널 편집</div>
+                <div className="pop-lbl">채널 이름</div>
+                <input value={editDraft.name} onChange={(e) => setEditDraft(s => ({ ...s, name: e.target.value }))}
+                       onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) saveEdit(); }}
+                       autoFocus className="pop-input" />
+                <div className="pop-lbl">아이콘</div>
+                <div className="icon-row">
+                  {CHANNEL_ICON_PRESETS.map(ic => (
+                    <span key={ic} className={"icon-cell" + (editDraft.icon === ic ? " active" : "")}
+                          onClick={() => setEditDraft(s => ({ ...s, icon: ic }))}>{ic}</span>
+                  ))}
+                </div>
+                <div className="pop-lbl">컬러</div>
+                <div className="color-row">
+                  {CHANNEL_COLOR_PRESETS.map(co => (
+                    <span key={co} className={"color-sw" + (editDraft.color === co ? " active" : "")}
+                          style={{ background: co }} onClick={() => setEditDraft(s => ({ ...s, color: co }))}></span>
+                  ))}
+                </div>
+                <div className="pop-actions">
+                  <button className="cancel" onClick={() => setEditing(null)}>취소</button>
+                  <button className="save" onClick={saveEdit}>저장</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 항목 테이블 (채널 필터) */}
+          <div className="yt-table-section">
+            <div className="yt-table-head">
+              <div className="title">✏ 유튜브 항목 (채널별)</div>
+              <div className="filters">
+                <button className={"yt-filter-chip" + (filterCh === "all" ? " active" : "")} onClick={() => setFilterCh("all")}>전체</button>
+                {channels.map(ch => (
+                  <button key={ch.id} className={"yt-filter-chip" + (filterCh === ch.id ? " active" : "")}
+                          onClick={() => setFilterCh(ch.id)}
+                          style={filterCh === ch.id ? { background: ch.color + "26", color: ch.color, borderColor: ch.color } : {}}>
+                    <span className="dot" style={{ background: ch.color }}></span>{ch.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {filteredItems.length === 0 ? (
+              <div className="re-empty-line">
+                {filterCh === "all"
+                  ? "유튜브 항목이 없습니다. [전체] 탭에서 segment를 부수입으로 변경하거나 새로 추가하세요."
+                  : "이 채널의 항목이 없습니다."}
+              </div>
+            ) : (
+              <table className="yt-item-table">
+                <thead>
+                  <tr><th>이름</th><th>채널</th><th>유형</th><th>분류</th><th style={{ textAlign: "right" }}>금액</th></tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map(x => {
+                    const chId = x.channelId || channels[0].id;
+                    const ch = channels.find(c => c.id === chId) || channels[0];
+                    return (
+                      <tr key={x._kind + "-" + x.id}>
+                        <td>{x.name}</td>
+                        <td>
+                          <select value={chId}
+                                  onChange={(e) => {
+                                    const newChId = e.target.value;
+                                    setFinance(prev => ({
+                                      ...prev,
+                                      [x._kind]: (prev[x._kind] || []).map(it => it.id === x.id ? { ...it, channelId: newChId } : it)
+                                    }));
+                                  }}
+                                  className="yt-ch-select"
+                                  style={{ color: ch.color, borderColor: ch.color + "66" }}>
+                            {channels.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                          </select>
+                        </td>
+                        <td><span className={"yt-type-pill " + (x._type === "in" ? "in" : "out")}>{x._type === "in" ? "수입" : "지출"}</span></td>
+                        <td style={{ color: "var(--text-3)", fontSize: 11.5 }}>{x.category || "-"}</td>
+                        <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace", fontWeight: 700, color: x._type === "in" ? "var(--green)" : "var(--red)" }}>
+                          {x._type === "in" ? "+" : "-"}{fmtMan(x.actual || x.expected || 0)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            <div className="yt-help">
+              💡 [전체] 탭에서 segment pill을 <b>부수입</b>으로 설정하면 여기에 표시됩니다. 채널은 드롭다운에서 선택.
+            </div>
+          </div>
+        </section>
+      );
+    }
+
     function BusinessFlowSection({ finance, setFinance, settings, setSettings }) {
       const sections = (settings.incomeSections && settings.incomeSections.length >= 2)
         ? settings.incomeSections.slice(0, 2)
@@ -5726,7 +6229,7 @@
       );
     }
 
-    function FinanceDetailModal({ open, onClose, finance, setFinance, items, settings, setSettings, initialSection }) {
+    function FinanceDetailModal({ open, onClose, finance, setFinance, items, settings, setSettings, initialSection, realEstateSync }) {
       // 2×2 grid layout — 자산/부채/수입/지출 동시 표시, 행별 가로 분할 사용자 조절
       const savedSplit1 = (typeof settings?.financeSplit1 === "number" && settings.financeSplit1 >= 20 && settings.financeSplit1 <= 80) ? settings.financeSplit1 : 50;
       const savedSplit2 = (typeof settings?.financeSplit2 === "number" && settings.financeSplit2 >= 20 && settings.financeSplit2 <= 80) ? settings.financeSplit2 : 50;
@@ -5747,6 +6250,7 @@
         return "summary";
       };
       const [activeTab, setActiveTab] = useState(initialTab(initialSection));
+      const [ieSubTab, setIeSubTab] = useState("all"); // "all" | "estate" | "youtube"
 
       // 모달 열릴 때마다 initialSection에 맞춰 탭 변경
       useEffect(() => {
@@ -6005,25 +6509,52 @@
                 </div>
               )}
 
-              {/* ━━━━ 탭 3: 수입·지출 (BusinessFlowSection) ━━━━ */}
+              {/* ━━━━ 탭 3: 수입·지출 (서브탭 — 전체/부동산/유튜브) ━━━━ */}
               {activeTab === "ie" && (
-                <section className="fin2-section biz-flow-section">
-                  <div className="fin2-sec-head">
-                    <div className="fin2-sec-title">💼 사업별 자금 흐름</div>
-                    <div className="fin2-sec-sum" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>
-                      Net {profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만
-                    </div>
+                <>
+                  <div className="ie-subtabs">
+                    <button className={"ie-subtab" + (ieSubTab === "all" ? " active all" : "")} onClick={() => setIeSubTab("all")}>
+                      📋 전체
+                    </button>
+                    <button className={"ie-subtab" + (ieSubTab === "estate" ? " active estate" : "")} onClick={() => setIeSubTab("estate")}>
+                      🏠 부동산 {realEstateSync ? <span className="cnt">{(realEstateSync.transactions || []).length}</span> : ""}
+                    </button>
+                    <button className={"ie-subtab" + (ieSubTab === "youtube" ? " active youtube" : "")} onClick={() => setIeSubTab("youtube")}>
+                      📺 유튜브 <span className="cnt">{(settings.youtubeChannels || []).length}</span>
+                    </button>
+                    <div className="ie-subtab-spacer"></div>
+                    <span className="ie-source-tag">
+                      {ieSubTab === "estate" ? "🔒 업로더 자동 동기" :
+                       ieSubTab === "youtube" ? "✏ 수동 편집" : "📥 통합 뷰"}
+                    </span>
                   </div>
-                  <BusinessFlowSection finance={finance} setFinance={setFinance} settings={settings} setSettings={setSettings} />
-                  {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).length > 0 && (
-                    <div className="biz-debuff-strip">
-                      <span className="lbl">⚔️ 장착 아이템 디버프</span>
-                      {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).map(i => (
-                        <span key={"d-" + i.id} className="chip">{i.emoji} {i.name} <span style={{ color: "var(--red)" }}>-{(i.debuffs || []).filter(d => d.type === "money").reduce((s,d)=>s+d.value,0).toLocaleString()}</span></span>
-                      ))}
-                    </div>
+
+                  {ieSubTab === "all" && (
+                    <section className="fin2-section biz-flow-section">
+                      <div className="fin2-sec-head">
+                        <div className="fin2-sec-title">💼 사업별 자금 흐름</div>
+                        <div className="fin2-sec-sum" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>
+                          Net {profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만
+                        </div>
+                      </div>
+                      <BusinessFlowSection finance={finance} setFinance={setFinance} settings={settings} setSettings={setSettings} />
+                      {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).length > 0 && (
+                        <div className="biz-debuff-strip">
+                          <span className="lbl">⚔️ 장착 아이템 디버프</span>
+                          {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).map(i => (
+                            <span key={"d-" + i.id} className="chip">{i.emoji} {i.name} <span style={{ color: "var(--red)" }}>-{(i.debuffs || []).filter(d => d.type === "money").reduce((s,d)=>s+d.value,0).toLocaleString()}</span></span>
+                          ))}
+                        </div>
+                      )}
+                    </section>
                   )}
-                </section>
+
+                  {ieSubTab === "estate" && <RealEstateSyncView data={realEstateSync} />}
+
+                  {ieSubTab === "youtube" && (
+                    <YoutubeChannelsView finance={finance} setFinance={setFinance} settings={settings} setSettings={setSettings} />
+                  )}
+                </>
               )}
             </div>
 
@@ -6061,6 +6592,7 @@
       const [financeModalOpen, setFinanceModalOpen] = useState(false);
       const [financeInitialSection, setFinanceInitialSection] = useState(null);
       const [finGoalsModalOpen, setFinGoalsModalOpen] = useState(false);
+      const [realEstateSync, setRealEstateSync] = useState(null); // 부동산 업로더 동기 데이터
       const [settings, setSettings] = useState(() => {
         const loaded = loadLS("dreamboard_settings", INITIAL_SETTINGS);
         // 셧다운된 모델명 자동 마이그레이션
@@ -6100,6 +6632,26 @@
           }
           setLoaded(true);
         });
+      }, [user.uid]);
+
+      // 부동산 업로더 ↔ realEstateSync/current 실시간 구독
+      useEffect(() => {
+        const unsub = _db.collection("users").doc(user.uid)
+          .collection("realEstateSync").doc("current")
+          .onSnapshot(
+            (snap) => {
+              if (snap.exists) {
+                setRealEstateSync(snap.data());
+              } else {
+                setRealEstateSync(null); // 아직 동기 전
+              }
+            },
+            (err) => {
+              console.warn("realEstateSync 구독 실패:", err.message);
+              setRealEstateSync(null);
+            }
+          );
+        return () => unsub && unsub();
       }, [user.uid]);
 
       // 저장 상태 (idle | saving | saved | error)
@@ -6494,6 +7046,7 @@
             settings={settings}
             setSettings={setSettings}
             initialSection={financeInitialSection}
+            realEstateSync={realEstateSync}
           />
           <FinancialGoalsModal
             open={finGoalsModalOpen}
