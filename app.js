@@ -327,7 +327,8 @@
       characterAvatarUrl: "",
       characterName: "",
       gtrColumnWidths: [35, 40, 25],
-      gtrZoomLevel: 1
+      gtrZoomLevel: 1,
+      finGoals: { netWorth: 3000000000, monthlyIncome: 10000000, monthlySavings: 5000000, milestones: [] }
     };
 
     const INITIAL_RETROS = [
@@ -3510,7 +3511,7 @@
                               style={t.goalId ? { boxShadow: `inset 3px 0 0 ${goalColor(t.goalId)}`, cursor: "grab" } : { cursor: "grab" }}>
                               <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} style={{ cursor: "pointer" }} title="완료 토글" />
                               <span className="eq-task-text" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} style={{ cursor: "text" }} title="클릭으로 수정">{t.text}</span>
-                              {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>~{fmtDeadline(t.dueDate).slice(5).replace('.', '/')}</span>}
+                              {t.dueDate && <span className={"task-due " + dueClass} style={{ marginRight: 4 }}>{(() => { const dd = calcDday(t.dueDate); return dd >= 0 ? "D-" + dd : "D+" + Math.abs(dd); })()}</span>}
                               {g && <span className="gtag" style={{ background: goalColor(g.id) + "22", color: goalColor(g.id), borderColor: goalColor(g.id) + "55" }}>{g.name.slice(0, 6)}</span>}
                               <button className="del-x" onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id); }} title="세부 편집">✏</button>
                               <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
@@ -4238,7 +4239,7 @@
       );
     }
 
-    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings, setSettings, finance, setFinance, onOpenFinance, onOpenStatModal, onOpenSettings, uid, highlightSection, onHighlightConsumed }) {
+    function ResourcesItemsTab({ items, setItems, resources, setResources, goals, stats, settings, setSettings, finance, setFinance, onOpenFinance, onOpenStatModal, onOpenSettings, uid, highlightSection, onHighlightConsumed, onOpenFinGoals }) {
       const [selectedItem, setSelectedItem] = useState(null);
       const [filter, setFilter] = useState("all");
       const [editingAssetId, setEditingAssetId] = useState(null);
@@ -4476,7 +4477,53 @@
                 </div>
               </div>
 
-              {/* 🏦 자산 & 💼 수익 (2×2 그리드) */}
+              {/* 🎯 재무 목표 위젯 */}
+              {(() => {
+                const fg = settings?.finGoals || { netWorth: 3000000000, monthlyIncome: 10000000, monthlySavings: 5000000 };
+                const curNet = netWorth;
+                const curIncome = totalIncome;
+                const curSavings = profitActual;
+                const pctNet = fg.netWorth > 0 ? Math.min(100, Math.round((curNet / fg.netWorth) * 100)) : 0;
+                const pctInc = fg.monthlyIncome > 0 ? Math.min(100, Math.round((curIncome / fg.monthlyIncome) * 100)) : 0;
+                const pctSav = fg.monthlySavings > 0 ? Math.min(100, Math.round((curSavings / fg.monthlySavings) * 100)) : 0;
+                return (
+                  <>
+                    <div className="ri2-sec-head">
+                      <span className="h">🎯 재무 목표</span>
+                      <span className="sub">설정 클릭 → 풀스크린 모달</span>
+                      <button className="fingoal-edit-btn" onClick={onOpenFinGoals}>✏ 설정</button>
+                    </div>
+                    <div className="fingoal-grid">
+                      <div className="fingoal-card gold" onClick={onOpenFinGoals}>
+                        <div className="ic">💎</div>
+                        <div className="name">순자산</div>
+                        <div className="val">{fmtKR(curNet)}</div>
+                        <div className="target">/ {fmtKR(fg.netWorth)}</div>
+                        <div className="bar gold"><div style={{ width: pctNet + "%" }} /></div>
+                        <div className="pct-row"><span>목표까지 {fmtKR(Math.max(0, fg.netWorth - curNet))}</span><span className="achieved">{pctNet}%</span></div>
+                      </div>
+                      <div className="fingoal-card green" onClick={onOpenFinGoals}>
+                        <div className="ic">📈</div>
+                        <div className="name">월 수입</div>
+                        <div className="val">{fmtKR(curIncome)}</div>
+                        <div className="target">/ {fmtKR(fg.monthlyIncome)}</div>
+                        <div className="bar green"><div style={{ width: pctInc + "%" }} /></div>
+                        <div className="pct-row"><span>남은 {fmtKR(Math.max(0, fg.monthlyIncome - curIncome))}/월</span><span className="achieved">{pctInc}%</span></div>
+                      </div>
+                      <div className="fingoal-card blue" onClick={onOpenFinGoals}>
+                        <div className="ic">🪙</div>
+                        <div className="name">월 저축</div>
+                        <div className="val">{fmtKR(curSavings)}</div>
+                        <div className="target">/ {fmtKR(fg.monthlySavings)}</div>
+                        <div className="bar blue"><div style={{ width: pctSav + "%" }} /></div>
+                        <div className="pct-row"><span>남은 {fmtKR(Math.max(0, fg.monthlySavings - curSavings))}/월</span><span className="achieved">{pctSav}%</span></div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              {/* 🏦 자산 & 💼 수익 (4열) */}
               <div className="ri2-sec-head"><span className="h">🏦 자산 & 💼 수익</span><span className="sub">클릭으로 상세 모달</span></div>
               <div className="ri2-detail-grid">
                 {/* 자산 */}
@@ -4956,6 +5003,155 @@
       );
     }
 
+    /* ─── 재무 목표 풀스크린 모달 ─── */
+    function FinancialGoalsModal({ open, onClose, settings, setSettings, currentValues }) {
+      const defaults = { netWorth: 3000000000, monthlyIncome: 10000000, monthlySavings: 5000000, milestones: [] };
+      const fg = { ...defaults, ...(settings?.finGoals || {}) };
+      const [draft, setDraft] = useState(fg);
+      useEffect(() => { if (open) setDraft({ ...defaults, ...(settings?.finGoals || {}) }); }, [open]);
+      if (!open) return null;
+
+      const update = (k, v) => setDraft(p => ({ ...p, [k]: v }));
+      const save = () => {
+        setSettings(p => ({ ...p, finGoals: draft }));
+        onClose();
+      };
+
+      const cur = currentValues || { netWorth: 0, monthlyIncome: 0, monthlySavings: 0 };
+      const pctNet = draft.netWorth > 0 ? Math.min(100, Math.round((cur.netWorth / draft.netWorth) * 100)) : 0;
+      const pctInc = draft.monthlyIncome > 0 ? Math.min(100, Math.round((cur.monthlyIncome / draft.monthlyIncome) * 100)) : 0;
+      const pctSav = draft.monthlySavings > 0 ? Math.min(100, Math.round((cur.monthlySavings / draft.monthlySavings) * 100)) : 0;
+
+      const milestones = Array.isArray(draft.milestones) ? draft.milestones : [];
+      const addMilestone = () => {
+        const amount = prompt("마일스톤 금액 (원):", "1000000000");
+        if (!amount) return;
+        const label = prompt("마일스톤 이름:", "10억 (자산가)");
+        if (!label) return;
+        update("milestones", [...milestones, { id: "ms" + Date.now(), amount: Number(amount) || 0, label, achievedDate: cur.netWorth >= Number(amount) ? new Date().toISOString().slice(0,7) : "" }]);
+      };
+      const deleteMilestone = (id) => update("milestones", milestones.filter(m => m.id !== id));
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="fgm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="fgm-head">
+              <div>
+                <div className="fgm-title">🎯 재무 목표 설정</div>
+                <div className="fgm-sub">순자산 · 월수입 · 월저축 + 마일스톤</div>
+              </div>
+              <button className="fgm-close" onClick={onClose}>✕</button>
+            </div>
+
+            <div className="fgm-body">
+              <div className="fgm-left">
+                <div className="fgm-goal-card main">
+                  <div className="fgm-goal-head">
+                    <span className="ic">💎</span>
+                    <span className="lbl">순자산 (메인)</span>
+                    <span className="cur">현재 {fmtKR(cur.netWorth)}</span>
+                  </div>
+                  <div className="fgm-input-row">
+                    <div className="fgm-input-block">
+                      <label>목표 금액 (원)</label>
+                      <input type="text" inputMode="numeric" value={fmtComma(draft.netWorth)} onChange={(e) => update("netWorth", parseComma(e.target.value))} />
+                    </div>
+                  </div>
+                  <div className="fgm-progress">
+                    <div className="fgm-bar gold"><div style={{ width: pctNet + "%" }} /></div>
+                    <div className="fgm-progress-foot">
+                      <span className="pct gold">{pctNet}% · {fmtKR(cur.netWorth)}</span>
+                      <span className="remain">남은 {fmtKR(Math.max(0, draft.netWorth - cur.netWorth))}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fgm-goal-card">
+                  <div className="fgm-goal-head">
+                    <span className="ic">📈</span>
+                    <span className="lbl">월 수입</span>
+                    <span className="cur">현재 {fmtKR(cur.monthlyIncome)}/월</span>
+                  </div>
+                  <div className="fgm-input-row">
+                    <div className="fgm-input-block">
+                      <label>목표 금액 (원/월)</label>
+                      <input type="text" inputMode="numeric" value={fmtComma(draft.monthlyIncome)} onChange={(e) => update("monthlyIncome", parseComma(e.target.value))} />
+                    </div>
+                  </div>
+                  <div className="fgm-progress">
+                    <div className="fgm-bar green"><div style={{ width: pctInc + "%" }} /></div>
+                    <div className="fgm-progress-foot">
+                      <span className="pct green">{pctInc}%</span>
+                      <span className="remain">남은 {fmtKR(Math.max(0, draft.monthlyIncome - cur.monthlyIncome))}/월</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fgm-goal-card">
+                  <div className="fgm-goal-head">
+                    <span className="ic">🪙</span>
+                    <span className="lbl">월 저축</span>
+                    <span className="cur">현재 {fmtKR(cur.monthlySavings)}/월</span>
+                  </div>
+                  <div className="fgm-input-row">
+                    <div className="fgm-input-block">
+                      <label>목표 금액 (원/월)</label>
+                      <input type="text" inputMode="numeric" value={fmtComma(draft.monthlySavings)} onChange={(e) => update("monthlySavings", parseComma(e.target.value))} />
+                    </div>
+                  </div>
+                  <div className="fgm-progress">
+                    <div className="fgm-bar blue"><div style={{ width: pctSav + "%" }} /></div>
+                    <div className="fgm-progress-foot">
+                      <span className="pct blue">{pctSav}%</span>
+                      <span className="remain">남은 {fmtKR(Math.max(0, draft.monthlySavings - cur.monthlySavings))}/월</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="fgm-right">
+                <div className="fgm-pie-card">
+                  <div className="fgm-section-title">📊 순자산 진행률</div>
+                  <div className="fgm-pie">
+                    <svg viewBox="0 0 200 200" style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="var(--bg-3)" strokeWidth="22"/>
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="#fbbf24" strokeWidth="22" strokeDasharray="503" strokeDashoffset={503 - (pctNet / 100) * 503} strokeLinecap="round" style={{ filter: "drop-shadow(0 0 8px rgba(251,191,36,0.5))" }}/>
+                    </svg>
+                    <div className="fgm-pie-center">
+                      <div className="fgm-pie-pct">{pctNet}%</div>
+                      <div className="fgm-pie-lbl">{fmtKR(cur.netWorth)} / {fmtKR(draft.netWorth)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fgm-milestones">
+                  <div className="fgm-section-title">🎖️ 마일스톤 <button className="fgm-add" onClick={addMilestone}>+ 추가</button></div>
+                  {milestones.length === 0 && <div className="fgm-empty">마일스톤 없음 — 추가해보세요 (예: 5억/10억/20억)</div>}
+                  {[...milestones].sort((a, b) => a.amount - b.amount).map(m => {
+                    const achieved = cur.netWorth >= m.amount;
+                    const current = !achieved && cur.netWorth >= (m.amount * 0.8);
+                    return (
+                      <div key={m.id} className="fgm-milestone">
+                        <span className={"dot" + (achieved ? " done" : current ? " current" : "")}></span>
+                        <span className={"nm" + (achieved ? " done" : "")}>{m.label}</span>
+                        <span className="val">{fmtKR(m.amount)}</span>
+                        <button className="del" onClick={() => deleteMilestone(m.id)}>×</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="fgm-foot">
+              <button className="fgm-btn-cancel" onClick={onClose}>취소</button>
+              <button className="fgm-btn-save" onClick={save}>✓ 목표 저장</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function FinanceDetailModal({ open, onClose, finance, setFinance, items, settings, setSettings, initialSection }) {
       // 2×2 grid layout — 자산/부채/수입/지출 동시 표시, 행별 가로 분할 사용자 조절
       const savedSplit1 = (typeof settings?.financeSplit1 === "number" && settings.financeSplit1 >= 20 && settings.financeSplit1 <= 80) ? settings.financeSplit1 : 50;
@@ -5235,6 +5431,7 @@
       const [summaryCards, setSummaryCards] = useState(INITIAL_SUMMARY_CARDS);
       const [financeModalOpen, setFinanceModalOpen] = useState(false);
       const [financeInitialSection, setFinanceInitialSection] = useState(null);
+      const [finGoalsModalOpen, setFinGoalsModalOpen] = useState(false);
       const [settings, setSettings] = useState(() => {
         const loaded = loadLS("dreamboard_settings", INITIAL_SETTINGS);
         // 셧다운된 모델명 자동 마이그레이션
@@ -5575,6 +5772,7 @@
             goals={goals} stats={stats} settings={settings} setSettings={setSettings}
             finance={finance} setFinance={setFinance}
             onOpenFinance={(section) => { setFinanceInitialSection(section || null); setFinanceModalOpen(true); }}
+            onOpenFinGoals={() => setFinGoalsModalOpen(true)}
             onOpenStatModal={() => setStatModalOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
             uid={user?.uid}
@@ -5664,6 +5862,17 @@
             settings={settings}
             setSettings={setSettings}
             initialSection={financeInitialSection}
+          />
+          <FinancialGoalsModal
+            open={finGoalsModalOpen}
+            onClose={() => setFinGoalsModalOpen(false)}
+            settings={settings}
+            setSettings={setSettings}
+            currentValues={{
+              netWorth: sumAssets(finance) - sumDebts(finance),
+              monthlyIncome: sumIncome(finance, items),
+              monthlySavings: sumIncome(finance, items) - sumExpense(finance, items)
+            }}
           />
           <QuestGuideModal
             open={questGuideOpen}

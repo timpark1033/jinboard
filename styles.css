@@ -5323,3 +5323,91 @@
 .eq-cell.drag-over { background: var(--accent-soft); border-color: var(--accent) !important; box-shadow: inset 0 0 0 2px var(--accent); }
 .eq-task-row.task-dragging { opacity: 0.4; cursor: grabbing !important; }
 .eq-task-row[draggable="true"]:active { cursor: grabbing !important; }
+
+/* ============================================================
+   재무 목표 위젯 (3-col) + 풀스크린 설정 모달
+   ============================================================ */
+.fingoal-edit-btn { margin-left: auto; background: var(--bg-2); border: 1px solid var(--border-accent); color: var(--accent); padding: 5px 12px; border-radius: 6px; font-family: inherit; font-size: 11.5px; cursor: pointer; font-weight: 600; }
+.fingoal-edit-btn:hover { background: var(--accent-soft); }
+
+.fingoal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .fingoal-grid { grid-template-columns: 1fr; } }
+.fingoal-card { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 18px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
+.fingoal-card:hover { transform: translateY(-1px); border-color: var(--border-accent); }
+.fingoal-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.fingoal-card.gold::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.fingoal-card.green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+.fingoal-card.blue::before { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+.fingoal-card .ic { font-size: 24px; }
+.fingoal-card .name { font-size: 12px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 6px; }
+.fingoal-card .val { font-family: "Geist Mono", monospace; font-size: 24px; font-weight: 800; color: var(--text-1); letter-spacing: -0.03em; margin-top: 4px; }
+.fingoal-card .target { font-size: 11.5px; color: var(--text-4); font-family: "Geist Mono", monospace; margin-top: 2px; }
+.fingoal-card .bar { height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; margin-top: 10px; }
+.fingoal-card .bar.gold > div { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 3px; }
+.fingoal-card .bar.green > div { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 3px; }
+.fingoal-card .bar.blue > div { height: 100%; background: linear-gradient(90deg, #3b82f6, #6366f1); border-radius: 3px; }
+.fingoal-card .pct-row { display: flex; justify-content: space-between; margin-top: 5px; font-size: 10.5px; color: var(--text-3); font-family: "Geist Mono", monospace; }
+.fingoal-card.gold .pct-row .achieved { color: #fbbf24; font-weight: 700; }
+.fingoal-card.green .pct-row .achieved { color: var(--green); font-weight: 700; }
+.fingoal-card.blue .pct-row .achieved { color: var(--blue); font-weight: 700; }
+
+/* 모달 */
+.fgm-modal { background: var(--bg-1); border-radius: 18px; overflow: hidden; width: 95vw; max-width: 1100px; max-height: 92vh; display: flex; flex-direction: column; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+.fgm-head { padding: 24px 32px; background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(139,92,246,0.04), var(--bg-1)); border-bottom: 1px solid var(--border); position: relative; display: flex; justify-content: space-between; align-items: flex-start; }
+.fgm-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); }
+.fgm-sub { font-size: 13px; color: var(--text-3); margin-top: 4px; }
+.fgm-close { background: var(--bg-2); border: 1px solid var(--border); color: var(--text-3); width: 36px; height: 36px; border-radius: 9px; font-size: 14px; cursor: pointer; }
+.fgm-close:hover { background: var(--bg-3); color: var(--text-1); }
+
+.fgm-body { padding: 24px 32px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; overflow-y: auto; flex: 1; }
+@media (max-width: 900px) { .fgm-body { grid-template-columns: 1fr; } }
+.fgm-left { display: flex; flex-direction: column; gap: 14px; }
+.fgm-right { display: flex; flex-direction: column; gap: 14px; }
+
+.fgm-goal-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.fgm-goal-card.main { background: linear-gradient(135deg, rgba(251,191,36,0.06), var(--bg-2)); border-color: rgba(251,191,36,0.25); }
+.fgm-goal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; font-weight: 700; color: var(--text-2); }
+.fgm-goal-head .ic { font-size: 18px; }
+.fgm-goal-head .lbl { flex: 1; }
+.fgm-goal-head .cur { font-family: "Geist Mono", monospace; font-size: 11.5px; color: var(--text-3); font-weight: 500; }
+.fgm-input-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+.fgm-input-block { display: flex; flex-direction: column; gap: 5px; }
+.fgm-input-block label { font-size: 11px; color: var(--text-3); font-weight: 600; }
+.fgm-input-block input { background: var(--bg-1); border: 1px solid var(--border); color: var(--text-1); border-radius: 8px; padding: 10px 14px; font-family: "Geist Mono", monospace; font-size: 16px; font-weight: 700; outline: none; text-align: right; }
+.fgm-input-block input:focus { border-color: var(--accent); background: var(--bg-3); }
+.fgm-progress { margin-top: 4px; }
+.fgm-bar { height: 8px; background: var(--bg-3); border-radius: 4px; overflow: hidden; }
+.fgm-bar.gold > div { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); box-shadow: 0 0 10px rgba(251,191,36,0.4); border-radius: 4px; }
+.fgm-bar.green > div { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 4px; }
+.fgm-bar.blue > div { height: 100%; background: linear-gradient(90deg, #3b82f6, #6366f1); border-radius: 4px; }
+.fgm-progress-foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; font-family: "Geist Mono", monospace; }
+.fgm-progress-foot .pct.gold { color: #fbbf24; font-weight: 700; }
+.fgm-progress-foot .pct.green { color: var(--green); font-weight: 700; }
+.fgm-progress-foot .pct.blue { color: var(--blue); font-weight: 700; }
+.fgm-progress-foot .remain { color: var(--text-3); }
+
+.fgm-pie-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.fgm-section-title { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.fgm-pie { position: relative; width: 180px; height: 180px; margin: 0 auto; }
+.fgm-pie svg { width: 100%; height: 100%; }
+.fgm-pie-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.fgm-pie-pct { font-family: "Geist Mono", monospace; font-size: 36px; font-weight: 800; color: #fbbf24; letter-spacing: -0.03em; line-height: 1; }
+.fgm-pie-lbl { font-size: 11px; color: var(--text-3); margin-top: 6px; font-family: "Geist Mono", monospace; }
+
+.fgm-milestones { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.fgm-add { background: var(--accent-soft); border: 1px solid var(--border-accent); color: var(--accent); padding: 3px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-family: inherit; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.fgm-empty { font-size: 12px; color: var(--text-4); padding: 12px; text-align: center; font-style: italic; }
+.fgm-milestone { display: grid; grid-template-columns: 14px 1fr auto 22px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.fgm-milestone:last-child { border-bottom: none; }
+.fgm-milestone .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-strong); }
+.fgm-milestone .dot.done { background: var(--green); border-color: var(--green); }
+.fgm-milestone .dot.current { background: #fbbf24; border-color: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.6); }
+.fgm-milestone .nm { color: var(--text-2); }
+.fgm-milestone .nm.done { text-decoration: line-through; color: var(--text-4); }
+.fgm-milestone .val { font-family: "Geist Mono", monospace; color: var(--text-3); font-size: 11.5px; }
+.fgm-milestone .del { background: transparent; border: none; color: var(--text-4); cursor: pointer; font-size: 14px; }
+
+.fgm-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 32px; background: var(--bg-2); border-top: 1px solid var(--border); }
+.fgm-btn-cancel { background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); padding: 9px 18px; border-radius: 8px; font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 600; }
+.fgm-btn-save { background: #fbbf24; color: #000; border: 1px solid #fbbf24; padding: 9px 22px; border-radius: 8px; font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 700; }
+.fgm-btn-save:hover { background: #f59e0b; box-shadow: 0 0 14px rgba(251,191,36,0.4); }
