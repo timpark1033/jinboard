@@ -4670,8 +4670,8 @@
                 );
               })()}
 
-              {/* 🎯 재무 목표 위젯 */}
-              {(() => {
+              {/* 🎯 재무 목표 위젯 — 매거진 히어로에 통합되므로 숨김 */}
+              {false && (() => {
                 const fg = settings?.finGoals || { netWorth: 3000000000, monthlyIncome: 10000000, monthlySavings: 5000000 };
                 const curNet = netWorth;
                 const curIncome = totalIncome;
