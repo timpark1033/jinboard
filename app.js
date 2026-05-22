@@ -2335,6 +2335,29 @@
 
     /* ─── 집중모드 뷰 (포모도로 + 드래그 큐) ─── */
     function FocusModeView({ tasks, goals, stats, toggleTask, settings, setSettings }) {
+      // 큐 우측 폭 조절
+      const savedQueueWidth = (typeof settings?.focusQueueWidth === "number" && settings.focusQueueWidth >= 200 && settings.focusQueueWidth <= 800) ? settings.focusQueueWidth : 320;
+      const [queueWidth, setQueueWidth] = useState(savedQueueWidth);
+      const queueWidthRef = useRef(queueWidth);
+      useEffect(() => { queueWidthRef.current = queueWidth; }, [queueWidth]);
+      const startQueueResize = (e) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startW = queueWidth;
+        const onMove = (ev) => {
+          const delta = startX - ev.clientX; // 오른쪽 → 왼쪽으로 드래그하면 큐 폭 늘어남
+          let next = Math.max(200, Math.min(800, startW + delta));
+          setQueueWidth(next);
+        };
+        const onUp = () => {
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+          if (setSettings) setSettings(p => ({ ...p, focusQueueWidth: queueWidthRef.current }));
+        };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+      };
+
       const POMO_WORK = 25 * 60;
       const POMO_REST = 5 * 60;
       const [seconds, setSeconds] = useState(POMO_WORK);
@@ -2431,7 +2454,7 @@
       const onDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
       return (
-        <div className="focus-mode-view">
+        <div className="focus-mode-view" style={{ gridTemplateColumns: `minmax(0, 1fr) 6px ${queueWidth}px` }}>
           <div className="focus-left">
           <div className="focus-current-box">
             <div className="lbl">📍 현재 집중</div>
@@ -2478,6 +2501,7 @@
           </div>
           </div>
 
+          <div className="focus-queue-resize" onMouseDown={startQueueResize} title="드래그로 큐 폭 조절" />
           <div className="focus-right">
           <div className="focus-queue-title">⚡ 업무 큐 ({queue.length}) — 드래그로 순서 변경</div>
           <div className="focus-queue">
