@@ -270,6 +270,29 @@
     function fmtComma(n) { return Number(n || 0).toLocaleString(); }
     function parseComma(str) { return Number(String(str || "").replace(/[^0-9-]/g, "")) || 0; }
 
+    /* 매거진 히어로용 단축 포맷: 1.4억 / 22억 / -7.9억 / 1,234만 */
+    function fmtKRShort(n) {
+      const num = Math.round(Number(n) || 0);
+      if (num === 0) return "0";
+      const sign = num < 0 ? "-" : "";
+      const abs = Math.abs(num);
+      if (abs >= 100000000) {
+        const eok = abs / 100000000;
+        return sign + (eok >= 100 ? Math.round(eok).toLocaleString() : eok.toFixed(1).replace(/\.0$/, "")) + "억";
+      }
+      if (abs >= 10000) {
+        return sign + Math.round(abs / 10000).toLocaleString() + "만";
+      }
+      return sign + abs.toLocaleString();
+    }
+    /* 부호 명시: +320만 / -120만 / +14.1억 */
+    function fmtKRShortSigned(n) {
+      const num = Math.round(Number(n) || 0);
+      if (num === 0) return "0";
+      const prefix = num > 0 ? "+" : "";
+      return prefix + fmtKRShort(num);
+    }
+
     function fmtKR(n) {
       const num = Math.round(Number(n) || 0);
       if (num === 0) return "0원";
@@ -4544,35 +4567,70 @@
             {/* ━━━━ MAIN AREA ━━━━ */}
             <main className="ri2-main">
 
-              {/* 💰 TOP KPI 5칸 */}
-              <div className="ri2-sec-head"><span className="h">💰 재무 한눈에</span><span className="sub">대시보드 KPI와 연결</span></div>
-              <div className="ri2-kpi-row">
-                <div ref={sectionRefs.assets} className={"ri2-kpi linked" + (pulseSection === "assets" ? " pulse" : "")} onClick={() => onOpenFinance("assets")}>
-                  <div className="kc-lbl">🏦 총 자산<span className="kc-link">DB ←</span></div>
-                  <div className="kc-val green">{fmtKR(totalAssets)}</div>
-                  <div className="kc-sub">{Object.entries(ASSET_CATS).filter(([c]) => sumAssets(fin, c) > 0).map(([c, l]) => l.replace(/^[^ ]+ /, "")).join(" + ") || "없음"}</div>
-                </div>
-                <div ref={sectionRefs.debts} className={"ri2-kpi" + (pulseSection === "debts" ? " pulse" : "")} onClick={() => onOpenFinance("debts")}>
-                  <div className="kc-lbl">🚨 총 부채</div>
-                  <div className="kc-val red">{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "없음"}</div>
-                  <div className="kc-sub">{totalDebts > 0 ? "주담대 + 카드 등" : "부채 없음"}</div>
-                </div>
-                <div ref={sectionRefs["net-worth"]} className={"ri2-kpi linked" + (pulseSection === "net-worth" ? " pulse" : "")} onClick={() => onOpenFinance("assets")}>
-                  <div className="kc-lbl">💎 순자산<span className="kc-link">DB ←</span></div>
-                  <div className="kc-val accent">{fmtKR(netWorth)}</div>
-                  <div className="kc-sub">자산 − 부채</div>
-                </div>
-                <div className="ri2-kpi linked" onClick={() => onOpenFinance("incomes")}>
-                  <div className="kc-lbl">📈 월수입<span className="kc-link">DB ←</span></div>
-                  <div className="kc-val green">+{Math.round(totalIncome/10000).toLocaleString()}만</div>
-                  <div className="kc-sub">주 {Math.round(mainIncomeSum/10000).toLocaleString()} + 부 {Math.round(sideIncomeSum/10000).toLocaleString()}</div>
-                </div>
-                <div ref={sectionRefs.expenses} className={"ri2-kpi" + (pulseSection === "expenses" ? " pulse" : "")} onClick={() => onOpenFinance("expenses")}>
-                  <div className="kc-lbl">📉 월지출</div>
-                  <div className="kc-val red">-{Math.round(totalExpense/10000).toLocaleString()}만</div>
-                  <div className="kc-sub">고정 + 변동</div>
-                </div>
-              </div>
+              {/* 💰 매거진 듀얼 히어로 + 미니 4-col */}
+              <div className="ri2-sec-head"><span className="h">💰 재무 한눈에</span><span className="sub">카드 클릭 → 풀스크린 모달</span></div>
+              {(() => {
+                // 주/부 수입 — incomeSections segment 기반 (없으면 regular/irregular 카테고리로 폴백)
+                const sections = (settings.incomeSections && settings.incomeSections.length >= 2) ? settings.incomeSections : INITIAL_SETTINGS.incomeSections;
+                const incomesArr = fin.incomes || [];
+                const hasSegments = incomesArr.some(i => i.segment);
+                const primaryIncomeSum = hasSegments
+                  ? incomesArr.filter(i => (i.segment || "primary") === sections[0].id).reduce((s, i) => s + (i.actual || i.expected || 0), 0)
+                  : mainIncomeSum;
+                const secondaryIncomeSum = hasSegments
+                  ? incomesArr.filter(i => (i.segment || "primary") === sections[1].id).reduce((s, i) => s + (i.actual || i.expected || 0), 0)
+                  : sideIncomeSum;
+                const monthlyIncomeAct = totalIncomeActual || totalIncome;
+                const monthlySavings = profitActual;
+                return (
+                  <>
+                    <div className="mag-hero">
+                      <div ref={sectionRefs["net-worth"]} className={"mag-card net" + (pulseSection === "net-worth" ? " pulse" : "")} onClick={() => onOpenFinance("summary")}>
+                        <div className="mag-tag">YOUR NET WORTH</div>
+                        <div className="mag-lbl">💎 순자산 (자산 − 부채)</div>
+                        <div className="mag-val">{fmtKRShort(netWorth)}<span className="u">원</span></div>
+                        <div className="mag-foot">
+                          <div className="mag-foot-item"><div className="l">자산</div><div className="v green">{fmtKRShort(totalAssets)}</div></div>
+                          <div className="mag-foot-item"><div className="l">부채</div><div className="v red">{totalDebts > 0 ? "-" + fmtKRShort(totalDebts) : "0"}</div></div>
+                          <div className="mag-foot-item"><div className="l">자산 비중</div><div className="v gold">{totalAssets > 0 ? Math.round((netWorth / totalAssets) * 100) : 0}%</div></div>
+                        </div>
+                      </div>
+                      <div className="mag-card income" onClick={() => onOpenFinance("incomes")}>
+                        <div className="mag-tag">MONTHLY INCOME</div>
+                        <div className="mag-lbl">💼 월 수입 (실제 입금)</div>
+                        <div className="mag-val">+{fmtKRShort(monthlyIncomeAct).replace(/^\+/, "")}<span className="u">{monthlyIncomeAct >= 100000000 ? "" : "원"}</span></div>
+                        <div className="mag-foot">
+                          <div className="mag-foot-item"><div className="l">{sections[0].name}</div><div className="v gold">{fmtKRShort(primaryIncomeSum)}</div></div>
+                          <div className="mag-foot-item"><div className="l">{sections[1].name}</div><div className="v gold">{fmtKRShort(secondaryIncomeSum)}</div></div>
+                          <div className="mag-foot-item"><div className="l">월 Net</div><div className={"v " + (monthlySavings >= 0 ? "green" : "red")}>{fmtKRShortSigned(monthlySavings)}</div></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mag-stats-row">
+                      <div ref={sectionRefs.assets} className={"mag-stat assets" + (pulseSection === "assets" ? " pulse" : "")} onClick={() => onOpenFinance("assets")}>
+                        <div className="mag-stat-head"><div className="mag-stat-lbl">🏦 자산</div><div className="mag-stat-arrow">›</div></div>
+                        <div className="mag-stat-val green">{fmtKRShort(totalAssets)}</div>
+                        <div className="mag-stat-sub">{(fin.assets || []).length}건 · {Object.entries(ASSET_CATS).filter(([c]) => sumAssets(fin, c) > 0).map(([c, l]) => l.replace(/^[^ ]+ /, "")).join(" + ") || "없음"}</div>
+                      </div>
+                      <div ref={sectionRefs.debts} className={"mag-stat debts" + (pulseSection === "debts" ? " pulse" : "")} onClick={() => onOpenFinance("debts")}>
+                        <div className="mag-stat-head"><div className="mag-stat-lbl">🚨 부채</div><div className="mag-stat-arrow">›</div></div>
+                        <div className="mag-stat-val red">{totalDebts > 0 ? "-" + fmtKRShort(totalDebts) : "0"}</div>
+                        <div className="mag-stat-sub">{(fin.debts || []).length > 0 ? (fin.debts || []).length + "건 · 대출 + 보증금 등" : "부채 없음"}</div>
+                      </div>
+                      <div className="mag-stat savings" onClick={() => onOpenFinance("incomes")}>
+                        <div className="mag-stat-head"><div className="mag-stat-lbl">🪙 월 저축</div><div className="mag-stat-arrow">›</div></div>
+                        <div className={"mag-stat-val " + (monthlySavings >= 0 ? "blue" : "red")}>{fmtKRShortSigned(monthlySavings)}</div>
+                        <div className="mag-stat-sub">잉여 (수입 − 지출)</div>
+                      </div>
+                      <div ref={sectionRefs.expenses} className={"mag-stat expense" + (pulseSection === "expenses" ? " pulse" : "")} onClick={() => onOpenFinance("expenses")}>
+                        <div className="mag-stat-head"><div className="mag-stat-lbl">📉 월 지출</div><div className="mag-stat-arrow">›</div></div>
+                        <div className="mag-stat-val amber">-{fmtKRShort(totalExpenseActual || totalExpense)}</div>
+                        <div className="mag-stat-sub">{(fin.expenses || []).length}건 · 고정 + 변동</div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* 🎯 재무 목표 위젯 */}
               {(() => {
@@ -5579,18 +5637,27 @@
       };
       const [pulse, setPulse] = useState(null);
 
-      // 진입 시 initialSection으로 스크롤 + 펄스
+      // 3탭 — 요약 / 자산·부채 / 수입·지출
+      const initialTab = (sec) => {
+        if (sec === "assets" || sec === "debts" || sec === "ad") return "ad";
+        if (sec === "incomes" || sec === "expenses" || sec === "ie") return "ie";
+        return "summary";
+      };
+      const [activeTab, setActiveTab] = useState(initialTab(initialSection));
+
+      // 모달 열릴 때마다 initialSection에 맞춰 탭 변경
       useEffect(() => {
-        if (!open || !initialSection) return;
-        const ref = sectionRefs[initialSection];
-        if (ref?.current) {
-          setTimeout(() => {
-            ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
-            setPulse(initialSection);
-            setTimeout(() => setPulse(null), 2000);
-          }, 100);
-        }
+        if (open) setActiveTab(initialTab(initialSection));
       }, [open, initialSection]);
+
+      // 펄스 효과 (자산·부채 탭 진입 시)
+      useEffect(() => {
+        if (!open || !initialSection || activeTab !== "ad") return;
+        if (initialSection === "assets" || initialSection === "debts") {
+          setPulse(initialSection);
+          setTimeout(() => setPulse(null), 2000);
+        }
+      }, [open, initialSection, activeTab]);
 
       const startResize = (which) => (e) => {
         e.preventDefault();
@@ -5738,61 +5805,123 @@
               <button className="modal-close" onClick={onClose}>×</button>
             </div>
 
-            {/* 상단 요약 스트립 */}
-            <div className="fin2-summary-strip">
-              <div className="fin2-sum-item"><span className="lbl">💎 순자산</span><span className="val" style={{ color: netWorth >= 0 ? "var(--text-1)" : "var(--red)" }}>{fmtKR(netWorth)}</span></div>
-              <div className="fin2-sum-item"><span className="lbl">🏦 자산</span><span className="val green">{fmtKR(totalAssets)}</span></div>
-              <div className="fin2-sum-item"><span className="lbl">🚨 부채</span><span className="val" style={{ color: "var(--red)" }}>-{fmtKR(totalDebts)}</span></div>
-              <div className="fin2-sum-item"><span className="lbl">📈 월수입 (실)</span><span className="val green">+{Math.round(totalInAct/10000).toLocaleString()}만</span></div>
-              <div className="fin2-sum-item"><span className="lbl">📉 월지출 (실)</span><span className="val" style={{ color: "var(--red)" }}>-{Math.round(totalExAct/10000).toLocaleString()}만</span></div>
-              <div className="fin2-sum-item"><span className="lbl">💵 순이익</span><span className="val" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>{profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만</span></div>
+            {/* 탭 바 */}
+            <div className="fsm-tabs-bar">
+              <button className={"fsm-tab" + (activeTab === "summary" ? " active" : "")} onClick={() => setActiveTab("summary")}>
+                <span className="ic">📊</span> 요약
+              </button>
+              <button className={"fsm-tab" + (activeTab === "ad" ? " active" : "")} onClick={() => setActiveTab("ad")}>
+                <span className="ic">🏦</span> 자산·부채
+              </button>
+              <button className={"fsm-tab" + (activeTab === "ie" ? " active" : "")} onClick={() => setActiveTab("ie")}>
+                <span className="ic">💼</span> 수입·지출
+              </button>
             </div>
 
             <div className="modal-body fin2-body" ref={containerRef}>
-              {/* ROW 1: 자산 | 부채 */}
-              <div className="fin2-row" style={{ gridTemplateColumns: `${split1}% 8px ${100-split1}%` }}>
-                <section ref={sectionRefs.assets} className={"fin2-section" + (pulse === "assets" ? " pulse" : "")}>
-                  <div className="fin2-sec-head">
-                    <div className="fin2-sec-title">🏦 자산</div>
-                    <div className="fin2-sec-sum green">{fmtKR(totalAssets)}</div>
-                  </div>
-                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 160px 28px" }}>
-                    <span>항목</span><span style={{ textAlign: "right" }}>가치 (원)</span><span />
-                  </div>
-                  {renderValueItems("assets", ASSET_CATS)}
-                </section>
-                <div className="fin2-resize-handle" onMouseDown={startResize(1)} title="드래그로 폭 조절" />
-                <section ref={sectionRefs.debts} className={"fin2-section" + (pulse === "debts" ? " pulse" : "")}>
-                  <div className="fin2-sec-head">
-                    <div className="fin2-sec-title">🚨 부채</div>
-                    <div className="fin2-sec-sum" style={{ color: "var(--red)" }}>{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "0"}</div>
-                  </div>
-                  <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 100px 140px 28px" }}>
-                    <span>항목</span><span>카테고리</span><span style={{ textAlign: "right" }}>잔액 (원)</span><span />
-                  </div>
-                  {renderDebtsFlat()}
-                </section>
-              </div>
 
-              {/* ROW 2: 사업별 자금 흐름 (주수입 / 부수입) */}
-              <section ref={(el) => { sectionRefs.incomes.current = el; sectionRefs.expenses.current = el; }}
-                       className={"fin2-section biz-flow-section" + ((pulse === "incomes" || pulse === "expenses") ? " pulse" : "")}>
-                <div className="fin2-sec-head">
-                  <div className="fin2-sec-title">💼 사업별 자금 흐름</div>
-                  <div className="fin2-sec-sum" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>
-                    Net {profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만
+              {/* ━━━━ 탭 1: 요약 ━━━━ */}
+              {activeTab === "summary" && (
+                <div className="fsm-summary">
+                  <div className="fsm-summary-grid">
+                    <div className="fsm-sum-hero">
+                      <div className="lbl">💎 순자산</div>
+                      <div className="val">{fmtKRShort(netWorth)}<span style={{ fontSize: 22, color: "var(--text-2)", marginLeft: 4 }}>원</span></div>
+                      <div className="sub">자산 {fmtKRShort(totalAssets)} − 부채 {fmtKRShort(totalDebts)}</div>
+                      {(() => {
+                        const pctAsset = totalAssets > 0 ? Math.min(100, Math.round((totalAssets / (totalAssets + totalDebts || 1)) * 100)) : 0;
+                        return (
+                          <div className="fsm-sum-bar"><div className="bar-asset" style={{ width: pctAsset + "%" }}></div><div className="bar-debt" style={{ width: (100 - pctAsset) + "%" }}></div></div>
+                        );
+                      })()}
+                    </div>
+                    <div className="fsm-sum-side">
+                      <div className="fsm-sum-mini">
+                        <div className="l">📈 월 수입 (실제)</div>
+                        <div className="v green">+{fmtKRShort(totalInAct)}</div>
+                      </div>
+                      <div className="fsm-sum-mini">
+                        <div className="l">📉 월 지출 (실제)</div>
+                        <div className="v red">-{fmtKRShort(totalExAct)}</div>
+                      </div>
+                      <div className="fsm-sum-mini" style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 12 }}>
+                        <div className="l">💵 월 Net (저축)</div>
+                        <div className={"v " + (profitAct >= 0 ? "green" : "red")}>{fmtKRShortSigned(profitAct)}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="fsm-summary-stats">
+                    <div className="fsm-sum-stat-card green-bar" onClick={() => setActiveTab("ad")}>
+                      <div className="fsm-stat-h"><span>🏦 자산</span><span className="arr">›</span></div>
+                      <div className="fsm-stat-v green">{fmtKRShort(totalAssets)}</div>
+                      <div className="fsm-stat-s">{(finance.assets || []).length}건</div>
+                    </div>
+                    <div className="fsm-sum-stat-card red-bar" onClick={() => setActiveTab("ad")}>
+                      <div className="fsm-stat-h"><span>🚨 부채</span><span className="arr">›</span></div>
+                      <div className="fsm-stat-v red">{totalDebts > 0 ? "-" + fmtKRShort(totalDebts) : "0"}</div>
+                      <div className="fsm-stat-s">{(finance.debts || []).length}건</div>
+                    </div>
+                    <div className="fsm-sum-stat-card blue-bar" onClick={() => setActiveTab("ie")}>
+                      <div className="fsm-stat-h"><span>🪙 월 저축</span><span className="arr">›</span></div>
+                      <div className={"fsm-stat-v " + (profitAct >= 0 ? "blue" : "red")}>{fmtKRShortSigned(profitAct)}</div>
+                      <div className="fsm-stat-s">수입 − 지출</div>
+                    </div>
+                    <div className="fsm-sum-stat-card amber-bar" onClick={() => setActiveTab("ie")}>
+                      <div className="fsm-stat-h"><span>📉 월 지출</span><span className="arr">›</span></div>
+                      <div className="fsm-stat-v amber">-{fmtKRShort(totalExAct)}</div>
+                      <div className="fsm-stat-s">{(finance.expenses || []).length}건</div>
+                    </div>
                   </div>
                 </div>
-                <BusinessFlowSection finance={finance} setFinance={setFinance} settings={settings} setSettings={setSettings} />
-                {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).length > 0 && (
-                  <div className="biz-debuff-strip">
-                    <span className="lbl">⚔️ 장착 아이템 디버프</span>
-                    {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).map(i => (
-                      <span key={"d-" + i.id} className="chip">{i.emoji} {i.name} <span style={{ color: "var(--red)" }}>-{(i.debuffs || []).filter(d => d.type === "money").reduce((s,d)=>s+d.value,0).toLocaleString()}</span></span>
-                    ))}
+              )}
+
+              {/* ━━━━ 탭 2: 자산·부채 ━━━━ */}
+              {activeTab === "ad" && (
+                <div className="fin2-row" style={{ gridTemplateColumns: `${split1}% 8px ${100-split1}%` }}>
+                  <section ref={sectionRefs.assets} className={"fin2-section" + (pulse === "assets" ? " pulse" : "")}>
+                    <div className="fin2-sec-head">
+                      <div className="fin2-sec-title">🏦 자산</div>
+                      <div className="fin2-sec-sum green">{fmtKR(totalAssets)}</div>
+                    </div>
+                    <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 160px 28px" }}>
+                      <span>항목</span><span style={{ textAlign: "right" }}>가치 (원)</span><span />
+                    </div>
+                    {renderValueItems("assets", ASSET_CATS)}
+                  </section>
+                  <div className="fin2-resize-handle" onMouseDown={startResize(1)} title="드래그로 폭 조절" />
+                  <section ref={sectionRefs.debts} className={"fin2-section" + (pulse === "debts" ? " pulse" : "")}>
+                    <div className="fin2-sec-head">
+                      <div className="fin2-sec-title">🚨 부채</div>
+                      <div className="fin2-sec-sum" style={{ color: "var(--red)" }}>{totalDebts > 0 ? "-" + fmtKR(totalDebts) : "0"}</div>
+                    </div>
+                    <div className="fin2-col-head" style={{ gridTemplateColumns: "1fr 100px 140px 28px" }}>
+                      <span>항목</span><span>카테고리</span><span style={{ textAlign: "right" }}>잔액 (원)</span><span />
+                    </div>
+                    {renderDebtsFlat()}
+                  </section>
+                </div>
+              )}
+
+              {/* ━━━━ 탭 3: 수입·지출 (BusinessFlowSection) ━━━━ */}
+              {activeTab === "ie" && (
+                <section className="fin2-section biz-flow-section">
+                  <div className="fin2-sec-head">
+                    <div className="fin2-sec-title">💼 사업별 자금 흐름</div>
+                    <div className="fin2-sec-sum" style={{ color: profitAct >= 0 ? "var(--green)" : "var(--red)" }}>
+                      Net {profitAct >= 0 ? "+" : ""}{Math.round(profitAct/10000).toLocaleString()}만
+                    </div>
                   </div>
-                )}
-              </section>
+                  <BusinessFlowSection finance={finance} setFinance={setFinance} settings={settings} setSettings={setSettings} />
+                  {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).length > 0 && (
+                    <div className="biz-debuff-strip">
+                      <span className="lbl">⚔️ 장착 아이템 디버프</span>
+                      {items.filter(i => i.status === "equipped" && (i.debuffs || []).some(d => d.type === "money")).map(i => (
+                        <span key={"d-" + i.id} className="chip">{i.emoji} {i.name} <span style={{ color: "var(--red)" }}>-{(i.debuffs || []).filter(d => d.type === "money").reduce((s,d)=>s+d.value,0).toLocaleString()}</span></span>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
             </div>
 
             <div className="modal-foot">

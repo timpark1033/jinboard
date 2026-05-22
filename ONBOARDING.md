@@ -10,7 +10,7 @@
 
 - **사용자**: timpark1033@gmail.com (부동산 + 유튜브 + NoteUp 창업자)
 - **배포**: jinboard.pages.dev (Cloudflare Pages, github `timpark1033/jinboard`, master → main)
-- **현재 캐시버스터**: `?v=20260522r` (변경 시 다음 글자로 bump)
+- **현재 캐시버스터**: `?v=20260522s` (변경 시 다음 글자로 bump)
 
 ---
 
@@ -111,7 +111,7 @@ C:\Users\sj\Desktop\jinboard\
 
 ## 🔴 진행 중 / 다음 작업 (우선순위)
 
-### 1️⃣ 자원·아이템 탭 매거진 리디자인 (확정, 미구현)
+### 1️⃣ ~~자원·아이템 탭 매거진 리디자인~~ → **구현 완료 2026-05-22**
 
 **참고 목업**: `C:\Users\sj\Downloads\jinboard-resources-magazine-v2.html`
 
