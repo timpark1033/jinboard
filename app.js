@@ -2269,11 +2269,17 @@
       const schedules = settings?.schedules || [];
       const schedulesByDate = (dateStr) => schedules.filter(s => s.date === dateStr);
 
-      const addSchedule = (dateStr) => {
-        const title = prompt("일정 제목 (시간 포함 가능, 예: 10:00 미팅):");
-        if (!title) return;
+      // 일정 빠른 추가 모달 state
+      const [schModalDate, setSchModalDate] = useState(null);
+      const [schModalText, setSchModalText] = useState("");
+      const openSchModal = (dateStr) => { setSchModalDate(dateStr); setSchModalText(""); };
+      const closeSchModal = () => { setSchModalDate(null); setSchModalText(""); };
+      const submitSchedule = () => {
+        const title = schModalText.trim();
+        if (!title || !schModalDate) { closeSchModal(); return; }
         const id = "sch" + Date.now();
-        setSettings(p => ({ ...p, schedules: [...(p.schedules || []), { id, date: dateStr, title }] }));
+        setSettings(p => ({ ...p, schedules: [...(p.schedules || []), { id, date: schModalDate, title }] }));
+        closeSchModal();
       };
       const deleteSchedule = (id) => {
         if (!confirm("일정을 삭제할까요?")) return;
@@ -2323,7 +2329,7 @@
         const dayTasks = tasksByDate(ds);
         const daySchedules = schedulesByDate(ds);
         return (
-          <div key={ds + (options.keyPrefix || "")} className={"weekly-day" + (isToday ? " today" : "") + (isOtherMonth ? " other-month" : "")}>
+          <div key={ds + (options.keyPrefix || "")} className={"weekly-day" + (isToday ? " today" : "") + (isOtherMonth ? " other-month" : "")} onDoubleClick={() => openSchModal(ds)} title="더블클릭으로 일정 추가">
             <div className="weekly-day-head">
               {options.showWeekday !== false && <span className="dlbl">{dayLabels[d.getDay() === 0 ? 6 : d.getDay() - 1]}</span>}
               <span className="dnum">{d.getDate()}</span>
@@ -2344,10 +2350,6 @@
                   </div>
                 );
               })}
-              {daySchedules.length === 0 && dayTasks.length === 0 && (
-                <div className="weekly-empty">비어있음</div>
-              )}
-              <button className="weekly-add" onClick={() => addSchedule(ds)}>+ 일정</button>
             </div>
           </div>
         );
@@ -2388,6 +2390,36 @@
                 {monthDays.map(d => renderDayCell(d, { dim: true, showWeekday: false, keyPrefix: "m" }))}
               </div>
             </>
+          )}
+
+          {/* 일정 빠른 추가 모달 */}
+          {schModalDate && (
+            <div className="modal-overlay" onClick={closeSchModal}>
+              <div className="sch-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="sch-head">
+                  <div className="sch-title">📅 새 일정</div>
+                  <div className="sch-date">{schModalDate}</div>
+                </div>
+                <div className="sch-body">
+                  <input
+                    autoFocus
+                    className="sch-input"
+                    value={schModalText}
+                    onChange={(e) => setSchModalText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing) submitSchedule();
+                      if (e.key === "Escape") closeSchModal();
+                    }}
+                    placeholder="일정 제목 (예: 10:00 미팅)"
+                  />
+                  <div className="sch-hint">💡 시간을 포함하면 자동 표기됩니다 · Enter로 추가, ESC로 취소</div>
+                </div>
+                <div className="sch-foot">
+                  <button className="sch-btn-cancel" onClick={closeSchModal}>취소</button>
+                  <button className="sch-btn-save" onClick={submitSchedule} disabled={!schModalText.trim()}>✓ 추가</button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       );

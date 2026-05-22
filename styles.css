@@ -5411,3 +5411,24 @@
 .fgm-btn-cancel { background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); padding: 9px 18px; border-radius: 8px; font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 600; }
 .fgm-btn-save { background: #fbbf24; color: #000; border: 1px solid #fbbf24; padding: 9px 22px; border-radius: 8px; font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 700; }
 .fgm-btn-save:hover { background: #f59e0b; box-shadow: 0 0 14px rgba(251,191,36,0.4); }
+
+/* 일정 빠른 추가 모달 (custom styled, prompt 대체) */
+.sch-modal { background: var(--bg-1); border: 1px solid var(--border); border-radius: 16px; width: 480px; max-width: 90vw; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+.sch-head { padding: 22px 26px 16px; background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(139,92,246,0.04), var(--bg-1)); border-bottom: 1px solid var(--border); }
+.sch-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); }
+.sch-date { margin-top: 4px; font-size: 13px; color: var(--text-3); font-family: "Geist Mono", monospace; }
+.sch-body { padding: 22px 26px; }
+.sch-input { width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text-1); border-radius: 10px; padding: 14px 16px; font-family: inherit; font-size: 15px; outline: none; transition: all 0.15s; box-sizing: border-box; }
+.sch-input:focus { border-color: var(--accent); background: var(--bg-3); box-shadow: 0 0 0 3px var(--accent-glow); }
+.sch-hint { margin-top: 10px; font-size: 11.5px; color: var(--text-4); line-height: 1.5; }
+.sch-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 26px; background: var(--bg-2); border-top: 1px solid var(--border); }
+.sch-btn-cancel { background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); padding: 8px 16px; border-radius: 7px; font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 600; }
+.sch-btn-cancel:hover { background: var(--bg-1); color: var(--text-1); }
+.sch-btn-save { background: var(--accent); border: 1px solid var(--accent); color: #fff; padding: 8px 18px; border-radius: 7px; font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 700; }
+.sch-btn-save:hover:not(:disabled) { background: var(--accent-2); box-shadow: 0 0 12px var(--accent-glow); }
+.sch-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 더블클릭 가능 표시: 호버 시 살짝 강조 */
+.weekly-day { cursor: default; }
+.weekly-day:hover { background: rgba(139,92,246,0.04); }
+.weekly-day.today:hover { background: rgba(139,92,246,0.10); }
