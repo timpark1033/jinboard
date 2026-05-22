@@ -5455,6 +5455,10 @@
 
     /* ─── 🏠 부동산 매출 (업로더 동기 데이터 표시 · 읽기 전용) ─── */
     function RealEstateSyncView({ data }) {
+      // 거래 내역 페이징 + 월 필터
+      const [showAllTxs, setShowAllTxs] = useState(false);
+      const [monthFilter, setMonthFilter] = useState("current"); // "current" | "prev" | "next" | "all" | "YYYY-MM"
+
       // 만원 단위 포맷
       const fmtMan = (n) => {
         const v = Math.round((Number(n) || 0) / 10000);
@@ -5463,6 +5467,35 @@
       const fmtManSigned = (n) => {
         const v = Math.round((Number(n) || 0) / 10000);
         return (v >= 0 ? "+" : "") + v.toLocaleString() + "만";
+      };
+      // 거래가 포맷 (만원 단위 입력 → "2억 90만" / "1억 7,500만" / "5,000만" 형식)
+      const fmtKRPriceMan = (man) => {
+        const n = Math.round(Number(man) || 0);
+        if (n === 0) return "0";
+        const eok = Math.floor(n / 10000);
+        const rem = n % 10000;
+        if (eok > 0 && rem > 0) return eok + "억 " + rem.toLocaleString() + "만";
+        if (eok > 0) return eok + "억";
+        return rem.toLocaleString() + "만";
+      };
+      // 거래종류 한글화
+      const dealTypeKR = (raw) => {
+        const d = (raw || "").toString().toLowerCase().trim();
+        if (["sale", "sell", "매매"].includes(d)) return "매매";
+        if (["jeonse", "전세", "lease"].includes(d)) return "전세";
+        if (["monthly", "월세"].includes(d)) return "월세";
+        if (["short", "단기", "단기임대"].includes(d)) return "단기";
+        return raw || "-";
+      };
+      // 가격 + 월세 합치기
+      const fmtPriceDisplay = (priceMain, priceSub, dealType) => {
+        const kr = dealTypeKR(dealType);
+        if (kr === "월세" || kr === "단기") {
+          // priceMain = 보증금(만), priceSub = 월세(만)
+          if (priceSub) return fmtKRPriceMan(priceMain) + " / " + priceSub.toLocaleString() + "만";
+          return fmtKRPriceMan(priceMain);
+        }
+        return fmtKRPriceMan(priceMain);
       };
       const fmtDateRel = (iso) => {
         if (!iso) return "—";
@@ -5519,19 +5552,32 @@
 
       const today = new Date();
       const thisMonthKey = today.getFullYear() + "-" + String(today.getMonth()+1).padStart(2,"0");
+      const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const prevMonthKey = prevMonth.getFullYear() + "-" + String(prevMonth.getMonth()+1).padStart(2,"0");
+      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const nextMonthKey = nextMonth.getFullYear() + "-" + String(nextMonth.getMonth()+1).padStart(2,"0");
 
-      // 거래 내역 — 이번 달 필터 (settlementDate 또는 contractDate 기준)
-      const thisMonthTxs = txs.filter(t => {
-        const d = t.settlementDate || t.contractDate || "";
-        return d.startsWith(thisMonthKey);
-      });
+      // 월 필터에 따라 거래 필터링
+      const filterTxByMonth = (tx) => {
+        if (monthFilter === "all") return true;
+        const d = tx.settlementDate || tx.contractDate || "";
+        const targetKey = monthFilter === "current" ? thisMonthKey :
+                          monthFilter === "prev" ? prevMonthKey :
+                          monthFilter === "next" ? nextMonthKey : monthFilter;
+        return d.startsWith(targetKey);
+      };
+      const filteredTxs = txs.filter(filterTxByMonth);
+
       // 정렬: D-day 가까운 순 (계약중 우선)
-      const sortedTxs = [...thisMonthTxs].sort((a, b) => {
+      const sortedTxs = [...filteredTxs].sort((a, b) => {
         const da = a.dday ?? 9999, db = b.dday ?? 9999;
         if (a.status === "pending" && b.status !== "pending") return -1;
         if (b.status === "pending" && a.status !== "pending") return 1;
         return Math.abs(da) - Math.abs(db);
       });
+      // 5개 페이징
+      const PAGE_SIZE = 5;
+      const visibleTxs = showAllTxs ? sortedTxs : sortedTxs.slice(0, PAGE_SIZE);
 
       // 월별 차트 데이터 (12개월)
       const months = Array.from({ length: 12 }, (_, i) => {
@@ -5631,48 +5677,72 @@
           {/* 거래 내역 */}
           <div className="re-section">
             <div className="re-section-head">
-              <div className="re-section-title">📋 거래 내역 <span className="re-badge">{sortedTxs.length}건 (이번 달)</span></div>
-              <div style={{ fontSize: 11, color: "var(--text-4)" }}>전체 {txs.length}건 보관 중</div>
+              <div className="re-section-title">
+                📋 거래 내역 <span className="re-badge">{sortedTxs.length}건 / 전체 {txs.length}건</span>
+              </div>
+              <div className="re-month-filters">
+                <button className={"re-month-btn" + (monthFilter === "prev" ? " active" : "")} onClick={() => { setMonthFilter("prev"); setShowAllTxs(false); }}>
+                  {prevMonthKey.replace("-", ".")}
+                </button>
+                <button className={"re-month-btn" + (monthFilter === "current" ? " active" : "")} onClick={() => { setMonthFilter("current"); setShowAllTxs(false); }}>
+                  {thisMonthKey.replace("-", ".")} (현재)
+                </button>
+                <button className={"re-month-btn" + (monthFilter === "next" ? " active" : "")} onClick={() => { setMonthFilter("next"); setShowAllTxs(false); }}>
+                  {nextMonthKey.replace("-", ".")}
+                </button>
+                <button className={"re-month-btn" + (monthFilter === "all" ? " active" : "")} onClick={() => { setMonthFilter("all"); setShowAllTxs(false); }}>
+                  전체
+                </button>
+              </div>
             </div>
             {sortedTxs.length === 0 ? (
-              <div className="re-empty-line">이번 달 거래 없음</div>
+              <div className="re-empty-line">해당 기간에 거래 없음</div>
             ) : (
-              <div className="re-tx-table-wrap">
-                <table className="re-tx-table">
-                  <thead>
-                    <tr>
-                      <th>상태</th><th>매물</th><th>거래</th>
-                      <th style={{ textAlign: "right" }}>거래가</th>
-                      <th style={{ textAlign: "right" }}>요율</th>
-                      <th style={{ textAlign: "right" }}>합계</th>
-                      <th>잔금일</th><th>D-Day</th><th>신고</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedTxs.map(t => (
-                      <tr key={t.id}>
-                        <td><span className={"re-status " + t.status}>{t.status === "pending" ? "계약중" : "완료"}</span></td>
-                        <td className="re-property">{t.property}</td>
-                        <td><span className="re-deal">{t.dealType}</span></td>
-                        <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace" }}>
-                          {t.priceMain ? t.priceMain.toLocaleString() : "-"}{t.priceSub ? "/" + t.priceSub : ""}
-                        </td>
-                        <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace" }}>
-                          {t.rate ? t.rate.toFixed(2) + "%" : "—"}
-                        </td>
-                        <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace", color: "var(--green)", fontWeight: 700 }}>
-                          +{fmtMan(t.total)}
-                        </td>
-                        <td style={{ fontSize: 11, color: "var(--text-3)" }}>
-                          {(t.settlementDate || "").slice(5, 10)}
-                        </td>
-                        <td>{ddayChip(t.dday, t.status)}</td>
-                        <td>{t.reported ? <span style={{ color: "var(--green)" }}>✓</span> : "—"}</td>
+              <>
+                <div className="re-tx-table-wrap">
+                  <table className="re-tx-table">
+                    <thead>
+                      <tr>
+                        <th>상태</th><th>거래내용</th><th>거래종류</th>
+                        <th style={{ textAlign: "right" }}>거래가</th>
+                        <th style={{ textAlign: "right" }}>요율</th>
+                        <th style={{ textAlign: "right" }}>합계</th>
+                        <th>잔금일</th><th>D-Day</th><th>신고</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {visibleTxs.map(t => (
+                        <tr key={t.id}>
+                          <td><span className={"re-status " + t.status}>{t.status === "pending" ? "계약중" : "완료"}</span></td>
+                          <td className="re-property">{t.property}</td>
+                          <td><span className="re-deal">{dealTypeKR(t.dealType)}</span></td>
+                          <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace", fontSize: 11.5 }}>
+                            {fmtPriceDisplay(t.priceMain, t.priceSub, t.dealType)}
+                          </td>
+                          <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace" }}>
+                            {t.rate ? t.rate.toFixed(2) + "%" : "—"}
+                          </td>
+                          <td style={{ textAlign: "right", fontFamily: "Geist Mono, monospace", color: "var(--green)", fontWeight: 700 }}>
+                            +{fmtMan(t.total)}
+                          </td>
+                          <td style={{ fontSize: 11, color: "var(--text-3)" }}>
+                            {(t.settlementDate || "").slice(5, 10)}
+                          </td>
+                          <td>{ddayChip(t.dday, t.status)}</td>
+                          <td>{t.reported ? <span style={{ color: "var(--green)" }}>✓</span> : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {sortedTxs.length > PAGE_SIZE && (
+                  <button className="re-more-btn" onClick={() => setShowAllTxs(v => !v)}>
+                    {showAllTxs
+                      ? "▲ 접기 (5건만 표시)"
+                      : `▼ 더보기 (${sortedTxs.length - PAGE_SIZE}건 더 · 전체 ${sortedTxs.length}건)`}
+                  </button>
+                )}
+              </>
             )}
           </div>
 

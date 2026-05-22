@@ -6207,9 +6207,31 @@
   border-radius: 4px 4px 0 0;
   transition: height 0.5s ease-out;
   box-shadow: 0 0 8px rgba(245,158,11,0.2);
+  min-height: 4px;  /* 작은 매출도 최소 두께 보장 */
 }
-.re-month.current .re-month-bar { background: linear-gradient(180deg, var(--gold), var(--amber)); box-shadow: 0 0 14px rgba(251,191,36,0.4); }
+/* 당월 — 보라 글로우 + 점선 외곽 */
+.re-month.current .re-month-bar-wrap {
+  background: rgba(139,92,246,0.10);
+  outline: 2px dashed rgba(139,92,246,0.5);
+  outline-offset: 2px;
+  border-radius: 4px 4px 0 0;
+}
+.re-month.current .re-month-bar {
+  background: linear-gradient(180deg, #c084fc, var(--accent));
+  box-shadow: 0 0 18px rgba(139,92,246,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+  min-height: 6px;
+}
+.re-month.current .re-month-val { color: var(--accent); font-size: 11px; }
 .re-month.future { opacity: 0.35; }
+/* "현재" 배지 — 당월 막대 위에 표시 */
+.re-month.current .re-month-bar-wrap::before {
+  content: "현재";
+  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; font-weight: 800; color: var(--accent);
+  background: var(--bg-1); padding: 1px 6px; border-radius: 999px;
+  border: 1px solid var(--accent);
+  white-space: nowrap;
+}
 .re-month-net-dot {
   position: absolute; left: 50%; transform: translateX(-50%);
   width: 7px; height: 7px; border-radius: 50%;
@@ -6400,3 +6422,27 @@
   border-radius: 5px; font-size: 11.5px; color: var(--text-3); line-height: 1.5;
 }
 .yt-help b { color: var(--accent); }
+
+
+/* 부동산 거래 내역 — 월 필터 + 더보기 */
+.re-month-filters { display: flex; gap: 5px; flex-wrap: wrap; }
+.re-month-btn {
+  background: var(--bg-3); border: 1px solid var(--border); color: var(--text-3);
+  padding: 4px 11px; border-radius: 6px; font-family: inherit;
+  font-size: 11.5px; font-weight: 700; cursor: pointer;
+  transition: all 0.12s;
+}
+.re-month-btn:hover { background: var(--bg-2); color: var(--text-2); border-color: var(--border-strong); }
+.re-month-btn.active {
+  background: rgba(139,92,246,0.15); color: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(139,92,246,0.25);
+}
+
+.re-more-btn {
+  display: block; width: 100%; margin-top: 12px;
+  background: var(--bg-3); border: 1px dashed var(--border-accent); color: var(--accent);
+  padding: 9px; border-radius: 7px; cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  transition: all 0.12s;
+}
+.re-more-btn:hover { background: rgba(139,92,246,0.08); border-color: var(--accent); }
