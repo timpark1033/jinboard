@@ -4401,6 +4401,9 @@
       const [selectedItem, setSelectedItem] = useState(null);
       const [filter, setFilter] = useState("all");
       const [editingAssetId, setEditingAssetId] = useState(null);
+      // 매거진 히어로 목표 편집 팝오버
+      const [goalEditPop, setGoalEditPop] = useState(null); // "netWorth" | "monthlyIncome" | null
+      const [goalDraft, setGoalDraft] = useState(0);
 
       const computed = useMemo(() => computeResources(resources, items), [resources, items]);
       const fin = finance || INITIAL_FINANCE;
@@ -4620,10 +4623,21 @@
                   : sideIncomeSum;
                 const monthlyIncomeAct = totalIncomeActual || totalIncome;
                 const monthlySavings = profitActual;
+                const fg = settings?.finGoals || INITIAL_SETTINGS.finGoals;
+                const nwTarget = fg.netWorth || 0;
+                const incTarget = fg.monthlyIncome || 0;
+                const nwPct = nwTarget > 0 ? Math.max(0, Math.min(100, (netWorth / nwTarget) * 100)) : 0;
+                const incPct = incTarget > 0 ? Math.max(0, Math.min(100, (monthlyIncomeAct / incTarget) * 100)) : 0;
+                const openGoalEdit = (kind, currentTarget) => (e) => {
+                  e.stopPropagation();
+                  setGoalDraft(currentTarget);
+                  setGoalEditPop(kind);
+                };
                 return (
                   <>
                     <div className="mag-hero">
-                      <div ref={sectionRefs["net-worth"]} className={"mag-card net" + (pulseSection === "net-worth" ? " pulse" : "")} onClick={() => onOpenFinance("summary")}>
+                      <div ref={sectionRefs["net-worth"]} className={"mag-card net c-card" + (pulseSection === "net-worth" ? " pulse" : "")} onClick={() => onOpenFinance("summary")}>
+                        <button className="goal-edit-btn" onClick={openGoalEdit("netWorth", nwTarget)}>✏ 목표</button>
                         <div className="mag-tag">YOUR NET WORTH</div>
                         <div className="mag-lbl">💎 순자산 (자산 − 부채)</div>
                         <div className="mag-val">{fmtKRShort(netWorth)}<span className="u">원</span></div>
@@ -4632,8 +4646,21 @@
                           <div className="mag-foot-item"><div className="l">부채</div><div className="v red">{totalDebts > 0 ? "-" + fmtKRShort(totalDebts) : "0"}</div></div>
                           <div className="mag-foot-item"><div className="l">자산 비중</div><div className="v gold">{totalAssets > 0 ? Math.round((netWorth / totalAssets) * 100) : 0}%</div></div>
                         </div>
+                        <div className="c-info-row">
+                          <span className="left">🎯 목표 <span className="tgt">{nwTarget > 0 ? fmtKRShort(nwTarget) : "미설정"}</span>{nwTarget > 0 && <> · 남은 <span className="tgt">{fmtKRShort(Math.max(0, nwTarget - netWorth))}</span></>}</span>
+                          <span className="pct-big">{nwTarget > 0 ? nwPct.toFixed(1) + "%" : "—"}</span>
+                        </div>
+                        <div className="c-glow" style={{ width: nwPct + "%" }}></div>
+                        <div className="c-fill-bg"></div>
+                        <div className="c-fill" style={{ width: nwPct + "%" }}></div>
+                        <div className="c-milestones">
+                          <div className={"c-milestone-tick" + (nwPct >= 25 ? " reached" : "")} style={{ left: "25%" }}></div>
+                          <div className={"c-milestone-tick" + (nwPct >= 50 ? " reached" : "")} style={{ left: "50%" }}></div>
+                          <div className={"c-milestone-tick" + (nwPct >= 75 ? " reached" : "")} style={{ left: "75%" }}></div>
+                        </div>
                       </div>
-                      <div className="mag-card income" onClick={() => onOpenFinance("incomes")}>
+                      <div className="mag-card income c-card" onClick={() => onOpenFinance("incomes")}>
+                        <button className="goal-edit-btn" onClick={openGoalEdit("monthlyIncome", incTarget)}>✏ 목표</button>
                         <div className="mag-tag">MONTHLY INCOME</div>
                         <div className="mag-lbl">💼 월 수입 (실제 입금)</div>
                         <div className="mag-val">+{fmtKRShort(monthlyIncomeAct).replace(/^\+/, "")}<span className="u">{monthlyIncomeAct >= 100000000 ? "" : "원"}</span></div>
@@ -4641,6 +4668,18 @@
                           <div className="mag-foot-item"><div className="l">{sections[0].name}</div><div className="v gold">{fmtKRShort(primaryIncomeSum)}</div></div>
                           <div className="mag-foot-item"><div className="l">{sections[1].name}</div><div className="v gold">{fmtKRShort(secondaryIncomeSum)}</div></div>
                           <div className="mag-foot-item"><div className="l">월 Net</div><div className={"v " + (monthlySavings >= 0 ? "green" : "red")}>{fmtKRShortSigned(monthlySavings)}</div></div>
+                        </div>
+                        <div className="c-info-row">
+                          <span className="left">🎯 목표 <span className="tgt">{incTarget > 0 ? fmtKRShort(incTarget) + "/월" : "미설정"}</span>{incTarget > 0 && <> · 남은 <span className="tgt">{fmtKRShort(Math.max(0, incTarget - monthlyIncomeAct))}/월</span></>}</span>
+                          <span className="pct-big">{incTarget > 0 ? incPct.toFixed(1) + "%" : "—"}</span>
+                        </div>
+                        <div className="c-glow" style={{ width: incPct + "%" }}></div>
+                        <div className="c-fill-bg"></div>
+                        <div className="c-fill" style={{ width: incPct + "%" }}></div>
+                        <div className="c-milestones">
+                          <div className={"c-milestone-tick" + (incPct >= 25 ? " reached" : "")} style={{ left: "25%" }}></div>
+                          <div className={"c-milestone-tick" + (incPct >= 50 ? " reached" : "")} style={{ left: "50%" }}></div>
+                          <div className={"c-milestone-tick" + (incPct >= 75 ? " reached" : "")} style={{ left: "75%" }}></div>
                         </div>
                       </div>
                     </div>
@@ -4865,6 +4904,50 @@
               stats={stats}
             />
           )}
+
+          {/* 매거진 히어로 목표 편집 팝오버 */}
+          {goalEditPop && (() => {
+            const isNet = goalEditPop === "netWorth";
+            const title = isNet ? "💎 순자산 목표 설정" : "💼 월 수입 목표 설정";
+            const unitHint = isNet
+              ? (goalDraft > 0 ? "원 (" + fmtKRShort(goalDraft) + ")" : "원")
+              : (goalDraft > 0 ? "원/월 (" + fmtKRShort(goalDraft) + ")" : "원/월");
+            const helper = isNet ? "자산 − 부채의 누적 목표" : "실제 입금 기준 월 수입 합계";
+            const save = () => {
+              const v = Number(goalDraft) || 0;
+              setSettings(prev => ({ ...prev, finGoals: { ...(prev.finGoals || {}), [goalEditPop]: v } }));
+              setGoalEditPop(null);
+            };
+            return (
+              <div className="hero-goal-overlay" onClick={() => setGoalEditPop(null)}>
+                <div className="hero-goal-pop" onClick={(e) => e.stopPropagation()}>
+                  <div className="hero-goal-title">{title}</div>
+                  <div className="hero-goal-lbl">{isNet ? "목표 금액" : "월 수입 목표"}</div>
+                  <div className="hero-goal-input-row">
+                    <input
+                      type="text" inputMode="numeric" autoFocus
+                      value={fmtComma(goalDraft)}
+                      onChange={(e) => setGoalDraft(parseComma(e.target.value))}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) save(); else if (e.key === "Escape") setGoalEditPop(null); }}
+                      className="hero-goal-input"
+                    />
+                    <span className="hero-goal-unit">{unitHint}</span>
+                  </div>
+                  <div className="hero-goal-help">{helper}</div>
+                  <div className="hero-goal-presets">
+                    <span className="hero-goal-presets-lbl">빠른 선택</span>
+                    {(isNet ? [500000000, 1000000000, 3000000000, 10000000000] : [3000000, 5000000, 10000000, 30000000]).map(v => (
+                      <button key={v} className={"preset-chip" + (goalDraft === v ? " active" : "")} onClick={() => setGoalDraft(v)}>{fmtKRShort(v)}</button>
+                    ))}
+                  </div>
+                  <div className="hero-goal-actions">
+                    <button className="hero-goal-cancel" onClick={() => setGoalEditPop(null)}>취소</button>
+                    <button className="hero-goal-save" onClick={save}>저장</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       );
     }
