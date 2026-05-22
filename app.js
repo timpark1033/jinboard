@@ -2334,7 +2334,21 @@
     }
 
     /* ─── 집중모드 뷰 (포모도로 + 드래그 큐) ─── */
-    function FocusModeView({ tasks, goals, stats, toggleTask, settings, setSettings }) {
+    function FocusModeView({ tasks, goals, stats, toggleTask, settings, setSettings, addTask, setEditingTaskId }) {
+      // 빠른 추가 입력
+      const [quickAddText, setQuickAddText] = useState("");
+      const [quickAddOpen, setQuickAddOpen] = useState(false);
+      const handleQuickAdd = () => {
+        const text = quickAddText.trim();
+        if (!text) { setQuickAddOpen(false); return; }
+        if (addTask) addTask({
+          id: "t" + Date.now(), text, quadrant: 2,
+          goalId: null, questId: null, tag: "", dueDate: "", done: false, time: ""
+        });
+        setQuickAddText("");
+        setQuickAddOpen(false);
+      };
+
       // 큐 우측 폭 조절
       const savedQueueWidth = (typeof settings?.focusQueueWidth === "number" && settings.focusQueueWidth >= 200 && settings.focusQueueWidth <= 800) ? settings.focusQueueWidth : 320;
       const [queueWidth, setQueueWidth] = useState(savedQueueWidth);
@@ -2503,7 +2517,23 @@
 
           <div className="focus-queue-resize" onMouseDown={startQueueResize} title="드래그로 큐 폭 조절" />
           <div className="focus-right">
-          <div className="focus-queue-title">⚡ 업무 큐 ({queue.length}) — 드래그로 순서 변경</div>
+          <div className="focus-queue-title">⚡ 업무 큐 ({queue.length}) — 클릭 추가 · 더블클릭 수정 · 드래그 정렬</div>
+          {quickAddOpen ? (
+            <input
+              autoFocus
+              className="focus-queue-quick-input"
+              value={quickAddText}
+              onChange={(e) => setQuickAddText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) handleQuickAdd();
+                if (e.key === "Escape") { setQuickAddOpen(false); setQuickAddText(""); }
+              }}
+              onBlur={() => { if (quickAddText.trim()) handleQuickAdd(); else setQuickAddOpen(false); }}
+              placeholder="새 업무 (Enter)"
+            />
+          ) : (
+            <div className="focus-queue-add-row" onClick={() => setQuickAddOpen(true)}>+ 클릭하여 업무 추가</div>
+          )}
           <div className="focus-queue">
             {queue.length === 0 && <div style={{ color: "var(--text-4)", padding: 14, textAlign: "center", fontStyle: "italic", fontSize: 12 }}>완료 안 된 업무가 없습니다</div>}
             {queue.map((t, i) => {
@@ -2518,6 +2548,8 @@
                   onDrop={onDrop(i)}
                   onDragEnd={onDragEnd}
                   onClick={() => setCurrentTaskId(t.id)}
+                  onDoubleClick={() => setEditingTaskId && setEditingTaskId(t.id)}
+                  title="클릭 → 현재 집중 · 더블클릭 → 편집"
                   className={"focus-queue-task" + (isCurrent ? " current" : "") + (dragOverIdx === i ? " drag-over" : "") + (dragIdx === i ? " dragging" : "")}
                 >
                   <span className="drag-grip">⋮⋮</span>
@@ -3419,7 +3451,7 @@
 
               {taskTab === "weekly" && <WeeklyTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} goalColor={goalColor} settings={settings} setSettings={setSettings} />}
 
-              {taskTab === "focus" && <FocusModeView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} settings={settings} setSettings={setSettings} />}
+              {taskTab === "focus" && <FocusModeView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} settings={settings} setSettings={setSettings} addTask={addTask} setEditingTaskId={setEditingTaskId} />}
             </div>
 
             <div className="gtr-resize-handle" onMouseDown={startResize(1)} title="드래그로 폭 조절" />

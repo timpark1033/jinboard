@@ -5234,3 +5234,16 @@
   background: var(--accent-soft); color: var(--accent);
   border-color: var(--border-accent);
 }
+
+/* 집중 큐 빠른 추가 */
+.focus-queue-add-row {
+  padding: 10px; background: var(--bg-2); border: 1px dashed var(--border-accent);
+  color: var(--text-3); border-radius: 7px; font-size: 12px; text-align: center;
+  cursor: pointer; transition: all 0.15s; margin-bottom: 4px;
+}
+.focus-queue-add-row:hover { background: var(--accent-soft); color: var(--accent); border-style: solid; }
+.focus-queue-quick-input {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--accent); color: var(--text-1);
+  padding: 9px 12px; border-radius: 7px; font-family: inherit; font-size: 13px;
+  outline: none; margin-bottom: 4px;
+}
