@@ -6045,3 +6045,38 @@
   .mag-stats-with-inv { grid-template-columns: 1fr; }
   .ri2-inv-section.inv-side .inv-grid { grid-template-columns: repeat(10, 1fr); }
 }
+
+
+/* ============================================================
+   🎒 인벤토리 1행 (가로 길게) — 미니카드 제거 후
+   ============================================================ */
+.ri2-inv-section.inv-row {
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+.inv-row-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.inv-row-head .inv-side-title {
+  font-size: 14px; font-weight: 800; color: var(--text-1);
+  display: flex; align-items: baseline; gap: 8px; margin: 0;
+}
+.inv-row-head .inv-side-sub { font-size: 11.5px; color: var(--text-4); font-weight: 500; }
+
+/* 1행 그리드 — 모든 슬롯을 한 줄에 강제 (grid-auto-flow: column) */
+.inv-grid.inv-grid-row {
+  display: grid !important;
+  grid-template-rows: 1fr !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: 1fr !important;
+  grid-template-columns: none !important;
+  gap: 6px;
+}
+.inv-grid.inv-grid-row .inv-slot {
+  aspect-ratio: 1;
+  max-width: none;
+  min-height: 0;
+}
+.inv-grid.inv-grid-row .inv-slot-emoji { font-size: 24px; }
