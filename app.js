@@ -4292,6 +4292,7 @@
       const [promptOpen, setPromptOpen] = useState(false);
       const [aiPrompt, setAiPrompt] = useState("");
       const [editingName, setEditingName] = useState(false);
+      const [showActions, setShowActions] = useState(false);
       const avatarUrl = settings?.characterAvatarUrl || "";
       const charName = settings?.characterName || "";
       const setSetting = (key, value) => setSettings(prev => ({ ...prev, [key]: value }));
@@ -4329,9 +4330,10 @@
       return (
         <div className="ri2-sb-card accent">
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
-          <div className="ri2-avatar" onClick={() => !busy && fileRef.current?.click()} title="클릭으로 업로드">
+          <div className="ri2-avatar" onDoubleClick={() => setShowActions(v => !v)} title="더블클릭으로 업로드/AI 메뉴 열기">
             {avatarUrl ? <img src={avatarUrl} alt="" /> : <span style={{ fontSize: 56 }}>🦸</span>}
             {busy && <div className="ri2-busy">처리중...</div>}
+            {showActions && <div className="ri2-avatar-hint">✏</div>}
           </div>
           <div className="ri2-name">
             {editingName ? (
@@ -4344,11 +4346,13 @@
           <div className="ri2-lv-sub">/ 60 만렙</div>
           <div className="ri2-xp-bar"><div style={{ width: xpPct + "%" }} /></div>
           <div className="ri2-xp-txt">{totalXp.toLocaleString()} XP · {xpPct}%</div>
-          <div className="ri2-sb-actions">
-            <button className="sb-btn" disabled={busy} onClick={() => fileRef.current?.click()}>📁 업로드</button>
-            <button className="sb-btn ai" disabled={busy} onClick={() => { setPromptOpen(v => !v); if (!aiPrompt) setAiPrompt(charName ? charName + " RPG 캐릭터 초상화" : ""); }}>✨ AI</button>
-          </div>
-          {promptOpen && (
+          {showActions && (
+            <div className="ri2-sb-actions">
+              <button className="sb-btn" disabled={busy} onClick={() => fileRef.current?.click()}>📁 업로드</button>
+              <button className="sb-btn ai" disabled={busy} onClick={() => { setPromptOpen(v => !v); if (!aiPrompt) setAiPrompt(charName ? charName + " RPG 캐릭터 초상화" : ""); }}>✨ AI</button>
+            </div>
+          )}
+          {showActions && promptOpen && (
             <div className="ri2-sb-prompt">
               <input type="text" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="프롬프트" onKeyDown={(e) => { if (e.key === "Enter") runAi(); }} />
               <button className="sb-btn ai" disabled={busy} onClick={runAi}>{busy ? "..." : "GO"}</button>

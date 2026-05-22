@@ -10,7 +10,7 @@
 
 - **사용자**: timpark1033@gmail.com (부동산 + 유튜브 + NoteUp 창업자)
 - **배포**: jinboard.pages.dev (Cloudflare Pages, github `timpark1033/jinboard`, master → main)
-- **현재 캐시버스터**: `?v=20260522s` (변경 시 다음 글자로 bump)
+- **현재 캐시버스터**: `?v=20260522t` (변경 시 다음 글자로 bump)
 
 ---
 

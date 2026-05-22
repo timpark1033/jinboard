@@ -5714,3 +5714,84 @@
 .fsm-stat-v.blue { color: var(--blue); }
 .fsm-stat-v.amber { color: var(--amber); }
 .fsm-stat-s { font-size: 11px; color: var(--text-4); margin-top: 2px; font-family: "Geist Mono", monospace; }
+
+
+/* ============================================================
+   🎨 전역 스크롤바 — 테마 매칭 (다크 + 보라 accent)
+   ============================================================ */
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 5px; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(139,92,246,0.35), rgba(99,102,241,0.25));
+  border-radius: 5px;
+  border: 2px solid var(--bg-0);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  background-clip: padding-box;
+  border: 2px solid var(--bg-0);
+}
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* 좁은 스크롤바 (사이드바·내부 패널) */
+.ri2-sidebar::-webkit-scrollbar,
+.fin2-body::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar { width: 6px; }
+.ri2-sidebar::-webkit-scrollbar-thumb,
+.fin2-body::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb { border: none; border-radius: 3px; }
+
+/* ============================================================
+   🎯 캐릭터 사이드바 컴팩트화 (스크롤 없이 한 화면)
+   ============================================================ */
+.ri2-sidebar { gap: 10px !important; max-height: calc(100vh - 110px) !important; }
+.ri2-sb-card { padding: 13px 14px !important; }
+
+/* 캐릭터 카드 압축 — 아바타 작게, 여백 축소 */
+.ri2-sb-card.accent .ri2-avatar { width: 96px !important; height: 96px !important; border-width: 2.5px !important; }
+.ri2-sb-card.accent .ri2-avatar span { font-size: 44px !important; }
+.ri2-name { margin-top: 8px !important; font-size: 13px !important; }
+.ri2-lv { margin-top: 4px !important; font-size: 32px !important; letter-spacing: -0.02em; }
+.ri2-lv-sub { margin-top: 0 !important; font-size: 10px !important; }
+.ri2-xp-bar { margin-top: 6px !important; height: 5px !important; }
+.ri2-xp-txt { margin-top: 4px !important; font-size: 10.5px !important; }
+
+/* 능력치/자원/인생 카드 압축 */
+.ri2-sb-title { font-size: 12px !important; margin-bottom: 8px !important; }
+.ri2-stat-line { padding: 4px 0 !important; font-size: 12px !important; }
+.ri2-stat-line .ic { font-size: 13px !important; }
+.ri2-stat-line .lv { font-size: 11px !important; }
+.ri2-stat-bar { height: 3px !important; margin: 1px 0 4px !important; }
+.ri2-sb-divider { margin: 8px 0 !important; }
+.ri2-sb-subtitle { font-size: 10.5px !important; margin-bottom: 4px !important; }
+.ri2-res-row { margin-bottom: 8px !important; }
+.ri2-res-row .head { font-size: 11.5px !important; }
+.ri2-res-row .sub { font-size: 10.5px !important; margin-top: 2px !important; }
+.ri2-res-bar { height: 5px !important; margin-top: 3px !important; }
+
+/* 더블클릭으로 나타나는 액션 영역 — 살짝 슬라이드 효과 */
+.ri2-sb-actions {
+  margin-top: 10px !important;
+  animation: actionsFadeIn 0.22s ease-out;
+  display: flex; gap: 6px;
+}
+@keyframes actionsFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ri2-sb-prompt { animation: actionsFadeIn 0.22s ease-out; margin-top: 8px !important; }
+
+/* 아바타 호버 시 더블클릭 힌트 */
+.ri2-avatar { transition: transform 0.18s, box-shadow 0.18s; }
+.ri2-avatar:hover { transform: scale(1.03); box-shadow: 0 0 30px var(--accent-glow); }
+.ri2-avatar-hint {
+  position: absolute; bottom: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  animation: actionsFadeIn 0.22s ease-out;
+}
