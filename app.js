@@ -360,12 +360,139 @@
         { id: "ch1", name: "메인 채널", icon: "🎬", color: "#ef4444" },
         { id: "ch2", name: "쇼츠 채널", icon: "📱", color: "#3b82f6" },
         { id: "ch3", name: "강의 채널", icon: "🎓", color: "#a855f7" }
-      ]
+      ],
+      googleCalendar: {
+        clientId: "",            // OAuth 2.0 클라이언트 ID
+        calendarId: "primary",
+        syncEnabled: false,
+        lastSyncAt: "",
+        lastSyncStatus: "",      // success | error
+        lastSyncMessage: "",
+        eventMap: {}             // { scheduleId: googleEventId }
+      }
     };
     const SECTION_COLOR_PRESETS = ["#fbbf24", "#10b981", "#3b82f6", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316"];
     const SECTION_ICON_PRESETS = ["🏠","📺","💼","💎","🚀","🎯","⚡","🏢","💰","📦","🎨","🛒"];
     const CHANNEL_ICON_PRESETS = ["🎬","📱","🎓","🎥","🎮","📡","💬","🎙️","🎨","🍿","🏆","✨"];
     const CHANNEL_COLOR_PRESETS = ["#ef4444", "#3b82f6", "#a855f7", "#10b981", "#f59e0b", "#ec4899", "#06b6d4", "#fbbf24"];
+
+    /* ─── Google Calendar API 헬퍼 ─── */
+    const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar";
+    const GCAL_DISCOVERY = "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest";
+
+    // gapi + GIS 로드 대기
+    function waitForGoogleApis(timeoutMs = 8000) {
+      return new Promise((resolve, reject) => {
+        const start = Date.now();
+        const tick = () => {
+          if (window.gapi && window.google && window.google.accounts && window.google.accounts.oauth2) {
+            return resolve(true);
+          }
+          if (Date.now() - start > timeoutMs) return reject(new Error("Google API 스크립트 로드 시간 초과"));
+          setTimeout(tick, 100);
+        };
+        tick();
+      });
+    }
+
+    // gapi.client.calendar 초기화 (1회)
+    let _gcalInited = false;
+    async function initGcalClient() {
+      if (_gcalInited) return;
+      await waitForGoogleApis();
+      await new Promise((resolve, reject) => {
+        window.gapi.load("client", { callback: resolve, onerror: reject });
+      });
+      await window.gapi.client.init({ discoveryDocs: [GCAL_DISCOVERY] });
+      _gcalInited = true;
+    }
+
+    // OAuth 토큰 요청 (팝업 → 사용자 동의)
+    function requestGcalToken(clientId) {
+      return new Promise((resolve, reject) => {
+        try {
+          const tokenClient = window.google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: GCAL_SCOPE,
+            callback: (tokenResp) => {
+              if (tokenResp && tokenResp.access_token) {
+                resolve(tokenResp);
+              } else {
+                reject(new Error(tokenResp?.error || "토큰 받기 실패"));
+              }
+            },
+          });
+          tokenClient.requestAccessToken({ prompt: "" });
+        } catch (e) { reject(e); }
+      });
+    }
+
+    function revokeGcalToken(token) {
+      try {
+        if (window.google?.accounts?.oauth2 && token) {
+          window.google.accounts.oauth2.revoke(token, () => {});
+        }
+      } catch {}
+    }
+
+    // schedule { id, date, title } → Google Calendar 이벤트 (all-day)
+    function scheduleToGcalEvent(s) {
+      const d = s.date; // "YYYY-MM-DD"
+      // all-day 이벤트는 end가 다음날 (exclusive)
+      const next = new Date(d + "T00:00:00");
+      next.setDate(next.getDate() + 1);
+      const endDate = next.toISOString().slice(0, 10);
+      return {
+        summary: s.title || "(제목 없음)",
+        start: { date: d },
+        end: { date: endDate },
+        description: "DreamBoard 동기 · scheduleId=" + s.id,
+      };
+    }
+
+    // Google 이벤트 → schedule
+    function gcalEventToSchedule(e) {
+      const d = e.start?.date || (e.start?.dateTime || "").slice(0, 10);
+      if (!d) return null;
+      return {
+        id: "gcal_" + e.id,
+        date: d,
+        title: e.summary || "(제목 없음)",
+        _gcalId: e.id,
+      };
+    }
+
+    async function gcalListEvents(calendarId, timeMin, timeMax) {
+      const res = await window.gapi.client.calendar.events.list({
+        calendarId: calendarId || "primary",
+        timeMin, timeMax,
+        singleEvents: true,
+        orderBy: "startTime",
+        maxResults: 250,
+      });
+      return res.result.items || [];
+    }
+    async function gcalInsertEvent(calendarId, schedule) {
+      const res = await window.gapi.client.calendar.events.insert({
+        calendarId: calendarId || "primary",
+        resource: scheduleToGcalEvent(schedule),
+      });
+      return res.result;
+    }
+    async function gcalPatchEvent(calendarId, eventId, schedule) {
+      const res = await window.gapi.client.calendar.events.patch({
+        calendarId: calendarId || "primary",
+        eventId,
+        resource: scheduleToGcalEvent(schedule),
+      });
+      return res.result;
+    }
+    async function gcalDeleteEvent(calendarId, eventId) {
+      await window.gapi.client.calendar.events.delete({
+        calendarId: calendarId || "primary",
+        eventId,
+      });
+    }
 
     const INITIAL_RETROS = [
       { id: "r1", week: "W20 · 2026", date: "05.10 ~ 05.16",
@@ -2419,12 +2546,21 @@
       );
     }
 
-    /* ─── 주간 업무 뷰 (요일 그리드 + 일정/업무 + Google 연결 stub) ─── */
+    /* ─── 주간 업무 뷰 (요일 그리드 + 일정/업무 + Google 연결) ─── */
     function WeeklyTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, goalColor, settings, setSettings }) {
       const savedMode = settings?.calendarMode === "month" ? "month" : "week";
       const [mode, setMode] = useState(savedMode);
       const setModePersist = (m) => { setMode(m); setSettings(p => ({ ...p, calendarMode: m })); };
       const [cursor, setCursor] = useState(new Date()); // 현재 표시 기준일
+      const [gcalOpen, setGcalOpen] = useState(false);
+      // schedules는 settings.schedules로 관리됨 — 래퍼 제공
+      const schedules = settings?.schedules || [];
+      const setSchedulesViaSettings = (updater) => {
+        setSettings(prev => ({
+          ...prev,
+          schedules: typeof updater === "function" ? updater(prev.schedules || []) : updater
+        }));
+      };
 
       const today = new Date();
       const fmt = (d) => d.toISOString().slice(0, 10);
@@ -2538,7 +2674,12 @@
                 <button className={mode === "week" ? "active" : ""} onClick={() => setModePersist("week")}>주간</button>
                 <button className={mode === "month" ? "active" : ""} onClick={() => setModePersist("month")}>월간</button>
               </div>
-              <button className="gcal-connect-btn" onClick={() => alert("Google Calendar 연동 안내\n\n1. Google Cloud Console에서 OAuth 2.0 클라이언트 ID 생성\n2. Calendar API 활성화\n3. 클라이언트 ID를 설정에 입력\n4. '연결' 버튼 → 권한 허용\n\n(설정 후 양방향 동기 활성화. 현재는 자체 캘린더만 동작)")} title="Google Calendar 연동">🔗 Google</button>
+              <button className={"gcal-connect-btn" + (settings?.googleCalendar?.clientId ? " configured" : "")}
+                      onClick={() => setGcalOpen(true)}
+                      title={settings?.googleCalendar?.clientId ? "Google Calendar 동기 — 마지막: " + (settings?.googleCalendar?.lastSyncMessage || "없음") : "Google Calendar 연동 (클릭하여 설정)"}>
+                🔗 Google
+                {settings?.googleCalendar?.lastSyncStatus === "success" && <span className="gcal-dot success"></span>}
+              </button>
             </div>
           </div>
 
@@ -2586,6 +2727,16 @@
               </div>
             </div>
           )}
+
+          {/* Google Calendar 연결 모달 */}
+          <GoogleCalendarModal
+            open={gcalOpen}
+            onClose={() => setGcalOpen(false)}
+            settings={settings}
+            setSettings={setSettings}
+            schedules={schedules}
+            setSchedules={setSchedulesViaSettings}
+          />
         </div>
       );
     }
@@ -6331,6 +6482,241 @@
               </div>
             </div>
           )}
+        </div>
+      );
+    }
+
+    /* ─── 🔗 Google Calendar 연결 모달 ─── */
+    function GoogleCalendarModal({ open, onClose, settings, setSettings, schedules, setSchedules }) {
+      const [clientIdDraft, setClientIdDraft] = useState(settings?.googleCalendar?.clientId || "");
+      const [calendarIdDraft, setCalendarIdDraft] = useState(settings?.googleCalendar?.calendarId || "primary");
+      const [token, setToken] = useState(null);
+      const [userEmail, setUserEmail] = useState("");
+      const [busy, setBusy] = useState(false);
+      const [msg, setMsg] = useState("");
+      const [msgKind, setMsgKind] = useState(""); // success | error | info
+
+      const gcalCfg = settings?.googleCalendar || INITIAL_SETTINGS.googleCalendar;
+
+      useEffect(() => {
+        if (!open) return;
+        setClientIdDraft(settings?.googleCalendar?.clientId || "");
+        setCalendarIdDraft(settings?.googleCalendar?.calendarId || "primary");
+      }, [open]);
+
+      if (!open) return null;
+
+      const showMsg = (text, kind = "info") => {
+        setMsg(text); setMsgKind(kind);
+        if (kind === "success") setTimeout(() => setMsg(""), 5000);
+      };
+
+      const saveCfg = (patch) => {
+        setSettings(prev => ({
+          ...prev,
+          googleCalendar: { ...(prev.googleCalendar || INITIAL_SETTINGS.googleCalendar), ...patch }
+        }));
+      };
+
+      // 연결 (OAuth 토큰 받기)
+      const handleConnect = async () => {
+        const cid = clientIdDraft.trim();
+        if (!cid) { showMsg("⚠ OAuth 클라이언트 ID를 먼저 입력하세요.", "error"); return; }
+        setBusy(true); showMsg("Google API 로드 중...", "info");
+        try {
+          await initGcalClient();
+          showMsg("Google 로그인 창에서 권한 허용해 주세요...", "info");
+          const tokenResp = await requestGcalToken(cid);
+          setToken(tokenResp.access_token);
+          window.gapi.client.setToken({ access_token: tokenResp.access_token });
+          // 사용자 정보 조회 (calendarList에서 본인 primary 이메일)
+          try {
+            const calRes = await window.gapi.client.calendar.calendarList.get({ calendarId: "primary" });
+            setUserEmail(calRes.result.summary || calRes.result.id || "(unknown)");
+          } catch { setUserEmail("(연결됨)"); }
+          saveCfg({ clientId: cid, calendarId: calendarIdDraft.trim() || "primary" });
+          showMsg("✓ 연결 완료. 이제 ⬆ 푸시 또는 ⬇ 풀 동기를 실행하세요.", "success");
+        } catch (e) {
+          showMsg("✗ 연결 실패: " + (e.message || e), "error");
+        } finally { setBusy(false); }
+      };
+
+      const handleDisconnect = () => {
+        if (token) revokeGcalToken(token);
+        setToken(null); setUserEmail("");
+        saveCfg({ syncEnabled: false });
+        showMsg("연결 해제됨.", "info");
+      };
+
+      // ⬆ Push: 로컬 → Google
+      const handlePush = async () => {
+        if (!token) { showMsg("⚠ 먼저 연결하세요.", "error"); return; }
+        setBusy(true); showMsg("푸시 중...", "info");
+        try {
+          window.gapi.client.setToken({ access_token: token });
+          const cid = calendarIdDraft.trim() || "primary";
+          const map = { ...(gcalCfg.eventMap || {}) };
+          let created = 0, updated = 0, errors = 0;
+          for (const s of (schedules || [])) {
+            try {
+              const existingId = map[s.id];
+              if (existingId) {
+                await gcalPatchEvent(cid, existingId, s);
+                updated++;
+              } else {
+                const created_ev = await gcalInsertEvent(cid, s);
+                map[s.id] = created_ev.id;
+                created++;
+              }
+            } catch (e) { errors++; console.warn("푸시 실패:", s, e); }
+          }
+          saveCfg({
+            eventMap: map,
+            lastSyncAt: new Date().toISOString(),
+            lastSyncStatus: errors === 0 ? "success" : "error",
+            lastSyncMessage: `푸시 완료 · 신규 ${created} · 갱신 ${updated}` + (errors ? ` · 실패 ${errors}` : "")
+          });
+          showMsg(`✓ 푸시 완료 · 신규 ${created} · 갱신 ${updated}` + (errors ? ` · 실패 ${errors}` : ""), errors ? "error" : "success");
+        } catch (e) {
+          showMsg("✗ 푸시 실패: " + (e.message || e), "error");
+        } finally { setBusy(false); }
+      };
+
+      // ⬇ Pull: Google → 로컬
+      const handlePull = async () => {
+        if (!token) { showMsg("⚠ 먼저 연결하세요.", "error"); return; }
+        setBusy(true); showMsg("풀 중...", "info");
+        try {
+          window.gapi.client.setToken({ access_token: token });
+          const cid = calendarIdDraft.trim() || "primary";
+          // 지난 6개월 ~ 향후 12개월
+          const now = new Date();
+          const min = new Date(now); min.setMonth(min.getMonth() - 6);
+          const max = new Date(now); max.setMonth(max.getMonth() + 12);
+          const events = await gcalListEvents(cid, min.toISOString(), max.toISOString());
+          const existingMap = { ...(gcalCfg.eventMap || {}) };
+          const reverseMap = {}; // gcalId → localId
+          Object.entries(existingMap).forEach(([lid, gid]) => { reverseMap[gid] = lid; });
+
+          const newSchedules = [...(schedules || [])];
+          let added = 0, skipped = 0;
+          for (const ev of events) {
+            // 이미 매핑된 이벤트는 무시 (충돌 방지)
+            if (reverseMap[ev.id]) { skipped++; continue; }
+            // all-day 또는 dateTime
+            const s = gcalEventToSchedule(ev);
+            if (!s) continue;
+            newSchedules.push(s);
+            existingMap[s.id] = ev.id;
+            added++;
+          }
+          setSchedules(newSchedules);
+          saveCfg({
+            eventMap: existingMap,
+            lastSyncAt: new Date().toISOString(),
+            lastSyncStatus: "success",
+            lastSyncMessage: `풀 완료 · 신규 ${added} · 기존 ${skipped}`
+          });
+          showMsg(`✓ 풀 완료 · 신규 ${added}건 추가 · 기존 매핑 ${skipped}건 건너뜀`, "success");
+        } catch (e) {
+          showMsg("✗ 풀 실패: " + (e.message || e), "error");
+        } finally { setBusy(false); }
+      };
+
+      const isConnected = !!token;
+      const lastSync = gcalCfg.lastSyncAt;
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal-box gcal-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div className="modal-title">🔗 Google Calendar 연동</div>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            <div className="modal-body">
+              {/* 안내 */}
+              <div className="gcal-help">
+                <div className="gcal-help-title">📋 초기 설정 (1회만)</div>
+                <ol className="gcal-help-list">
+                  <li>
+                    <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style={{ color: "var(--accent)" }}>Google Cloud Console</a> 접속 → 프로젝트 생성 (예: <code>jinboard-cal</code>)
+                  </li>
+                  <li>좌측 <b>API 및 서비스</b> → <b>라이브러리</b> → <code>Google Calendar API</code> 검색 → <b>사용</b></li>
+                  <li><b>OAuth 동의 화면</b> → 사용자 유형 <b>외부</b> → 앱 정보 작성 → 테스트 사용자에 <code>timpark1033@gmail.com</code> 추가</li>
+                  <li><b>사용자 인증 정보</b> → <b>+ 사용자 인증 정보 만들기</b> → <b>OAuth 클라이언트 ID</b><br />
+                    유형 <b>웹 애플리케이션</b> · 승인된 JavaScript 출처:<br />
+                    <code style={{ fontSize: 11.5 }}>https://jinboard.pages.dev</code> 추가
+                  </li>
+                  <li>생성 후 표시되는 <b>클라이언트 ID</b> (xxxxxxx.apps.googleusercontent.com) 복사 → 아래 칸에 붙여넣기</li>
+                </ol>
+              </div>
+
+              {/* 입력 */}
+              <div className="gcal-field">
+                <label>OAuth 2.0 클라이언트 ID</label>
+                <input value={clientIdDraft} onChange={(e) => setClientIdDraft(e.target.value)}
+                       placeholder="xxxxxxx.apps.googleusercontent.com" />
+              </div>
+              <div className="gcal-field">
+                <label>캘린더 ID <span style={{ color: "var(--text-4)", fontSize: 11 }}>(기본 primary = 본인 메인 캘린더)</span></label>
+                <input value={calendarIdDraft} onChange={(e) => setCalendarIdDraft(e.target.value)} placeholder="primary" />
+              </div>
+
+              {/* 연결 상태 */}
+              <div className="gcal-status">
+                {isConnected ? (
+                  <>
+                    <div className="dot connected"></div>
+                    <span>연결됨 · {userEmail}</span>
+                    <button className="gcal-disconnect" onClick={handleDisconnect}>연결 해제</button>
+                  </>
+                ) : (
+                  <>
+                    <div className="dot"></div>
+                    <span>미연결</span>
+                    <button className="gcal-connect" onClick={handleConnect} disabled={busy}>
+                      {busy ? "연결 중..." : "🔌 Google 계정 연결"}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* 동기 액션 */}
+              {isConnected && (
+                <div className="gcal-actions">
+                  <button className="gcal-action push" onClick={handlePush} disabled={busy}>
+                    ⬆ 푸시 (로컬 → Google)
+                  </button>
+                  <button className="gcal-action pull" onClick={handlePull} disabled={busy}>
+                    ⬇ 풀 (Google → 로컬)
+                  </button>
+                </div>
+              )}
+
+              {/* 결과 메시지 */}
+              {msg && (
+                <div className={"gcal-msg " + msgKind}>
+                  {msg}
+                </div>
+              )}
+
+              {/* 마지막 동기 */}
+              {lastSync && (
+                <div className="gcal-last-sync">
+                  마지막 동기: {new Date(lastSync).toLocaleString("ko-KR")} · {gcalCfg.lastSyncMessage || "-"}
+                </div>
+              )}
+
+              <div className="gcal-note">
+                💡 <b>현재 지원:</b> 수동 푸시·풀 (양방향 자동 동기는 추후 추가)<br />
+                ⚠ 토큰은 브라우저 메모리에만 유지 (페이지 새로고침 시 재연결 필요)<br />
+                🗓 schedules는 <b>all-day 이벤트</b>로 동기됩니다.
+              </div>
+            </div>
+            <div className="modal-foot">
+              <button className="btn-save" onClick={onClose}>닫기</button>
+            </div>
+          </div>
         </div>
       );
     }
