@@ -6599,3 +6599,229 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(0.8); }
 }
+
+
+/* ============================================================
+   🏆 완료 목표 시스템 (자동 감지 + 트로피 갤러리)
+   ============================================================ */
+
+/* 진행중/완료 토글 */
+.goal-status-toggle {
+  display: flex; gap: 2px; background: var(--bg-2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 2px;
+  margin-left: 10px;
+}
+.goal-status-toggle .gst-btn {
+  background: transparent; border: none; padding: 5px 12px; border-radius: 6px;
+  color: var(--text-3); font-family: inherit; font-size: 11.5px;
+  font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.goal-status-toggle .gst-btn:hover { color: var(--text-2); background: var(--bg-3); }
+.goal-status-toggle .gst-btn.active.active-on { background: var(--accent); color: #fff; }
+.goal-status-toggle .gst-btn.active.completed { background: var(--gold); color: #1a1a1f; box-shadow: 0 0 10px rgba(251,191,36,0.3); }
+.goal-status-toggle .cnt {
+  font-size: 9.5px; padding: 1px 6px; border-radius: 999px;
+  background: rgba(0,0,0,0.25); font-weight: 700;
+}
+.goal-status-toggle .gst-btn.active .cnt { background: rgba(255,255,255,0.2); }
+
+/* 거의 완료 상태 — 진행중 카드 강조 */
+.gmini.almost-done {
+  box-shadow: 0 0 14px rgba(251,191,36,0.3) !important;
+  border-color: var(--gold) !important;
+}
+.gmini-almost-badge {
+  display: inline-block; font-size: 9.5px; padding: 1px 6px; border-radius: 999px;
+  background: var(--gold); color: #1a1a1f; font-weight: 800;
+  margin-left: 6px; animation: gmini-pulse 1.6s infinite;
+}
+@keyframes gmini-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.95); }
+}
+
+/* 트로피 갤러리 통계 */
+.trophy-summary {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.08), var(--bg-2));
+  border: 1px solid rgba(251,191,36,0.25);
+  border-radius: 10px; padding: 12px 14px;
+}
+.trophy-stat { text-align: center; }
+.trophy-stat .l { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.trophy-stat .v {
+  font-family: 'Geist Mono', monospace; font-size: 18px; font-weight: 800;
+  color: var(--gold); margin-top: 3px;
+}
+.trophy-stat .v.green { color: var(--green); }
+.trophy-stat .v.text { color: var(--text-1); }
+
+/* 필터 */
+.trophy-filter { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+.trophy-filter button {
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text-3);
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.trophy-filter button:hover { background: var(--bg-3); color: var(--text-2); }
+.trophy-filter button.active { background: var(--gold); color: #1a1a1f; border-color: var(--gold); }
+.trophy-filter .spacer { flex: 1; }
+.trophy-filter select {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 5px;
+  padding: 4px 8px; color: var(--text-2); font-family: inherit; font-size: 10.5px;
+  font-weight: 700; outline: none; cursor: pointer;
+}
+
+/* 트로피 카드 그리드 */
+.trophy-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.trophy-card {
+  background: linear-gradient(135deg, rgba(251,191,36,0.10), var(--bg-2));
+  border: 1px solid rgba(251,191,36,0.25); border-radius: 10px;
+  padding: 12px 14px; cursor: pointer; transition: all 0.15s;
+  position: relative; overflow: hidden;
+}
+.trophy-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold);
+  box-shadow: 0 6px 20px rgba(251,191,36,0.2);
+}
+.trophy-card.estate { background: linear-gradient(135deg, rgba(245,158,11,0.10), var(--bg-2)); border-color: rgba(245,158,11,0.30); }
+.trophy-card.youtube { background: linear-gradient(135deg, rgba(239,68,68,0.10), var(--bg-2)); border-color: rgba(239,68,68,0.30); }
+.trophy-card.health { background: linear-gradient(135deg, rgba(16,185,129,0.10), var(--bg-2)); border-color: rgba(16,185,129,0.30); }
+.trophy-card .tc-trophy {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 22px; opacity: 0.4;
+}
+.trophy-card .tc-name { font-size: 13px; font-weight: 800; margin-bottom: 4px; padding-right: 28px; line-height: 1.3; }
+.trophy-card .tc-category {
+  display: inline-block; font-size: 9.5px; padding: 1px 6px; border-radius: 4px;
+  background: var(--bg-3); color: var(--text-3); font-weight: 600;
+  margin-bottom: 6px;
+}
+.trophy-card .tc-bonus {
+  font-family: 'Geist Mono', monospace; font-size: 17px; font-weight: 900;
+  color: var(--gold); letter-spacing: -0.02em; margin-bottom: 4px;
+}
+.trophy-card.estate .tc-bonus { color: var(--amber); }
+.trophy-card.youtube .tc-bonus { color: var(--red); }
+.trophy-card.health .tc-bonus { color: var(--green); }
+.trophy-card .tc-meta {
+  font-size: 10.5px; color: var(--text-3); font-family: 'Geist Mono', monospace;
+  display: flex; justify-content: space-between;
+  padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08);
+}
+
+/* ============================================================
+   🏆 트로피 토스트
+   ============================================================ */
+.trophy-toast {
+  position: fixed; top: 20px; right: 20px; z-index: 10001;
+  background: linear-gradient(135deg, rgba(251,191,36,0.18), var(--bg-1));
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 30px rgba(251,191,36,0.35);
+  max-width: 360px; min-width: 320px;
+  animation: trophySlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes trophySlide {
+  from { opacity: 0; transform: translateY(-20px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.trophy-toast .head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.trophy-toast .trophy-big {
+  font-size: 32px;
+  filter: drop-shadow(0 0 6px rgba(251,191,36,0.6));
+  animation: trophyBounce 1.2s ease-in-out 2;
+}
+@keyframes trophyBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.trophy-toast .lbl {
+  font-size: 10.5px; font-weight: 800; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.trophy-toast .name { font-size: 16px; font-weight: 800; color: var(--text-1); margin-top: 2px; }
+.trophy-toast .xp {
+  font-family: 'Geist Mono', monospace; font-size: 24px; font-weight: 900;
+  color: var(--gold); letter-spacing: -0.03em; margin: 8px 0 4px;
+  text-shadow: 0 0 12px rgba(251,191,36,0.5);
+}
+.trophy-toast .sub {
+  font-size: 11.5px; color: var(--text-3); margin-bottom: 12px;
+}
+.trophy-toast .actions { display: flex; gap: 6px; }
+.trophy-toast .actions button {
+  flex: 1; padding: 7px; border-radius: 6px; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 700;
+  border: 1px solid;
+}
+.trophy-toast .actions .confirm {
+  background: var(--gold); color: #1a1a1f; border-color: var(--gold);
+}
+.trophy-toast .actions .view {
+  background: var(--bg-3); color: var(--text-2); border-color: var(--border);
+}
+
+/* ============================================================
+   🏆 트로피 상세 모달
+   ============================================================ */
+.trophy-modal {
+  background: var(--bg-1); border: 1px solid var(--gold);
+  border-radius: 16px; padding: 24px 28px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 24px rgba(251,191,36,0.15);
+  width: 560px; max-width: 92vw; max-height: 88vh; overflow-y: auto;
+}
+.trophy-modal .mc-head {
+  text-align: center; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.trophy-modal .mc-trophy { font-size: 56px; line-height: 1; filter: drop-shadow(0 0 12px rgba(251,191,36,0.5)); }
+.trophy-modal .mc-tag {
+  font-size: 10.5px; font-weight: 800; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-top: 8px;
+}
+.trophy-modal .mc-name { font-size: 22px; font-weight: 800; margin-top: 6px; letter-spacing: -0.02em; }
+.trophy-modal .mc-bonus {
+  font-family: 'Geist Mono', monospace; font-size: 28px; font-weight: 900;
+  color: var(--gold); margin-top: 8px;
+  text-shadow: 0 0 16px rgba(251,191,36,0.4);
+}
+.trophy-modal .mc-meta-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  background: var(--bg-2); border-radius: 8px; padding: 12px 16px;
+  margin: 14px 0;
+}
+.trophy-modal .mc-meta-row > div { text-align: center; }
+.trophy-modal .mc-meta-row .l { font-size: 9.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.trophy-modal .mc-meta-row .v { font-family: 'Geist Mono', monospace; font-size: 14px; font-weight: 800; margin-top: 3px; }
+.trophy-modal .mc-section { margin-top: 14px; }
+.trophy-modal .mc-section-title {
+  font-size: 11px; color: var(--text-3); text-transform: uppercase;
+  letter-spacing: 0.05em; font-weight: 700; margin-bottom: 8px;
+}
+.trophy-modal .mc-checklist { display: flex; flex-direction: column; gap: 4px; }
+.trophy-modal .mc-checkitem {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 10px; background: var(--bg-2); border-radius: 6px;
+  font-size: 12px; color: var(--text-2);
+}
+.trophy-modal .mc-checkitem .check { color: var(--green); font-weight: 800; }
+.trophy-modal .mc-actions {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 18px;
+}
+.trophy-modal .mc-actions button {
+  padding: 9px; border-radius: 7px; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 700;
+  border: 1px solid;
+}
+.trophy-modal .mc-actions .revert { background: var(--bg-3); color: var(--text-3); border-color: var(--border); }
+.trophy-modal .mc-actions .revert:hover { background: var(--bg-2); color: var(--red); border-color: var(--red); }
+.trophy-modal .mc-actions .clone { background: rgba(99,102,241,0.10); color: var(--accent-2); border-color: rgba(99,102,241,0.3); }
+.trophy-modal .mc-actions .clone:hover { background: var(--accent-2); color: #fff; }
+.trophy-modal .mc-actions .close { background: var(--accent); color: #fff; border-color: var(--accent); }
+.trophy-modal .mc-actions .close:hover { background: var(--accent-2); }

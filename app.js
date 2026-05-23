@@ -70,7 +70,15 @@
     /* ---------------- DATA ---------------- */
     /* ── 퀘스트 마이그레이션 (sideQuests + challenges → quests) ── */
     function migrateGoalQuests(g) {
-      if (g.quests) return g;
+      // 완료 목표 시스템 필드 마이그레이션
+      const base = {
+        ...g,
+        status: g.status || "active",        // "active" | "completed"
+        completedAt: g.completedAt || "",
+        completionBonus: g.completionBonus || 0,
+        startedAt: g.startedAt || "",        // 시작일 (소요기간 계산용)
+      };
+      if (g.quests) return base;
       const quests = [];
       (g.sideQuests || []).forEach(s => quests.push({
         id: s.id, name: s.name,
@@ -85,7 +93,51 @@
         repeat: c.repeat || null, done: !!c.done,
         lastResetWeek: c.repeat ? getWeekNumber() : null
       }));
-      return { ...g, quests };
+      return { ...base, quests };
+    }
+
+    /* ─── 목표 자동 완료 헬퍼 ─── */
+    const COMPLETION_BONUS_XP = 1500;
+
+    // 메인 단계 + 퀘스트 모두 완료됐는지 체크
+    function isGoalCompletable(goal) {
+      if (!goal || goal.status === "completed") return false;
+      const milestones = goal.milestones || [];
+      const quests = goal.quests || [];
+      // 메인 단계가 있으면 모두 done이어야 함
+      const milestonesDone = milestones.length === 0 || milestones.every(m => m.status === "done");
+      // 퀘스트가 있으면 모두 current >= target 이어야 함
+      const questsDone = quests.length === 0
+        || quests.every(q => (q.target ? (q.current || 0) >= q.target : !!q.done));
+      // 둘 다 비어있으면 자동 완료 불가 (실수 방지)
+      if (milestones.length === 0 && quests.length === 0) return false;
+      return milestonesDone && questsDone;
+    }
+
+    // 거의 완료 상태 (메인 100% + 퀘스트 ≥80%)
+    function isGoalAlmostDone(goal) {
+      if (!goal || goal.status === "completed") return false;
+      const milestones = goal.milestones || [];
+      const quests = goal.quests || [];
+      if (milestones.length === 0 && quests.length === 0) return false;
+      const mDone = milestones.length === 0 || milestones.every(m => m.status === "done");
+      if (!mDone) return false;
+      if (quests.length === 0) return false;
+      const totalCur = quests.reduce((s, q) => s + Math.min(q.current || 0, q.target || 1), 0);
+      const totalTgt = quests.reduce((s, q) => s + (q.target || 1), 0);
+      const pct = totalTgt > 0 ? totalCur / totalTgt : 0;
+      return pct >= 0.8 && pct < 1.0;
+    }
+
+    // 소요 일수 계산
+    function calcGoalDuration(goal) {
+      if (!goal.completedAt) return null;
+      const start = goal.startedAt || goal.id; // 폴백
+      const startDate = goal.startedAt ? new Date(goal.startedAt) : null;
+      if (!startDate || isNaN(startDate)) return null;
+      const endDate = new Date(goal.completedAt);
+      const ms = endDate - startDate;
+      return Math.max(1, Math.round(ms / 86400000));
     }
 
     const INITIAL_GOALS = [
@@ -2526,6 +2578,116 @@
       );
     }
 
+    /* ─── 🏆 트로피 토스트 (자동 완료 알림) ─── */
+    function TrophyToast({ event, onClose, onViewDetail }) {
+      useEffect(() => {
+        if (!event) return;
+        const t = setTimeout(() => onClose && onClose(), 8000);
+        return () => clearTimeout(t);
+      }, [event?.id]);
+      if (!event) return null;
+      return (
+        <div className="trophy-toast" key={event.id}>
+          <div className="head">
+            <div className="trophy-big">🏆</div>
+            <div>
+              <div className="lbl">목표 달성</div>
+              <div className="name">{event.goalName}</div>
+            </div>
+          </div>
+          <div className="xp">+{event.xp.toLocaleString()} XP</div>
+          <div className="sub">{event.durationDays ? `${event.durationDays}일 만에 달성` : "달성 완료!"} · 자동 인식</div>
+          <div className="actions">
+            <button className="view" onClick={() => { onViewDetail && onViewDetail(event.goalId); onClose && onClose(); }}>📋 상세 보기</button>
+            <button className="confirm" onClick={() => onClose && onClose()}>✓ 확인</button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─── 🏆 트로피 상세 모달 ─── */
+    function TrophyDetailModal({ open, onClose, goal, stats, onRevert, onClone }) {
+      if (!open || !goal) return null;
+      const days = calcGoalDuration(goal);
+      const milestones = goal.milestones || [];
+      const quests = goal.quests || [];
+      const statName = (stats || []).find(s => s.id === goal.statId)?.label || "";
+
+      const handleRevert = () => {
+        if (!confirm("이 목표를 진행중 상태로 되돌릴까요?\n보너스 XP는 회수됩니다.")) return;
+        onRevert && onRevert(goal.id);
+        onClose && onClose();
+      };
+      const handleClone = () => {
+        if (!confirm("이 목표와 동일한 새 목표를 진행중으로 추가할까요?\n현재 완료 카드는 그대로 보존됩니다.")) return;
+        onClone && onClone(goal.id);
+        onClose && onClose();
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="trophy-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="mc-head">
+              <div className="mc-trophy">🏆</div>
+              <div className="mc-tag">목표 달성</div>
+              <div className="mc-name">{goal.name}</div>
+              <div className="mc-bonus">+{(goal.completionBonus || 0).toLocaleString()} XP</div>
+            </div>
+
+            <div className="mc-meta-row">
+              <div><div className="l">시작</div><div className="v">{goal.startedAt || "—"}</div></div>
+              <div><div className="l">완료</div><div className="v" style={{ color: "var(--green)" }}>{goal.completedAt || "—"}</div></div>
+              <div><div className="l">소요</div><div className="v" style={{ color: "var(--gold)" }}>{days ? days + "일" : "—"}</div></div>
+            </div>
+
+            {milestones.length > 0 && (
+              <div className="mc-section">
+                <div className="mc-section-title">✓ 메인 단계 ({milestones.filter(m => m.status === "done").length}/{milestones.length})</div>
+                <div className="mc-checklist">
+                  {milestones.map(m => (
+                    <div key={m.id} className="mc-checkitem">
+                      <span className="check">{m.status === "done" ? "✓" : "·"}</span>
+                      <span style={{ flex: 1 }}>{m.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {quests.length > 0 && (
+              <div className="mc-section">
+                <div className="mc-section-title">💎 퀘스트 ({quests.filter(q => (q.current || 0) >= q.target).length}/{quests.length})</div>
+                <div className="mc-checklist">
+                  {quests.map(q => {
+                    const done = (q.current || 0) >= q.target;
+                    return (
+                      <div key={q.id} className="mc-checkitem">
+                        <span className="check" style={{ color: done ? "var(--green)" : "var(--text-4)" }}>{done ? "✓" : "·"}</span>
+                        <span style={{ flex: 1 }}>{q.name}</span>
+                        <span style={{ color: "var(--text-4)", fontSize: 11, fontFamily: "Geist Mono, monospace" }}>{q.current}/{q.target}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {statName && (
+              <div style={{ fontSize: 11.5, color: "var(--text-3)", textAlign: "center", marginTop: 12 }}>
+                ⚔️ {statName} 스탯에 +{(goal.completionBonus || 0).toLocaleString()} XP 부여됨
+              </div>
+            )}
+
+            <div className="mc-actions">
+              <button className="revert" onClick={handleRevert}>↩ 진행으로 되돌리기</button>
+              <button className="clone" onClick={handleClone}>🔄 다시 도전</button>
+              <button className="close" onClick={onClose}>닫기</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     /* ─── Stage 2: GoalsTasksRetroTab ─── */
     /* ─── 목표별 업무 뷰 (목표 × 컬럼) ─── */
     function FieldTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, deleteTask, goalColor, addTask }) {
@@ -3073,7 +3235,8 @@
       retros, setRetros, dailyLog, stats, onOpenQuestGuide,
       initialOpenGoalId, onGoalOpened,
       settings, setSettings,
-      taskFullscreen, setTaskFullscreen
+      taskFullscreen, setTaskFullscreen,
+      onRevertGoal, onCloneGoal
     }) {
       const toggleStageInForm = toggleStage || ((gId, mId) => {
         const g = goals.find(x => x.id === gId);
@@ -3082,6 +3245,11 @@
         editGoal(gId, { milestones: newStages });
       });
       const [openGoalId, setOpenGoalId] = useState(null);
+      // 진행중/완료 토글 + 트로피 갤러리 상태
+      const [goalStatusFilter, setGoalStatusFilter] = useState("active"); // "active" | "completed"
+      const [trophyDetailGoal, setTrophyDetailGoal] = useState(null);
+      const [trophyCategoryFilter, setTrophyCategoryFilter] = useState("all");
+      const [trophySort, setTrophySort] = useState("recent"); // recent | oldest | duration | xp
       const [editingGoalId, setEditingGoalId] = useState(null);
       const savedTaskTab = (settings?.taskTab && ["eisen","weekly","field","focus"].includes(settings.taskTab)) ? settings.taskTab : "eisen";
       const [taskTab, setTaskTab] = useState(savedTaskTab);
@@ -3499,27 +3667,39 @@
             </svg>
             {/* ── LEFT: GOALS ── */}
             <div className="gtr-col goals" style={{ zoom: gtrZoom }}>
-              <div className="gtr-col-head">
-                <div className="gtr-col-title">
-                  🎯 목표 <span className="gtr-col-count">{goals.length}</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-                  <div className="gtr-zoom" title="텍스트 크기 (90~150%) — 슬라이더 조정 후 적용 버튼 클릭">
-                    <span style={{ fontSize: 11, color: "var(--text-3)" }}>🔍</span>
-                    <input type="range" min="90" max="150" step="5" value={Math.round(pendingZoom * 100)} onChange={(e) => setPendingZoom(Number(e.target.value) / 100)} />
-                    <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", minWidth: 32 }}>{Math.round(pendingZoom * 100)}%</span>
-                    <button
-                      className="gtr-zoom-apply"
-                      disabled={pendingZoom === gtrZoom}
-                      onClick={() => { setGtrZoom(pendingZoom); if (setSettings) setSettings(prev => ({ ...prev, gtrZoomLevel: pendingZoom })); }}
-                      title="적용"
-                    >적용</button>
+              {(() => {
+                const activeGoals = goals.filter(g => (g.status || "active") === "active");
+                const completedGoals = goals.filter(g => g.status === "completed");
+                return (
+                  <div className="gtr-col-head">
+                    <div className="gtr-col-title">
+                      🎯 목표
+                    </div>
+                    <div className="goal-status-toggle">
+                      <button className={"gst-btn" + (goalStatusFilter === "active" ? " active active-on" : "")} onClick={() => setGoalStatusFilter("active")}>
+                        🎯 진행중 <span className="cnt">{activeGoals.length}</span>
+                      </button>
+                      <button className={"gst-btn" + (goalStatusFilter === "completed" ? " active completed" : "")} onClick={() => setGoalStatusFilter("completed")}>
+                        🏆 완료 <span className="cnt">{completedGoals.length}</span>
+                      </button>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+                      <div className="gtr-zoom" title="텍스트 크기 (90~150%)">
+                        <span style={{ fontSize: 11, color: "var(--text-3)" }}>🔍</span>
+                        <input type="range" min="90" max="150" step="5" value={Math.round(pendingZoom * 100)} onChange={(e) => setPendingZoom(Number(e.target.value) / 100)} />
+                        <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", minWidth: 32 }}>{Math.round(pendingZoom * 100)}%</span>
+                        <button className="gtr-zoom-apply" disabled={pendingZoom === gtrZoom}
+                                onClick={() => { setGtrZoom(pendingZoom); if (setSettings) setSettings(prev => ({ ...prev, gtrZoomLevel: pendingZoom })); }}>적용</button>
+                      </div>
+                      {goalStatusFilter === "active" && (
+                        <button className="gtr-btn-add" onClick={() => setShowAddGoal((v) => !v)}>
+                          {showAddGoal ? "✕" : "+ 추가"}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <button className="gtr-btn-add" onClick={() => setShowAddGoal((v) => !v)}>
-                    {showAddGoal ? "✕" : "+ 추가"}
-                  </button>
-                </div>
-              </div>
+                );
+              })()}
 
               {showAddGoal && (
                 <div className="inline-add-form">
@@ -3539,13 +3719,94 @@
                 </div>
               )}
 
-              {goals.map((g) => {
+              {/* 🏆 완료 갤러리 뷰 */}
+              {goalStatusFilter === "completed" && (() => {
+                let completed = goals.filter(g => g.status === "completed");
+                // 카테고리 필터
+                if (trophyCategoryFilter !== "all") {
+                  completed = completed.filter(g => (g.category || "").toLowerCase().includes(trophyCategoryFilter.toLowerCase()));
+                }
+                // 정렬
+                completed = [...completed].sort((a, b) => {
+                  if (trophySort === "recent") return (b.completedAt || "").localeCompare(a.completedAt || "");
+                  if (trophySort === "oldest") return (a.completedAt || "").localeCompare(b.completedAt || "");
+                  if (trophySort === "duration") {
+                    return (calcGoalDuration(a) || 0) - (calcGoalDuration(b) || 0);
+                  }
+                  if (trophySort === "xp") return (b.completionBonus || 0) - (a.completionBonus || 0);
+                  return 0;
+                });
+                const totalXp = goals.filter(g => g.status === "completed").reduce((s, g) => s + (g.completionBonus || 0), 0);
+                const durations = goals.filter(g => g.status === "completed").map(calcGoalDuration).filter(Boolean);
+                const avgDays = durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0;
+                const thisYear = new Date().getFullYear();
+                const thisYearCount = goals.filter(g => g.status === "completed" && (g.completedAt || "").startsWith(thisYear + "")).length;
+                // 카테고리 옵션 수집
+                const allCategories = Array.from(new Set(goals.filter(g => g.status === "completed").map(g => (g.category || "").split(/[·•|]/)[0].trim()).filter(Boolean)));
+                return (
+                  <>
+                    {/* 통계 */}
+                    <div className="trophy-summary">
+                      <div className="trophy-stat"><div className="l">올해 달성</div><div className="v text">{thisYearCount} / {goals.filter(g => g.status === "completed").length}</div></div>
+                      <div className="trophy-stat"><div className="l">총 보상</div><div className="v">+{totalXp.toLocaleString()}</div></div>
+                      <div className="trophy-stat"><div className="l">평균 기간</div><div className="v green">{avgDays}일</div></div>
+                    </div>
+                    {/* 필터 */}
+                    <div className="trophy-filter">
+                      <button className={trophyCategoryFilter === "all" ? "active" : ""} onClick={() => setTrophyCategoryFilter("all")}>전체</button>
+                      {allCategories.slice(0, 4).map(c => (
+                        <button key={c} className={trophyCategoryFilter === c ? "active" : ""} onClick={() => setTrophyCategoryFilter(c)}>{c}</button>
+                      ))}
+                      <div className="spacer"></div>
+                      <select value={trophySort} onChange={(e) => setTrophySort(e.target.value)}>
+                        <option value="recent">최신순</option>
+                        <option value="oldest">오래된순</option>
+                        <option value="duration">소요기간 ↑</option>
+                        <option value="xp">XP 높은순</option>
+                      </select>
+                    </div>
+                    {/* 트로피 그리드 */}
+                    {completed.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "30px 20px", color: "var(--text-4)", fontSize: 13 }}>
+                        🏆 아직 완료한 목표가 없습니다.<br />
+                        <span style={{ fontSize: 11.5 }}>메인 단계 + 퀘스트를 모두 채우면 자동으로 완료 처리됩니다.</span>
+                      </div>
+                    ) : (
+                      <div className="trophy-grid">
+                        {completed.map(g => {
+                          const days = calcGoalDuration(g);
+                          const catFirst = (g.category || "").split(/[·•|]/)[0].trim();
+                          const colorCls = catFirst.includes("부동산") ? "estate" :
+                                           catFirst.includes("유튜브") || catFirst.includes("Creator") ? "youtube" :
+                                           catFirst.includes("건강") || catFirst.includes("체력") ? "health" : "";
+                          return (
+                            <div key={g.id} className={"trophy-card " + colorCls} onClick={() => setTrophyDetailGoal(g)}>
+                              <span className="tc-trophy">🏆</span>
+                              {catFirst && <div className="tc-category">{catFirst}</div>}
+                              <div className="tc-name">{g.name}</div>
+                              <div className="tc-bonus">+{(g.completionBonus || 0).toLocaleString()} XP</div>
+                              <div className="tc-meta">
+                                <span>{days ? days + "일 만에" : "—"}</span>
+                                <span>{(g.completedAt || "").slice(5)}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* 🎯 진행중 목표 리스트 (기존) */}
+              {goalStatusFilter === "active" && goals.filter(g => (g.status || "active") === "active").map((g) => {
                 const dday = calcDday(g.deadline);
                 const gTasks = tasksByGoal[g.id] || [];
                 const doneTasks = gTasks.filter((t) => t.done).length;
                 const isOpen = openGoalId === g.id;
                 const isEditing = editingGoalId === g.id;
                 const linkedStat = g.statId ? stats.find((s) => s.id === g.statId) : null;
+                const almostDone = isGoalAlmostDone(g);
                 return (
                   <div key={g.id} data-goal-id={g.id} data-conn-goal={g.id}
                     style={{ borderLeft: `4px solid ${goalColor(g.id)}` }}
@@ -4159,6 +4420,16 @@
               </div>
             );
           })()}
+
+          {/* 🏆 트로피 상세 모달 */}
+          <TrophyDetailModal
+            open={!!trophyDetailGoal}
+            onClose={() => setTrophyDetailGoal(null)}
+            goal={trophyDetailGoal}
+            stats={stats}
+            onRevert={onRevertGoal}
+            onClone={onCloneGoal}
+          />
         </div>
       );
     }
@@ -7526,8 +7797,44 @@
               }, 600);
             }
           }
-          return { ...g, milestones: stages, progress: stages.length > 0 ? Math.round((stages.filter(s => s.status === 'done').length / stages.length) * 100) : g.progress };
+          const updated = { ...g, milestones: stages, progress: stages.length > 0 ? Math.round((stages.filter(s => s.status === 'done').length / stages.length) * 100) : g.progress };
+          return tryAutoCompleteGoal(updated);
         }));
+      };
+
+      // 🏆 트로피 토스트 상태 (자동 완료 알림)
+      const [trophyToast, setTrophyToast] = useState(null); // { id, goalId, goalName, xp, durationDays }
+
+      // 자동 완료 체크 + 처리 (toggleStage/adjustQuestCount 후 호출)
+      const tryAutoCompleteGoal = (goal) => {
+        if (!goal || goal.status === "completed") return goal;
+        if (!isGoalCompletable(goal)) return goal;
+        // 자동 완료!
+        const today = new Date().toISOString().slice(0, 10);
+        const completed = {
+          ...goal,
+          status: "completed",
+          completedAt: today,
+          completionBonus: COMPLETION_BONUS_XP,
+          startedAt: goal.startedAt || today, // 시작일 없으면 오늘로 백필 (아쉽지만 폴백)
+        };
+        // 보너스 XP 부여
+        if (goal.statId) {
+          setStats(ps => ps.map(s => s.id === goal.statId
+            ? { ...s, totalXp: getStatTotalXp(s) + COMPLETION_BONUS_XP } : s));
+        }
+        // 트로피 토스트 (xpToast보다 우선 표시)
+        const days = calcGoalDuration(completed);
+        setTimeout(() => {
+          setTrophyToast({
+            id: Date.now() + 99,
+            goalId: goal.id,
+            goalName: goal.name,
+            xp: COMPLETION_BONUS_XP,
+            durationDays: days,
+          });
+        }, 800); // XP toast 직후 표시
+        return completed;
       };
 
       // 드림 클릭 → 비전 탭으로 이동 + 모달 자동 오픈
@@ -7576,8 +7883,47 @@
             }
             return { ...q, current: newCurrent, done: willBeDone };
           });
-          return { ...g, quests };
+          const updated = { ...g, quests };
+          return tryAutoCompleteGoal(updated);
         }));
+      };
+
+      // 목표 되돌리기 (완료 → 진행중)
+      const revertGoalCompletion = (goalId) => {
+        setGoals(prev => prev.map(g => {
+          if (g.id !== goalId || g.status !== "completed") return g;
+          // 보너스 XP 회수
+          if (g.statId && g.completionBonus) {
+            setStats(ps => ps.map(s => s.id === g.statId
+              ? { ...s, totalXp: Math.max(0, getStatTotalXp(s) - g.completionBonus) } : s));
+          }
+          return { ...g, status: "active", completedAt: "", completionBonus: 0 };
+        }));
+      };
+
+      // 목표 복제 (다시 도전)
+      const cloneGoal = (goalId) => {
+        const target = goals.find(g => g.id === goalId);
+        if (!target) return;
+        const today = new Date().toISOString().slice(0, 10);
+        const newId = "g" + Date.now();
+        const cloned = {
+          ...target,
+          id: newId,
+          name: target.name + " (재도전)",
+          status: "active",
+          completedAt: "",
+          completionBonus: 0,
+          startedAt: today,
+          progress: 0,
+          milestones: (target.milestones || []).map(m => ({
+            ...m, id: m.id + "_" + Date.now(), status: "active"
+          })),
+          quests: (target.quests || []).map(q => ({
+            ...q, id: q.id + "_" + Date.now(), current: 0, done: false
+          })),
+        };
+        setGoals(prev => [...prev, cloned]);
       };
 
       // 매주 반복 퀘스트 자동 리셋 (월요일 새 주차 진입 시)
@@ -7689,7 +8035,18 @@
             initialOpenGoalId={goalToOpen} onGoalOpened={() => setGoalToOpen(null)}
             settings={settings} setSettings={setSettings}
             taskFullscreen={taskFullscreen} setTaskFullscreen={setTaskFullscreen}
+            onRevertGoal={revertGoalCompletion}
+            onCloneGoal={cloneGoal}
           />}
+          {/* 🏆 트로피 토스트 (자동 완료 알림) */}
+          <TrophyToast event={trophyToast}
+            onClose={() => setTrophyToast(null)}
+            onViewDetail={(gid) => {
+              setTab("gtr");
+              // 다음 렌더 후 모달 오픈 (GoalsTasksRetroTab이 마운트되어야 모달 state 접근 가능)
+              // 간단히는 그냥 탭만 이동
+            }} />
+
           {tab === "resources" && <ResourcesItemsTab
             items={items} setItems={setItems}
             resources={resources} setResources={setResources}
