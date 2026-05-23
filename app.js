@@ -2630,29 +2630,52 @@
       );
     }
 
-    /* ─── 🏆 트로피 토스트 (자동 완료 알림) ─── */
-    function TrophyToast({ event, onClose, onViewDetail }) {
+    /* ─── 🏆 트로피 토스트 (제안 / 완료 알림) ─── */
+    function TrophyToast({ event, onClose, onViewDetail, onCompleteNow }) {
       useEffect(() => {
         if (!event) return;
-        const t = setTimeout(() => onClose && onClose(), 8000);
+        // 제안은 더 오래 (12초), 완료는 8초
+        const ms = event.mode === "suggest" ? 12000 : 8000;
+        const t = setTimeout(() => onClose && onClose(), ms);
         return () => clearTimeout(t);
       }, [event?.id]);
       if (!event) return null;
+
+      const isSuggest = event.mode === "suggest";
+
       return (
-        <div className="trophy-toast" key={event.id}>
+        <div className={"trophy-toast" + (isSuggest ? " suggest" : "")} key={event.id}>
           <div className="head">
-            <div className="trophy-big">🏆</div>
+            <div className="trophy-big">{isSuggest ? "🎉" : "🏆"}</div>
             <div>
-              <div className="lbl">목표 달성</div>
+              <div className="lbl">{isSuggest ? "완료 조건 충족!" : "목표 달성"}</div>
               <div className="name">{event.goalName}</div>
             </div>
           </div>
-          <div className="xp">+{event.xp.toLocaleString()} XP</div>
-          <div className="sub">{event.durationDays ? `${event.durationDays}일 만에 달성` : "달성 완료!"} · 자동 인식</div>
-          <div className="actions">
-            <button className="view" onClick={() => { onViewDetail && onViewDetail(event.goalId); onClose && onClose(); }}>📋 상세 보기</button>
-            <button className="confirm" onClick={() => onClose && onClose()}>✓ 확인</button>
-          </div>
+          {isSuggest ? (
+            <>
+              <div className="suggest-msg">
+                메인 단계 + 모든 퀘스트를 완료했습니다.<br />
+                지금 완료 처리하면 <b>+{event.xp.toLocaleString()} XP</b> 획득!
+              </div>
+              <div className="actions">
+                <button className="view" onClick={() => onClose && onClose()}>나중에</button>
+                <button className="confirm" onClick={() => {
+                  onCompleteNow && onCompleteNow(event.goalId);
+                  onClose && onClose();
+                }}>🏆 완료 처리</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="xp">+{event.xp.toLocaleString()} XP</div>
+              <div className="sub">{event.durationDays ? `${event.durationDays}일 만에 달성` : "달성 완료!"}</div>
+              <div className="actions">
+                <button className="view" onClick={() => { onViewDetail && onViewDetail(event.goalId); onClose && onClose(); }}>📋 상세 보기</button>
+                <button className="confirm" onClick={() => onClose && onClose()}>✓ 확인</button>
+              </div>
+            </>
+          )}
         </div>
       );
     }
@@ -3288,7 +3311,7 @@
       initialOpenGoalId, onGoalOpened,
       settings, setSettings,
       taskFullscreen, setTaskFullscreen,
-      onRevertGoal, onCloneGoal
+      onRevertGoal, onCloneGoal, onMarkCompleted
     }) {
       const toggleStageInForm = toggleStage || ((gId, mId) => {
         const g = goals.find(x => x.id === gId);
@@ -3838,7 +3861,7 @@
                     {completed.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "30px 20px", color: "var(--text-4)", fontSize: 13 }}>
                         🏆 아직 완료한 목표가 없습니다.<br />
-                        <span style={{ fontSize: 11.5 }}>메인 단계 + 퀘스트를 모두 채우면 자동으로 완료 처리됩니다.</span>
+                        <span style={{ fontSize: 11.5 }}>메인 단계 + 퀘스트를 모두 채우면 진행중 목표에 [🏆 완료 처리] 버튼이 표시됩니다.</span>
                       </div>
                     ) : (
                       <div className="trophy-grid">
@@ -3876,20 +3899,32 @@
                 const isEditing = editingGoalId === g.id;
                 const linkedStat = g.statId ? stats.find((s) => s.id === g.statId) : null;
                 const almostDone = isGoalAlmostDone(g);
+                const completable = isGoalCompletable(g);
                 return (
                   <div key={g.id} data-goal-id={g.id} data-conn-goal={g.id}
                     style={{ borderLeft: `4px solid ${goalColor(g.id)}` }}
-                    className={"gmini" + (isOpen ? " open" : "") + (dragId === g.id ? " dragging" : "") + (dragOverId === g.id ? " drag-over" : "")}
+                    className={"gmini" + (isOpen ? " open" : "") + (dragId === g.id ? " dragging" : "") + (dragOverId === g.id ? " drag-over" : "") + (completable ? " completable" : "") + (almostDone ? " almost-done" : "")}
                     draggable={!isEditing}
                     onDragStart={handleDragStart(g.id)}
                     onDragOver={handleDragOver(g.id)}
                     onDrop={handleDrop(g.id)}
                     onDragEnd={handleDragEnd}
                     onClick={() => !isEditing && setOpenGoalId(isOpen ? null : g.id)}>
+                    {completable && (
+                      <button className="gmini-complete-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm(`"${g.name}" 목표를 완료 처리할까요?\n\n+${COMPLETION_BONUS_XP.toLocaleString()} XP가 부여되고 🏆 트로피 갤러리로 이동합니다.`)) {
+                                  onMarkCompleted && onMarkCompleted(g.id);
+                                }
+                              }}>
+                        🏆 완료 처리
+                      </button>
+                    )}
                     <div className="gmini-head">
                       <div className="gmini-meta">
                         <div className="gmini-cat">{g.category}</div>
-                        <div className="gmini-name">{g.name}</div>
+                        <div className="gmini-name">{g.name}{almostDone && !completable && <span className="gmini-almost-badge">곧 달성</span>}</div>
                       </div>
                       <div className={"gmini-dday" + (dday <= 30 ? " urgent" : dday <= 90 ? " soon" : "")}>D-{dday}</div>
                     </div>
@@ -7871,39 +7906,63 @@
         }));
       };
 
-      // 🏆 트로피 토스트 상태 (자동 완료 알림)
-      const [trophyToast, setTrophyToast] = useState(null); // { id, goalId, goalName, xp, durationDays }
+      // 🏆 트로피 토스트 상태 (수동 완료 알림 / 완료 조건 충족 제안)
+      const [trophyToast, setTrophyToast] = useState(null);
+      // { id, goalId, goalName, xp, durationDays, mode: "completed" | "suggest" }
 
-      // 자동 완료 체크 + 처리 (toggleStage/adjustQuestCount 후 호출)
+      // 완료 조건 충족 감지 — 자동 완료 X, 토스트 제안만
       const tryAutoCompleteGoal = (goal) => {
         if (!goal || goal.status === "completed") return goal;
         if (!isGoalCompletable(goal)) return goal;
-        // 자동 완료!
-        const today = new Date().toISOString().slice(0, 10);
-        const completed = {
-          ...goal,
-          status: "completed",
-          completedAt: today,
-          completionBonus: COMPLETION_BONUS_XP,
-          startedAt: goal.startedAt || today, // 시작일 없으면 오늘로 백필 (아쉽지만 폴백)
-        };
-        // 보너스 XP 부여
-        if (goal.statId) {
-          setStats(ps => ps.map(s => s.id === goal.statId
-            ? { ...s, totalXp: getStatTotalXp(s) + COMPLETION_BONUS_XP } : s));
-        }
-        // 트로피 토스트 (xpToast보다 우선 표시)
-        const days = calcGoalDuration(completed);
+        // 자동 완료 X — 제안 토스트만 띄움 (사용자가 직접 완료 버튼 눌러야 함)
+        // 같은 목표에 대해 짧은 시간 내 중복 토스트 방지
         setTimeout(() => {
           setTrophyToast({
             id: Date.now() + 99,
             goalId: goal.id,
             goalName: goal.name,
             xp: COMPLETION_BONUS_XP,
-            durationDays: days,
+            mode: "suggest",
           });
-        }, 800); // XP toast 직후 표시
-        return completed;
+        }, 800);
+        return goal; // 상태 변경 X
+      };
+
+      // 수동 완료 처리 — 사용자가 명시적으로 호출 (목표 카드의 "🏆 완료 처리" 버튼)
+      const markGoalCompleted = (goalId) => {
+        const target = goals.find(g => g.id === goalId);
+        if (!target || target.status === "completed") return;
+        if (!isGoalCompletable(target)) {
+          alert("아직 완료 조건이 충족되지 않았습니다.\n메인 단계 + 모든 퀘스트를 완료해주세요.");
+          return;
+        }
+        const today = new Date().toISOString().slice(0, 10);
+        // goal 상태 업데이트
+        setGoals(prev => prev.map(g => {
+          if (g.id !== goalId) return g;
+          return {
+            ...g,
+            status: "completed",
+            completedAt: today,
+            completionBonus: COMPLETION_BONUS_XP,
+            startedAt: g.startedAt || today,
+          };
+        }));
+        // 보너스 XP 부여
+        if (target.statId) {
+          setStats(ps => ps.map(s => s.id === target.statId
+            ? { ...s, totalXp: getStatTotalXp(s) + COMPLETION_BONUS_XP } : s));
+        }
+        // 트로피 토스트 (완료 모드)
+        const days = calcGoalDuration({ ...target, completedAt: today });
+        setTrophyToast({
+          id: Date.now() + 100,
+          goalId: target.id,
+          goalName: target.name,
+          xp: COMPLETION_BONUS_XP,
+          durationDays: days,
+          mode: "completed",
+        });
       };
 
       // 드림 클릭 → 비전 탭으로 이동 + 모달 자동 오픈
@@ -8106,15 +8165,13 @@
             taskFullscreen={taskFullscreen} setTaskFullscreen={setTaskFullscreen}
             onRevertGoal={revertGoalCompletion}
             onCloneGoal={cloneGoal}
+            onMarkCompleted={markGoalCompleted}
           />}
-          {/* 🏆 트로피 토스트 (자동 완료 알림) */}
+          {/* 🏆 트로피 토스트 (제안 / 완료 알림) */}
           <TrophyToast event={trophyToast}
             onClose={() => setTrophyToast(null)}
-            onViewDetail={(gid) => {
-              setTab("gtr");
-              // 다음 렌더 후 모달 오픈 (GoalsTasksRetroTab이 마운트되어야 모달 state 접근 가능)
-              // 간단히는 그냥 탭만 이동
-            }} />
+            onCompleteNow={(gid) => markGoalCompleted(gid)}
+            onViewDetail={(gid) => { setTab("gtr"); }} />
 
           {tab === "resources" && <ResourcesItemsTab
             items={items} setItems={setItems}

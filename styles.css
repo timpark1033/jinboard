@@ -6981,3 +6981,89 @@
   from { opacity: 0.6; transform: scaleX(0.9); }
   to { opacity: 1; transform: scaleX(1); }
 }
+
+
+/* ============================================================
+   🏆 수동 완료 처리 시스템
+   ============================================================ */
+
+/* 완료 조건 충족 시 카드에 골드 글로우 + 우측 상단 버튼 */
+.gmini.completable {
+  position: relative;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 16px rgba(251,191,36,0.35) !important;
+  background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent 60%);
+  animation: completable-pulse 2s ease-in-out infinite;
+}
+@keyframes completable-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(251,191,36,0.25); }
+  50% { box-shadow: 0 0 20px rgba(251,191,36,0.5); }
+}
+
+/* 완료 처리 버튼 — 카드 우측 상단 플로팅 */
+.gmini-complete-btn {
+  position: absolute; top: 8px; right: 10px;
+  background: var(--gold); border: none; color: #1a1a1f;
+  padding: 5px 11px; border-radius: 999px;
+  font-family: inherit; font-size: 11px; font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(251,191,36,0.4);
+  z-index: 5;
+  transition: all 0.15s;
+}
+.gmini-complete-btn:hover {
+  background: var(--amber);
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(251,191,36,0.6);
+}
+.gmini-complete-btn:active {
+  transform: scale(0.98);
+}
+
+/* 곧 달성 뱃지 — 80~99% 진행 시 */
+.gmini-almost-badge {
+  display: inline-block; font-size: 9.5px; padding: 1px 6px; border-radius: 999px;
+  background: rgba(245,158,11,0.15); color: var(--amber); font-weight: 800;
+  margin-left: 6px;
+  animation: badge-pulse 1.6s infinite;
+}
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+/* 곧 달성 상태 — 약한 강조 */
+.gmini.almost-done:not(.completable) {
+  border-color: rgba(245,158,11,0.4) !important;
+  box-shadow: 0 0 8px rgba(245,158,11,0.15);
+}
+
+/* ============================================================
+   🎉 완료 제안 토스트 (suggest 모드)
+   ============================================================ */
+.trophy-toast.suggest {
+  background: linear-gradient(135deg, rgba(139,92,246,0.18), var(--bg-1));
+  border: 2px solid var(--accent);
+  box-shadow: 0 8px 30px rgba(139,92,246,0.35);
+}
+.trophy-toast.suggest .trophy-big {
+  filter: drop-shadow(0 0 6px rgba(139,92,246,0.6));
+}
+.trophy-toast.suggest .lbl {
+  color: var(--accent);
+}
+.trophy-toast.suggest .suggest-msg {
+  font-size: 12px; color: var(--text-2); line-height: 1.6;
+  margin: 8px 0 12px;
+}
+.trophy-toast.suggest .suggest-msg b {
+  color: var(--gold);
+  font-family: 'Geist Mono', monospace;
+  font-weight: 800;
+}
+.trophy-toast.suggest .actions .confirm {
+  background: var(--gold); color: #1a1a1f; border-color: var(--gold);
+}
+.trophy-toast.suggest .actions .view {
+  background: var(--bg-3); color: var(--text-2);
+}
