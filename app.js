@@ -7089,7 +7089,7 @@
                        checked={!!gcalCfg.syncEnabled}
                        onChange={(e) => saveCfg({ syncEnabled: e.target.checked })} />
                 <div>
-                  <div className="ttl">☑ 자동 백그라운드 동기 (5분 주기)</div>
+                  <div className="ttl">☑ 자동 백그라운드 동기 (2시간 주기)</div>
                   <div className="sub">활성화 시 페이지 로드 + 매 5분마다 자동 pull + push. 토큰은 만료 10분 전 자동 갱신.</div>
                 </div>
               </label>
@@ -7552,7 +7552,7 @@
         return () => unsub && unsub();
       }, [user.uid]);
 
-      // 🔗 Google Calendar 자동 백그라운드 동기 (5분 주기)
+      // 🔗 Google Calendar 자동 백그라운드 동기 (2시간 주기)
       const gcalSyncEnabled = settings?.googleCalendar?.syncEnabled;
       const gcalClientId = settings?.googleCalendar?.clientId;
       const gcalCalendarId = settings?.googleCalendar?.calendarId || "primary";
@@ -7655,8 +7655,8 @@
         // 초기 토큰 + 첫 동기
         tryRefreshToken().then(t => { if (t) doSync(); });
 
-        // 5분 주기
-        intervalId = setInterval(doSync, 5 * 60 * 1000);
+        // 2시간 주기
+        intervalId = setInterval(doSync, 2 * 60 * 60 * 1000); // 2시간 주기
 
         return () => {
           mounted = false;
