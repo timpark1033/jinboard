@@ -3332,6 +3332,7 @@
       const savedZoom = (typeof settings?.gtrZoomLevel === "number" && settings.gtrZoomLevel >= 0.9 && settings.gtrZoomLevel <= 1.5) ? settings.gtrZoomLevel : 1;
       const [gtrZoom, setGtrZoom] = useState(savedZoom);
       const [pendingZoom, setPendingZoom] = useState(savedZoom);
+      const [zoomExpanded, setZoomExpanded] = useState(false);
 
       /* ─── 컬럼 폭 (드래그 리사이즈, settings 영구 저장) ─── */
       const savedWidths = Array.isArray(settings?.gtrColumnWidths) && settings.gtrColumnWidths.length === 3
@@ -3736,12 +3737,28 @@
                       </button>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-                      <div className="gtr-zoom" title="텍스트 크기 (90~150%)">
-                        <span style={{ fontSize: 11, color: "var(--text-3)" }}>🔍</span>
-                        <input type="range" min="90" max="150" step="5" value={Math.round(pendingZoom * 100)} onChange={(e) => setPendingZoom(Number(e.target.value) / 100)} />
-                        <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", minWidth: 32 }}>{Math.round(pendingZoom * 100)}%</span>
-                        <button className="gtr-zoom-apply" disabled={pendingZoom === gtrZoom}
-                                onClick={() => { setGtrZoom(pendingZoom); if (setSettings) setSettings(prev => ({ ...prev, gtrZoomLevel: pendingZoom })); }}>적용</button>
+                      <div className={"gtr-zoom-wrap" + (zoomExpanded ? " expanded" : " collapsed")}
+                           onDoubleClick={() => setZoomExpanded(v => !v)}
+                           title={zoomExpanded ? "더블클릭으로 접기" : "더블클릭으로 텍스트 크기 조절"}>
+                        {!zoomExpanded ? (
+                          <span className="gtr-zoom-icon">🔍 {Math.round(gtrZoom * 100)}%</span>
+                        ) : (
+                          <div className="gtr-zoom">
+                            <span style={{ fontSize: 11, color: "var(--text-3)" }}>🔍</span>
+                            <input type="range" min="90" max="150" step="5"
+                                   value={Math.round(pendingZoom * 100)}
+                                   onChange={(e) => setPendingZoom(Number(e.target.value) / 100)}
+                                   onDoubleClick={(e) => e.stopPropagation()} />
+                            <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 11, color: "var(--accent)", minWidth: 32 }}>{Math.round(pendingZoom * 100)}%</span>
+                            <button className="gtr-zoom-apply" disabled={pendingZoom === gtrZoom}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setGtrZoom(pendingZoom);
+                                      if (setSettings) setSettings(prev => ({ ...prev, gtrZoomLevel: pendingZoom }));
+                                      setZoomExpanded(false);
+                                    }}>적용</button>
+                          </div>
+                        )}
                       </div>
                       {goalStatusFilter === "active" && (
                         <button className="gtr-btn-add" onClick={() => setShowAddGoal((v) => !v)}>

@@ -6930,3 +6930,54 @@
 }
 .trophy-shelf-empty .icon { font-size: 32px; opacity: 0.4; margin-bottom: 8px; }
 .trophy-shelf-empty .hint { font-size: 11px; color: var(--text-4); margin-top: 4px; font-style: italic; }
+
+
+/* ============================================================
+   목표 컬럼 헤더 — 진행중/완료 토글 가로 표시 강제 + 줌 접기/펼치기
+   ============================================================ */
+
+/* 진행중/완료 토글 가로 강제 (세로 표시 문제 수정) */
+.goal-status-toggle .gst-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+.goal-status-toggle .gst-btn .cnt {
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+/* 줌 슬라이더 접기/펼치기 컨테이너 */
+.gtr-zoom-wrap {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.gtr-zoom-wrap.collapsed {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-3);
+  display: inline-flex; align-items: center;
+}
+.gtr-zoom-wrap.collapsed:hover {
+  background: var(--bg-3);
+  border-color: var(--border-strong);
+  color: var(--text-1);
+}
+.gtr-zoom-wrap.collapsed .gtr-zoom-icon {
+  font-family: 'Geist Mono', monospace;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.gtr-zoom-wrap.expanded {
+  animation: zoomExpand 0.18s ease-out;
+}
+@keyframes zoomExpand {
+  from { opacity: 0.6; transform: scaleX(0.9); }
+  to { opacity: 1; transform: scaleX(1); }
+}
