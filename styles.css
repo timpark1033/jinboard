@@ -6825,3 +6825,108 @@
 .trophy-modal .mc-actions .clone:hover { background: var(--accent-2); color: #fff; }
 .trophy-modal .mc-actions .close { background: var(--accent); color: #fff; border-color: var(--accent); }
 .trophy-modal .mc-actions .close:hover { background: var(--accent-2); }
+
+
+/* ============================================================
+   🏆 대시보드 트로피 셸프 (드림 갤러리 ↔ 목표 진행도 사이)
+   ============================================================ */
+.trophy-shelf-block {
+  background: linear-gradient(180deg, rgba(251,191,36,0.06), var(--bg-1));
+  border: 1px solid rgba(251,191,36,0.25); border-radius: 14px;
+  padding: 16px 18px; position: relative; overflow: hidden;
+}
+.trophy-shelf-block::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--amber));
+}
+.trophy-shelf-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; gap: 14px; flex-wrap: wrap;
+}
+.trophy-shelf-title {
+  font-size: 14px; font-weight: 800; color: var(--gold);
+  display: flex; align-items: center; gap: 8px;
+}
+.trophy-shelf-counter {
+  font-size: 11px; padding: 3px 10px; border-radius: 999px;
+  background: rgba(251,191,36,0.15); color: var(--gold);
+  font-weight: 700; border: 1px solid rgba(251,191,36,0.3);
+  font-family: 'Geist Mono', monospace;
+}
+.trophy-shelf-meta {
+  font-size: 11px; color: var(--text-3); font-family: 'Geist Mono', monospace;
+}
+.trophy-shelf-see-all {
+  color: var(--gold); font-size: 11px; font-weight: 700; cursor: pointer;
+  white-space: nowrap;
+}
+.trophy-shelf-see-all:hover { text-decoration: underline; }
+
+.trophy-shelf-strip {
+  display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.trophy-shelf-strip::-webkit-scrollbar { height: 5px; }
+.trophy-shelf-strip::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.3); border-radius: 3px; }
+.trophy-shelf-strip::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+.trophy-shelf-card {
+  flex-shrink: 0; width: 180px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.10), var(--bg-2));
+  border: 1px solid rgba(251,191,36,0.25); border-radius: 12px;
+  padding: 14px 14px 12px; cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  position: relative;
+}
+.trophy-shelf-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(251,191,36,0.2);
+  border-color: var(--gold);
+}
+.trophy-shelf-card.estate {
+  background: linear-gradient(135deg, rgba(245,158,11,0.10), var(--bg-2));
+  border-color: rgba(245,158,11,0.30);
+}
+.trophy-shelf-card.youtube {
+  background: linear-gradient(135deg, rgba(239,68,68,0.10), var(--bg-2));
+  border-color: rgba(239,68,68,0.30);
+}
+.trophy-shelf-card.health {
+  background: linear-gradient(135deg, rgba(16,185,129,0.10), var(--bg-2));
+  border-color: rgba(16,185,129,0.30);
+}
+.trophy-shelf-card .trophy-icon {
+  font-size: 36px; text-align: center; line-height: 1;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 8px rgba(251,191,36,0.4));
+}
+.trophy-shelf-card .trophy-name {
+  font-size: 12.5px; font-weight: 800; text-align: center;
+  margin-bottom: 6px; line-height: 1.3; min-height: 32px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.trophy-shelf-card .trophy-meta {
+  font-size: 10px; color: var(--text-3); text-align: center;
+  font-family: 'Geist Mono', monospace; margin-bottom: 6px;
+}
+.trophy-shelf-card .trophy-xp {
+  text-align: center;
+  font-family: 'Geist Mono', monospace; font-size: 14px; font-weight: 900;
+  color: var(--gold); letter-spacing: -0.02em;
+  padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.trophy-shelf-card.estate .trophy-xp { color: var(--amber); }
+.trophy-shelf-card.youtube .trophy-xp { color: var(--red); }
+.trophy-shelf-card.health .trophy-xp { color: var(--green); }
+
+/* 빈 상태 */
+.trophy-shelf-empty {
+  text-align: center; padding: 28px 20px;
+  color: var(--text-4);
+}
+.trophy-shelf-empty .icon { font-size: 32px; opacity: 0.4; margin-bottom: 8px; }
+.trophy-shelf-empty .hint { font-size: 11px; color: var(--text-4); margin-top: 4px; font-style: italic; }

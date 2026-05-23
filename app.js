@@ -1049,11 +1049,63 @@
             <DreamGallery2Up dreams={dreams} onDreamClick={onDreamClick} nameSize={(settings?.dreamGalleryNameSize >= 14 && settings?.dreamGalleryNameSize <= 32) ? settings.dreamGalleryNameSize : 19} />
           </div>
 
-          {/* ZONE GOALS: 큰 원형 게이지들 (클릭 → 세부 모달) */}
+          {/* ZONE TROPHY: 🏆 달성한 목표 트로피 셸프 */}
+          {(() => {
+            const completedGoals = (goals || []).filter(g => g.status === "completed");
+            const totalXp = completedGoals.reduce((s, g) => s + (g.completionBonus || 0), 0);
+            const durations = completedGoals.map(calcGoalDuration).filter(Boolean);
+            const avgDays = durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0;
+            // 최신순 정렬
+            const sorted = [...completedGoals].sort((a, b) => (b.completedAt || "").localeCompare(a.completedAt || ""));
+            const handleTrophyClick = () => onEditGoal && onEditGoal(); // 목표·업무 탭 이동
+            return (
+              <div className="db2-section">
+                <div className="trophy-shelf-block">
+                  <div className="trophy-shelf-head">
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                      <div className="trophy-shelf-title">🏆 달성한 목표</div>
+                      <div className="trophy-shelf-counter">{completedGoals.length}개</div>
+                      {completedGoals.length > 0 && (
+                        <div className="trophy-shelf-meta">+{totalXp.toLocaleString()} XP · 평균 {avgDays}일</div>
+                      )}
+                    </div>
+                    <span className="trophy-shelf-see-all" onClick={handleTrophyClick}>전체 보기 →</span>
+                  </div>
+                  {completedGoals.length === 0 ? (
+                    <div className="trophy-shelf-empty">
+                      <div className="icon">🏆</div>
+                      <div>아직 달성한 목표가 없습니다.</div>
+                      <div className="hint">메인 단계 + 퀘스트를 모두 채우면 자동으로 트로피가 쌓입니다.</div>
+                    </div>
+                  ) : (
+                    <div className="trophy-shelf-strip">
+                      {sorted.map(g => {
+                        const days = calcGoalDuration(g);
+                        const catFirst = (g.category || "").split(/[·•|]/)[0].trim();
+                        const colorCls = catFirst.includes("부동산") ? "estate" :
+                                         catFirst.includes("유튜브") || catFirst.includes("Creator") ? "youtube" :
+                                         catFirst.includes("건강") || catFirst.includes("체력") ? "health" : "";
+                        return (
+                          <div key={g.id} className={"trophy-shelf-card " + colorCls} onClick={handleTrophyClick}>
+                            <div className="trophy-icon">🏆</div>
+                            <div className="trophy-name">{g.name}</div>
+                            <div className="trophy-meta">{(g.completedAt || "").slice(5)}{days ? " · " + days + "일" : ""}</div>
+                            <div className="trophy-xp">+{(g.completionBonus || 0).toLocaleString()} XP</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ZONE GOALS: 큰 원형 게이지들 (클릭 → 세부 모달) — 진행중 목표만 */}
           <div className="db2-section">
             <div className="db2-section-head">🎯 목표 진행도 <span className="hint">클릭 → 세부 대시보드</span></div>
             <div className="db2-goals-grid">
-              {goals.map(g => {
+              {goals.filter(g => (g.status || "active") === "active").map(g => {
                 const stages = g.milestones || [];
                 const done = stages.filter(m => m.status === "done").length;
                 const pct = stages.length > 0 ? Math.round((done / stages.length) * 100) : (g.progress || 0);
