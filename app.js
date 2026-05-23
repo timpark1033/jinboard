@@ -494,6 +494,33 @@
       } catch {}
     }
 
+    /* ─── 토큰 localStorage 캐시 (브라우저 새로고침 시에도 1시간 유지) ─── */
+    const GCAL_TOKEN_KEY = "dreamboard_gcal_token";
+    function saveGcalToken(tokenResp) {
+      try {
+        const expiresIn = Number(tokenResp.expires_in || 3600);
+        const obj = {
+          access_token: tokenResp.access_token,
+          expires_at: Date.now() + expiresIn * 1000,
+        };
+        localStorage.setItem(GCAL_TOKEN_KEY, JSON.stringify(obj));
+      } catch (e) { console.warn("[gcal] 토큰 저장 실패:", e); }
+    }
+    function loadGcalToken() {
+      try {
+        const raw = localStorage.getItem(GCAL_TOKEN_KEY);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj.access_token || !obj.expires_at) return null;
+        // 만료 1분 전이면 무효 처리 (안전 마진)
+        if (obj.expires_at < Date.now() + 60_000) return null;
+        return obj;
+      } catch { return null; }
+    }
+    function clearGcalToken() {
+      try { localStorage.removeItem(GCAL_TOKEN_KEY); } catch {}
+    }
+
     // schedule { id, date, title } → Google Calendar 이벤트 (all-day)
     function scheduleToGcalEvent(s) {
       const d = s.date; // "YYYY-MM-DD"
@@ -6565,10 +6592,33 @@
 
       const gcalCfg = settings?.googleCalendar || INITIAL_SETTINGS.googleCalendar;
 
+      // 모달 열릴 때 캐시된 토큰 자동 복원
       useEffect(() => {
         if (!open) return;
         setClientIdDraft(settings?.googleCalendar?.clientId || "");
         setCalendarIdDraft(settings?.googleCalendar?.calendarId || "primary");
+        // localStorage에서 유효 토큰 자동 복원
+        const cached = loadGcalToken();
+        if (cached && cached.access_token) {
+          setToken(cached.access_token);
+          // gapi 준비 후 이메일 조회
+          (async () => {
+            try {
+              await initGcalClient();
+              window.gapi.client.setToken({ access_token: cached.access_token });
+              const calRes = await window.gapi.client.calendar.calendarList.get({ calendarId: "primary" });
+              setUserEmail(calRes.result.summary || calRes.result.id || "(unknown)");
+              const remainMin = Math.round((cached.expires_at - Date.now()) / 60000);
+              setMsg(`✓ 캐시 토큰 사용 중 (${remainMin}분 후 자동 갱신)`);
+              setMsgKind("success");
+            } catch (e) {
+              // 토큰 무효 → 캐시 삭제
+              clearGcalToken();
+              setToken(null);
+              setUserEmail("");
+            }
+          })();
+        }
       }, [open]);
 
       if (!open) return null;
@@ -6595,6 +6645,7 @@
           showMsg("Google 로그인 창에서 권한 허용해 주세요...", "info");
           const tokenResp = await requestGcalToken(cid);
           setToken(tokenResp.access_token);
+          saveGcalToken(tokenResp); // localStorage 캐시
           window.gapi.client.setToken({ access_token: tokenResp.access_token });
           // 사용자 정보 조회 (calendarList에서 본인 primary 이메일)
           try {
@@ -6610,6 +6661,7 @@
 
       const handleDisconnect = () => {
         if (token) revokeGcalToken(token);
+        clearGcalToken(); // localStorage 캐시 삭제
         setToken(null); setUserEmail("");
         saveCfg({ syncEnabled: false });
         showMsg("연결 해제됨.", "info");
@@ -6786,8 +6838,9 @@
               )}
 
               <div className="gcal-note">
-                💡 <b>현재 지원:</b> 수동 푸시·풀 (양방향 자동 동기는 추후 추가)<br />
-                ⚠ 토큰은 브라우저 메모리에만 유지 (페이지 새로고침 시 재연결 필요)<br />
+                💡 <b>토큰 캐시 활성화:</b> 한번 연결하면 <b>1시간 동안 새로고침해도 유지</b> (localStorage)<br />
+                🔄 <b>자동 갱신:</b> 만료 5분 전 자동으로 silent 재발급 (Google 로그인 유지 시 팝업 없음)<br />
+                ⚠ <b>한계:</b> Google 세션 자체가 만료되면 (수일/수주) 다시 ⬇ 버튼 클릭 필요<br />
                 🗓 schedules는 <b>all-day 이벤트</b>로 동기됩니다.
               </div>
             </div>
@@ -7244,23 +7297,46 @@
         let mounted = true;
         let currentToken = null;
 
-        const tryRefreshToken = async () => {
+        const tryRefreshToken = async (forceFresh = false) => {
+          // 1) localStorage 캐시 우선 시도 (1시간 만료 전까지 즉시 사용)
+          if (!forceFresh) {
+            const cached = loadGcalToken();
+            if (cached && cached.access_token) {
+              try {
+                await initGcalClient();
+                if (!mounted) return null;
+                currentToken = cached.access_token;
+                window.gapi.client.setToken({ access_token: currentToken });
+                setGcalAutoStatus(prev => ({ ...prev, token: currentToken, active: true, lastMsg: "캐시 토큰 사용 중" }));
+                // 만료 5분 전 갱신 예약
+                const refreshIn = Math.max(60_000, cached.expires_at - Date.now() - 5 * 60_000);
+                if (refreshTimerId) clearTimeout(refreshTimerId);
+                refreshTimerId = setTimeout(() => tryRefreshToken(true), refreshIn);
+                return currentToken;
+              } catch (e) {
+                console.warn("[gcal-auto] 캐시 토큰 적용 실패, silent로 폴백:", e);
+              }
+            }
+          }
+          // 2) Silent OAuth 요청 (Google 로그인 유지되어 있으면 팝업 없음)
           try {
             await initGcalClient();
             const resp = await requestGcalTokenSilent(gcalClientId);
             if (!mounted) return null;
             currentToken = resp.access_token;
-            setGcalAutoStatus(prev => ({ ...prev, token: currentToken, active: true }));
+            saveGcalToken(resp); // localStorage 캐시
+            setGcalAutoStatus(prev => ({ ...prev, token: currentToken, active: true, lastMsg: "" }));
             window.gapi.client.setToken({ access_token: currentToken });
             // 만료 10분 전에 갱신
             const refreshIn = Math.max(60_000, ((resp.expires_in || 3600) - 600) * 1000);
             if (refreshTimerId) clearTimeout(refreshTimerId);
-            refreshTimerId = setTimeout(tryRefreshToken, refreshIn);
+            refreshTimerId = setTimeout(() => tryRefreshToken(true), refreshIn);
             return currentToken;
           } catch (e) {
             console.warn("[gcal-auto] 토큰 갱신 실패:", e.message || e);
             if (!mounted) return null;
-            setGcalAutoStatus(prev => ({ ...prev, token: null, active: false, lastMsg: "재연결 필요" }));
+            clearGcalToken();
+            setGcalAutoStatus(prev => ({ ...prev, token: null, active: false, lastMsg: "재연결 필요 (Google 재로그인)" }));
             return null;
           }
         };
@@ -7294,12 +7370,14 @@
             });
           } catch (e) {
             console.warn("[gcal-auto] 동기 실패:", e);
-            // 토큰 만료 등 → 재요청 트리거
-            if (String(e.message || e).match(/401|invalid|expired/i)) {
+            // 토큰 만료 등 → 캐시 무효화 후 강제 재요청
+            const errMsg = String(e.message || e?.result?.error?.message || e);
+            if (errMsg.match(/401|invalid|expired|unauthorized/i)) {
               currentToken = null;
-              tryRefreshToken();
+              clearGcalToken();
+              tryRefreshToken(true);
             }
-            if (mounted) setGcalAutoStatus(prev => ({ ...prev, lastMsg: "오류 — " + (e.message || e) }));
+            if (mounted) setGcalAutoStatus(prev => ({ ...prev, lastMsg: "오류 — " + errMsg }));
           }
         };
 
