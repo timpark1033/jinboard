@@ -2803,7 +2803,7 @@
                   <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                 </div>
               ))}
-              <div className="field-add-zone" onDoubleClick={() => setAddModalGoal(g.id)} title="더블클릭으로 업무 추가">＋ 더블클릭하여 추가</div>
+              <div className="field-add-zone" onClick={() => setAddModalGoal(g.id)} title="클릭으로 업무 추가">＋ 클릭하여 추가</div>
             </div>
           ))}
           {unlinked.length > 0 && (
@@ -2819,7 +2819,7 @@
                   <span className="qtag">Q{t.quadrant}</span>
                 </div>
               ))}
-              <div className="field-add-zone" onDoubleClick={() => setAddModalGoal("unlinked")} title="더블클릭으로 업무 추가">＋ 더블클릭하여 추가</div>
+              <div className="field-add-zone" onClick={() => setAddModalGoal("unlinked")} title="클릭으로 업무 추가">＋ 클릭하여 추가</div>
             </div>
           )}
 
