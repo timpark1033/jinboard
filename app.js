@@ -3977,11 +3977,6 @@
                                           <span className="qb-cb" style={{ width: 14, height: 14, border: "1.5px solid var(--border-strong)", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); adjustQuestCount && adjustQuestCount(g.id, q.id, q.done ? -1 : +1); }} title={q.done ? "되돌리기" : "+1"}>{q.done ? "✓" : (q.repeat ? "🔁" : "")}</span>
                                           <span className="qb-text" style={{ flex: 1, fontSize: 11 }}>{q.name}</span>
                                           <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: q.done ? "var(--green)" : "var(--accent)", fontWeight: 700, minWidth: 40, textAlign: "right" }}>{q.done ? "완료" : cur + "/" + target}</span>
-                                          {target > 1 && !q.done && (
-                                            <div style={{ width: 36, height: 4, background: "var(--bg-3)", borderRadius: 2, overflow: "hidden", flexShrink: 0 }}>
-                                              <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg, var(--accent-2), var(--accent))" }} />
-                                            </div>
-                                          )}
                                         </div>
                                       );
                                     })}
