@@ -3957,7 +3957,6 @@
                                   <div key={m.id} className={"qb-row " + cls} onClick={(e) => { e.stopPropagation(); toggleStageInForm(g.id, m.id); }} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                                     <span className="qb-cb" style={{ width: 14, height: 14, border: "1.5px solid var(--border-strong)", borderRadius: 3, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative" }}>{m.status === "done" ? "✓" : ""}</span>
                                     <span className="qb-text" style={{ flex: 1, fontSize: 11 }}>{m.name}</span>
-                                    <span className="qb-xp" style={{ fontFamily: "Geist Mono, monospace", fontSize: 10, color: "var(--accent)", fontWeight: 700 }}>+150</span>
                                   </div>
                                 );
                               })}
