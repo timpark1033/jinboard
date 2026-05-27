@@ -2870,7 +2870,7 @@
     }
 
     /* ─── 주간 업무 뷰 (요일 그리드 + 일정/업무 + Google 연결) ─── */
-    function WeeklyTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, goalColor, settings, setSettings }) {
+    function WeeklyTaskView({ tasks, goals, stats, toggleTask, setEditingTaskId, goalColor, settings, setSettings, editTask }) {
       const savedMode = settings?.calendarMode === "month" ? "month" : "week";
       const [mode, setMode] = useState(savedMode);
       const setModePersist = (m) => { setMode(m); setSettings(p => ({ ...p, calendarMode: m })); };
@@ -3066,6 +3066,8 @@
             setSettings={setSettings}
             schedules={schedules}
             setSchedules={setSchedulesViaSettings}
+            tasks={tasks}
+            editTask={editTask}
           />
         </div>
       );
@@ -4339,7 +4341,7 @@
 
               {taskTab === "field" && <FieldTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} deleteTask={deleteTask} goalColor={goalColor} addTask={addTask} />}
 
-              {taskTab === "weekly" && <WeeklyTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} goalColor={goalColor} settings={settings} setSettings={setSettings} />}
+              {taskTab === "weekly" && <WeeklyTaskView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} setEditingTaskId={setEditingTaskId} goalColor={goalColor} settings={settings} setSettings={setSettings} editTask={editTask} />}
 
               {taskTab === "focus" && <FocusModeView tasks={tasks} goals={goals} stats={stats} toggleTask={toggleTask} settings={settings} setSettings={setSettings} addTask={addTask} setEditingTaskId={setEditingTaskId} />}
             </div>
@@ -6949,7 +6951,7 @@
     }
 
     /* ─── 🔗 Google Calendar 연결 모달 ─── */
-    function GoogleCalendarModal({ open, onClose, settings, setSettings, schedules, setSchedules }) {
+    function GoogleCalendarModal({ open, onClose, settings, setSettings, schedules, setSchedules, tasks, editTask }) {
       const [clientIdDraft, setClientIdDraft] = useState(settings?.googleCalendar?.clientId || "");
       const [calendarIdDraft, setCalendarIdDraft] = useState(settings?.googleCalendar?.calendarId || "primary");
       const [token, setToken] = useState(null);
@@ -7035,7 +7037,21 @@
         showMsg("연결 해제됨.", "info");
       };
 
-      // ⬆ Push: 로컬 → Google
+      // 로컬 항목 통합 = 일정(schedules) + 할일(tasks with dueDate)
+      const buildSyncItems = () => {
+        const items = [];
+        (schedules || []).forEach(s => {
+          if (!s.date) return;
+          items.push({ id: "s_" + s.id, date: s.date, title: s.title || "(제목 없음)", _src: "schedule", _origId: s.id });
+        });
+        (tasks || []).forEach(t => {
+          if (!t.dueDate) return; // 마감일 있는 할일만
+          items.push({ id: "t_" + t.id, date: t.dueDate, title: t.text || "(제목 없음)", _src: "task", _origId: t.id });
+        });
+        return items;
+      };
+
+      // ⬆ Push: 로컬 → Google (stale eventMap 자동 복구 + 자세한 에러)
       const handlePush = async () => {
         if (!token) { showMsg("⚠ 먼저 연결하세요.", "error"); return; }
         setBusy(true); showMsg("푸시 중...", "info");
@@ -7043,29 +7059,64 @@
           window.gapi.client.setToken({ access_token: token });
           const cid = calendarIdDraft.trim() || "primary";
           const map = { ...(gcalCfg.eventMap || {}) };
-          let created = 0, updated = 0, errors = 0;
-          for (const s of (schedules || [])) {
+          const syncItems = buildSyncItems();
+
+          if (syncItems.length === 0) {
+            showMsg("⚠ 푸시할 항목 없음 (일정/마감일 있는 할일이 없습니다)", "error");
+            setBusy(false); return;
+          }
+
+          let created = 0, updated = 0, errors = 0, recovered = 0;
+          const errorDetails = [];
+
+          for (const s of syncItems) {
             try {
               const existingId = map[s.id];
               if (existingId) {
-                await gcalPatchEvent(cid, existingId, s);
-                updated++;
+                // 1. 우선 patch 시도
+                try {
+                  await gcalPatchEvent(cid, existingId, s);
+                  updated++;
+                } catch (patchErr) {
+                  // 404/410 (이벤트가 Google 측에서 삭제됨) → 재삽입
+                  const code = patchErr?.result?.error?.code || patchErr?.status;
+                  if (code === 404 || code === 410 || /not found|deleted/i.test(patchErr?.message || "")) {
+                    const ev = await gcalInsertEvent(cid, s);
+                    map[s.id] = ev.id;
+                    recovered++;
+                  } else {
+                    throw patchErr;
+                  }
+                }
               } else {
-                const created_ev = await gcalInsertEvent(cid, s);
-                map[s.id] = created_ev.id;
+                const ev = await gcalInsertEvent(cid, s);
+                map[s.id] = ev.id;
                 created++;
               }
-            } catch (e) { errors++; console.warn("푸시 실패:", s, e); }
+            } catch (e) {
+              errors++;
+              const reason = e?.result?.error?.message || e?.message || String(e);
+              console.warn("[gcal push] 실패:", s, e);
+              if (errorDetails.length < 3) {
+                errorDetails.push(`"${s.title.slice(0, 20)}": ${reason.slice(0, 60)}`);
+              }
+            }
           }
+
           saveCfg({
             eventMap: map,
             lastSyncAt: new Date().toISOString(),
             lastSyncStatus: errors === 0 ? "success" : "error",
-            lastSyncMessage: `푸시 완료 · 신규 ${created} · 갱신 ${updated}` + (errors ? ` · 실패 ${errors}` : "")
+            lastSyncMessage: `푸시 ${syncItems.length}건 · 신규 ${created} · 갱신 ${updated}` + (recovered ? ` · 복구 ${recovered}` : "") + (errors ? ` · 실패 ${errors}` : "")
           });
-          showMsg(`✓ 푸시 완료 · 신규 ${created} · 갱신 ${updated}` + (errors ? ` · 실패 ${errors}` : ""), errors ? "error" : "success");
+
+          let msg = `✓ 푸시 완료 (총 ${syncItems.length}건) · 신규 ${created} · 갱신 ${updated}`;
+          if (recovered > 0) msg += ` · 🔄 복구 ${recovered}`;
+          if (errors > 0) msg += ` · ✗ 실패 ${errors}\n` + errorDetails.join("\n");
+          showMsg(msg, errors ? "error" : "success");
         } catch (e) {
-          showMsg("✗ 푸시 실패: " + (e.message || e), "error");
+          console.error("[gcal push] 치명적 오류:", e);
+          showMsg("✗ 푸시 실패: " + (e?.result?.error?.message || e.message || e), "error");
         } finally { setBusy(false); }
       };
 
@@ -7206,10 +7257,11 @@
               )}
 
               <div className="gcal-note">
-                💡 <b>토큰 캐시 활성화:</b> 한번 연결하면 <b>1시간 동안 새로고침해도 유지</b> (localStorage)<br />
-                🔄 <b>자동 갱신:</b> 만료 5분 전 자동으로 silent 재발급 (Google 로그인 유지 시 팝업 없음)<br />
-                ⚠ <b>한계:</b> Google 세션 자체가 만료되면 (수일/수주) 다시 ⬇ 버튼 클릭 필요<br />
-                🗓 schedules는 <b>all-day 이벤트</b>로 동기됩니다.
+                💡 <b>동기 대상:</b> 일정(📌) + <b>마감일 있는 할일</b> — 모두 all-day 이벤트로<br />
+                🔄 <b>스마트 복구:</b> Google에서 삭제된 이벤트 자동 재생성<br />
+                🔐 <b>토큰 캐시:</b> 1시간 동안 새로고침해도 유지 (localStorage) · 만료 5분 전 자동 갱신<br />
+                ⚠ Google 세션 만료 시 (수일/수주) 다시 연결 클릭 필요<br />
+                📥 <b>풀:</b> Google 이벤트 → 로컬 일정으로만 추가 (할일과 충돌 방지)
               </div>
             </div>
             <div className="modal-foot">
