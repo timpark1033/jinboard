@@ -2969,7 +2969,6 @@
                   <div key={t.id} className={"weekly-task" + (t.done ? " done" : "")} style={g ? { borderLeftColor: goalColor(g.id) } : null} onClick={() => setEditingTaskId(t.id)} title={t.text + (g ? " · " + g.name : "")}>
                     <div className="cb" onClick={(e) => { e.stopPropagation(); toggleTask(t.id); }} />
                     <span className="t">{t.text}</span>
-                    {g && <span className="meta">{g.name.slice(0, 4)}</span>}
                   </div>
                 );
               })}

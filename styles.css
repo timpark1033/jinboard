@@ -5052,9 +5052,9 @@
 .weekly-day-head .dnum { font-family: "Geist Mono", monospace; font-size: 13px; font-weight: 700; color: var(--text-1); }
 .weekly-day.today .dnum { color: var(--accent); }
 .weekly-day-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-.weekly-sch { background: rgba(245,158,11,0.10); border-left: 2px solid var(--amber); color: var(--text-2); font-size: 10.5px; padding: 4px 6px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+.weekly-sch { background: rgba(245,158,11,0.10); border-left: 2px solid var(--amber); color: var(--text-2); font-size: 9px; padding: 3px 5px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
 .weekly-sch:hover { background: rgba(245,158,11,0.20); }
-.weekly-task { background: var(--bg-3); border-left: 3px solid var(--accent); padding: 4px 6px; border-radius: 3px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.weekly-task { background: var(--bg-3); border-left: 3px solid var(--accent); padding: 3px 5px; border-radius: 3px; font-size: 9.5px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; }
 .weekly-task:hover { transform: translateX(1px); }
 .weekly-task.done { opacity: 0.5; text-decoration: line-through; }
 .weekly-task .cb { width: 11px; height: 11px; border: 1.5px solid var(--border-strong); border-radius: 2px; flex-shrink: 0; cursor: pointer; }
