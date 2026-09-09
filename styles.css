@@ -7067,3 +7067,8 @@
 .trophy-toast.suggest .actions .view {
   background: var(--bg-3); color: var(--text-2);
 }
+
+/* 날짜 입력 — 칸 아무 데나 클릭하면 달력 열림 (openDatePicker) */
+input[type="date"] { cursor: pointer; }
+/* 네이티브 아이콘이 클릭을 가로채면 showPicker()가 두 번 불려 토글됨 → 클릭은 input 이 전담 */
+input[type="date"]::-webkit-calendar-picker-indicator { pointer-events: none; }

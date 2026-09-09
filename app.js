@@ -1,6 +1,15 @@
     const { useState, useEffect, useMemo, useRef } = React;
 
     /* --- helpers --- */
+    // 날짜 입력 클릭 → 네이티브 달력 즉시 열기
+    // (Chrome 기본 동작은 우측 아이콘을 정확히 눌러야만 열림 → 입력칸 아무 데나 클릭해도 열리게)
+    function openDatePicker(e) {
+      const el = e.currentTarget;
+      e.stopPropagation();
+      if (el && typeof el.showPicker === "function") {
+        try { el.showPicker(); } catch (_) { /* 이미 열려있거나 미지원 */ }
+      }
+    }
     function calcDday(dateStr) {
       const today = new Date();
       const target = new Date(dateStr);
@@ -1860,7 +1869,7 @@
               </div>
               <div className="edit-form-row">
                 <div><label>진행률 {newForm.progress}%</label><input type="range" min="0" max="100" value={newForm.progress} onChange={e => setNewForm(p => ({...p, progress: e.target.value}))} /></div>
-                <div><label>마감기한</label><input type="date" value={newForm.deadline} onChange={e => setNewForm(p => ({...p, deadline: e.target.value}))} /></div>
+                <div><label>마감기한</label><input type="date" onClick={openDatePicker} value={newForm.deadline} onChange={e => setNewForm(p => ({...p, deadline: e.target.value}))} /></div>
               </div>
               <div className="edit-form-row">
                 <div><label>현재 단계명</label><input value={newForm.milestoneName} onChange={e => setNewForm(p => ({...p, milestoneName: e.target.value}))} placeholder="예: 1단계 시장 조사" /></div>
@@ -1917,7 +1926,7 @@
                       </div>
                       <div className="edit-form-row">
                         <div><label>진행률 {editForm.progress}%</label><input type="range" min="0" max="100" value={editForm.progress} onChange={e => setEditForm(p => ({...p, progress: e.target.value}))} /></div>
-                        <div><label>마감기한</label><input type="date" value={editForm.deadline} onChange={e => setEditForm(p => ({...p, deadline: e.target.value}))} /></div>
+                        <div><label>마감기한</label><input type="date" onClick={openDatePicker} value={editForm.deadline} onChange={e => setEditForm(p => ({...p, deadline: e.target.value}))} /></div>
                       </div>
                       <div className="edit-form-row">
                         <div><label>현재 단계명</label><input value={editForm.milestoneName} onChange={e => setEditForm(p => ({...p, milestoneName: e.target.value}))} /></div>
@@ -2546,7 +2555,7 @@
                 <div className="settings-section-title">📅 개인 정보 (인생 게이지)</div>
                 <div className="settings-field">
                   <label>생년월일</label>
-                  <input type="date" value={settings.birthDate || ""} onChange={(e) => update("birthDate", e.target.value)} />
+                  <input type="date" onClick={openDatePicker} value={settings.birthDate || ""} onChange={(e) => update("birthDate", e.target.value)} />
                 </div>
                 <div className="settings-field" style={{ marginTop: 12 }}>
                   <label>성별</label>
@@ -3802,7 +3811,7 @@
                   <input value={newGoal.name} onChange={(e) => setNewGoal({ ...newGoal, name: e.target.value })} placeholder="목표 이름" autoFocus />
                   <div className="inline-add-form-row">
                     <input value={newGoal.category} onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })} placeholder="카테고리" />
-                    <input type="date" value={newGoal.deadline} onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })} />
+                    <input type="date" onClick={openDatePicker} value={newGoal.deadline} onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })} />
                   </div>
                   <select value={newGoal.statId} onChange={(e) => setNewGoal({ ...newGoal, statId: e.target.value })}>
                     <option value="">연결 스탯 선택</option>
@@ -4045,7 +4054,7 @@
                             </div>
                             <div className="gem-field">
                               <label>마감일</label>
-                              <input type="date" value={editGoalForm.deadline} onChange={(e) => setEditGoalForm({ ...editGoalForm, deadline: e.target.value })} />
+                              <input type="date" onClick={openDatePicker} value={editGoalForm.deadline} onChange={(e) => setEditGoalForm({ ...editGoalForm, deadline: e.target.value })} />
                             </div>
                           </div>
                           <div className="gem-field-row">
@@ -4111,7 +4120,7 @@
                                 const newStages = (g.milestones || []).map(x => x.id === m.id ? { ...x, name: e.target.value } : x);
                                 editGoal(g.id, { milestones: newStages });
                               }} />
-                              <input type="date" className="qm-date" value={m.deadline || ""} onChange={(e) => {
+                              <input type="date" onClick={openDatePicker} className="qm-date" value={m.deadline || ""} onChange={(e) => {
                                 const newStages = (g.milestones || []).map(x => x.id === m.id ? { ...x, deadline: e.target.value } : x);
                                 editGoal(g.id, { milestones: newStages });
                               }} />
@@ -4157,7 +4166,7 @@
                                 const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, name: e.target.value } : x);
                                 editGoal(g.id, { quests: newQ });
                               }} />
-                              <input type="date" className="qm-date" value={q.deadline || ""} onChange={(e) => {
+                              <input type="date" onClick={openDatePicker} className="qm-date" value={q.deadline || ""} onChange={(e) => {
                                 const newQ = (g.quests || []).map(x => x.id === q.id ? { ...x, deadline: e.target.value } : x);
                                 editGoal(g.id, { quests: newQ });
                               }} />
@@ -4279,7 +4288,7 @@
                   })()}
                   <div className="inline-add-form-row">
                     <input value={newTask.tag} onChange={(e) => setNewTask({ ...newTask, tag: e.target.value })} placeholder="태그 (예: 유튜브)" />
-                    <input type="date" value={newTask.dueDate || ""} onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })} placeholder="마감일" />
+                    <input type="date" onClick={openDatePicker} value={newTask.dueDate || ""} onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })} placeholder="마감일" />
                   </div>
                   <div className="inline-add-buttons">
                     <button onClick={() => setShowAddTask(false)}>취소</button>
@@ -4503,7 +4512,7 @@
                         </div>
                         <div className="tem-field">
                           <label>마감일</label>
-                          <input className="tem-input" type="date" value={t.dueDate || ""} onChange={(e) => update("dueDate", e.target.value)} />
+                          <input className="tem-input" type="date" onClick={openDatePicker} value={t.dueDate || ""} onChange={(e) => update("dueDate", e.target.value)} />
                         </div>
                       </div>
 
@@ -5691,7 +5700,7 @@
                   </div>
                   <div className="item-field-row">
                     <label>완료 예정</label>
-                    <input type="date" value={local.devTarget || ""} onChange={(e) => update("devTarget", e.target.value)} />
+                    <input type="date" onClick={openDatePicker} value={local.devTarget || ""} onChange={(e) => update("devTarget", e.target.value)} />
                   </div>
                 </>
               )}
