@@ -7067,20 +7067,3 @@
 .trophy-toast.suggest .actions .view {
   background: var(--bg-3); color: var(--text-2);
 }
-
-/* 완료된 목표 컬럼 — 업무 추가 잠김 */
-.field-task-col.goal-completed { opacity: 0.72; }
-.field-add-zone.locked {
-  cursor: default;
-  opacity: 0.55;
-  border-style: solid;
-  border-color: var(--border);
-  padding: 10px;
-  font-size: 11px;
-}
-.field-add-zone.locked:hover {
-  background: transparent;
-  color: var(--text-4);
-  border-color: var(--border);
-  border-style: solid;
-}
