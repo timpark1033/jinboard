@@ -2779,6 +2779,8 @@
         const text = addText.trim();
         if (!text) { closeAdd(); return; }
         const goalId = addModalGoal === "unlinked" ? null : addModalGoal;
+        // 완료된 목표에는 업무 추가 불가 (방어 가드)
+        if (goalId && (goals.find(g => g.id === goalId) || {}).status === "completed") { closeAdd(); return; }
         if (addTask) addTask({
           id: "t" + Date.now(), text, quadrant: Number(addQuad) || 2,
           goalId, questId: null, tag: "", dueDate: "", done: false, time: ""
@@ -2788,10 +2790,12 @@
 
       return (
         <div className="field-task-grid">
-          {grouped.map(({ goal: g, tasks: list }) => (
-            <div key={g.id} className="field-task-col" style={{ borderLeft: `3px solid ${goalColor(g.id)}` }}>
+          {grouped.map(({ goal: g, tasks: list }) => {
+            const goalDone = g.status === "completed";
+            return (
+            <div key={g.id} className={"field-task-col" + (goalDone ? " goal-completed" : "")} style={{ borderLeft: `3px solid ${goalColor(g.id)}` }}>
               <div className="field-col-head">
-                <span className="field-col-name" style={{ color: goalColor(g.id) }}>{g.name}</span>
+                <span className="field-col-name" style={{ color: goalColor(g.id) }}>{goalDone ? "🏆 " : ""}{g.name}</span>
                 <span className="field-col-count">{list.filter(t => t.done).length}/{list.length}</span>
               </div>
               {list.length === 0 && <div className="field-col-empty">없음</div>}
@@ -2803,9 +2807,12 @@
                   <button className="del-x" onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}>×</button>
                 </div>
               ))}
-              <div className="field-add-zone" onClick={() => setAddModalGoal(g.id)} title="클릭으로 업무 추가">＋ 클릭하여 추가</div>
+              {goalDone
+                ? <div className="field-add-zone locked" title="완료된 목표에는 업무를 추가할 수 없습니다">🏆 달성 완료 · 추가 잠김</div>
+                : <div className="field-add-zone" onClick={() => setAddModalGoal(g.id)} title="클릭으로 업무 추가">＋ 클릭하여 추가</div>}
             </div>
-          ))}
+            );
+          })}
           {unlinked.length > 0 && (
             <div className="field-task-col" style={{ gridColumn: "1 / -1" }}>
               <div className="field-col-head">
